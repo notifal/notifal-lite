@@ -1,0 +1,204 @@
+{
+  "apiVersion": 2,
+  "name": "notifal/icon",
+  "title": "Icon",
+  "description": "Display a customizable icon with SVG support for notifications",
+  "category": "notifal",
+  "icon": "star-filled",
+  "keywords": [
+    "notifal",
+    "icon",
+    "svg",
+    "vector",
+    "graphic"
+  ],
+  "textdomain": "notifal",
+  "editorScript": "file:../index.js",
+  "editorStyle": "file:../index.css",
+  "style": "file:../style-index.css",
+  "attributes": {
+    "svgContent": {
+      "type": "string",
+      "default": ""
+    },
+    "alignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "alignmentTablet": {
+      "type": "string"
+    },
+    "alignmentMobile": {
+      "type": "string"
+    },
+    "primaryColor": {
+      "type": "string",
+      "default": "#000000"
+    },
+    "size": {
+      "type": "number",
+      "default": 24
+    },
+    "sizeTablet": {
+      "type": "number"
+    },
+    "sizeMobile": {
+      "type": "number"
+    },
+    "sizeUnit": {
+      "type": "string",
+      "default": "px"
+    },
+    "width": {
+      "type": "number",
+      "default": 0
+    },
+    "widthUnit": {
+      "type": "string",
+      "default": "px"
+    },
+    "height": {
+      "type": "number",
+      "default": 0
+    },
+    "heightUnit": {
+      "type": "string",
+      "default": "px"
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": ""
+    },
+    "backgroundType": {
+      "type": "string",
+      "default": "simple"
+    },
+    "gradientFrom": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "gradientTo": {
+      "type": "string",
+      "default": "#f0f0f0"
+    },
+    "gradientDirection": {
+      "type": "string",
+      "default": "to right"
+    },
+    "borderStyle": {
+      "type": "string",
+      "default": "none"
+    },
+    "borderTop": {
+      "type": "number",
+      "default": 0
+    },
+    "borderRight": {
+      "type": "number",
+      "default": 0
+    },
+    "borderBottom": {
+      "type": "number",
+      "default": 0
+    },
+    "borderLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "borderColor": {
+      "type": "string",
+      "default": ""
+    },
+    "borderRadius": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowColor": {
+      "type": "string",
+      "default": "rgba(0, 0, 0, 0.2)"
+    },
+    "boxShadowH": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowV": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowBlur": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowSpread": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowInset": {
+      "type": "boolean",
+      "default": false
+    },
+    "paddingTop": {
+      "type": "number",
+      "default": 0
+    },
+    "paddingRight": {
+      "type": "number",
+      "default": 0
+    },
+    "paddingBottom": {
+      "type": "number",
+      "default": 0
+    },
+    "paddingLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "paddingTopTablet": {
+      "type": "number"
+    },
+    "paddingRightTablet": {
+      "type": "number"
+    },
+    "paddingBottomTablet": {
+      "type": "number"
+    },
+    "paddingLeftTablet": {
+      "type": "number"
+    },
+    "paddingTopMobile": {
+      "type": "number"
+    },
+    "paddingRightMobile": {
+      "type": "number"
+    },
+    "paddingBottomMobile": {
+      "type": "number"
+    },
+    "paddingLeftMobile": {
+      "type": "number"
+    },
+    "paddingUnit": {
+      "type": "string",
+      "default": "px"
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": [
+      "left",
+      "center",
+      "right",
+      "wide",
+      "full"
+    ],
+    "spacing": {
+      "margin": true,
+      "padding": false
+    }
+  },
+  "example": {
+    "attributes": {
+      "isExample": true
+    }
+  }
+}

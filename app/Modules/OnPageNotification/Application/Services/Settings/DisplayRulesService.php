@@ -1,0 +1,852 @@
+<?php
+
+namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
+
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Shared\Utils\Helper;
+
+defined('ABSPATH') || exit;
+
+/**
+ * Class DisplayRulesService
+ *
+ * Handles display rules logic, validation, and processing for OnPage Notifications.
+ * Manages rule evaluation, sanitization, and formatting for both lite and pro features.
+ *
+ * @since 2.0.0
+ * @author Hossein <hossein@notifal.com>
+ */
+class DisplayRulesService
+{
+
+    /**
+     * Basic rule types supported by the lite version.
+     * Pro features (categories, url_match, users) are added via filters.
+     *
+     * @since 2.0.0
+     * @var array
+     */
+    private const LITE_RULE_TYPES = [
+        'pages' => [
+            'label' => 'Pages',
+            'icon' => '📄',
+            'post_types' => ['page'],
+        ],
+        'posts' => [
+            'label' => 'Posts',
+            'icon' => '📝',
+            'post_types' => ['post'],
+        ],
+        'products' => [
+            'label' => 'Products',
+            'icon' => '🛍️',
+            'post_types' => ['product'],
+        ],
+        'post_type' => [
+            'label' => 'Post Type',
+            'icon' => '📚',
+            'post_types' => [], // Will be dynamically populated
+        ],
+    ];
+
+    /**
+     * Get all supported rule types with their configurations.
+     * Pro features are added via existing filter from the Pro plugin.
+     *
+     * @return array
+     * @since 2.0.0
+     */
+    public static function getSupportedRuleTypes(): array
+    {
+        $rule_types = self::LITE_RULE_TYPES;
+
+        // If Pro plugin is not active, add pro rule types with pro_feature flag
+        // so they appear disabled in the UI
+        if (!function_exists('is_notifal_pro_active') || !is_notifal_pro_active()) {
+            $pro_rule_types = [
+                'categories' => [
+                    'label' => 'Categories',
+                    'icon' => '🏷️',
+                    'taxonomies' => ['category', 'product_cat'],
+                    'post_types' => ['post', 'product'],
+                    'pro_feature' => true,
+                ],
+                'url_match' => [
+                    'label' => 'URL Conditions',
+                    'icon' => '🔗',
+                    'pro_feature' => true,
+                ],
+                'users' => [
+                    'label' => 'Users',
+                    'icon' => '👤',
+                    'pro_feature' => true,
+                ],
+            ];
+            $rule_types = array_merge($rule_types, $pro_rule_types);
+        } else {
+            // Pro plugin is active, let it add the rule types via filter
+            $rule_types = apply_filters(FilterHooks::ONPAGE_DISPLAY_RULES_SUPPORTED_TYPES, $rule_types);
+        }
+
+        return $rule_types;
+    }
+
+    /**
+     * Validate display rules data.
+     *
+     * @param array $rules
+     * @param string $combinationLogic
+     * @return array Validation errors
+     * @since 2.0.0
+     */
+    public static function validateRules(array $rules, string $combinationLogic = 'OR'): array
+    {
+        $errors = [];
+
+        // Only validate combination logic when there are multiple rules (where it matters)
+        if (count($rules) > 1 && !in_array($combinationLogic, ['AND', 'OR'])) {
+            $errors[] = __('Invalid rule combination logic. Must be either AND or OR.', 'notifal');
+        }
+
+        if (count($rules) > 1 && !self::isProFeatureAllowed()) {
+            $errors[] = __('Multiple display rules require Notifal Pro. Please activate your license or use only one rule.', 'notifal');
+        }
+
+        foreach ($rules as $ruleType => $ruleData) {
+            $supported_types = self::getSupportedRuleTypes();
+            if (!isset($supported_types[$ruleType])) {
+                $errors[] = sprintf(__('Unsupported rule type: %s', 'notifal'), $ruleType);
+                continue;
+            }
+
+            // Pro plugin will handle validation of its own rule types
+            if (!self::isLiteRuleType($ruleType)) {
+                continue;
+            }
+
+            $validationMethod = 'validate' . ucfirst($ruleType) . 'Rule';
+            if (method_exists(self::class, $validationMethod)) {
+                $ruleErrors = self::$validationMethod($ruleData);
+                $errors = array_merge($errors, $ruleErrors);
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate pages rule.
+     *
+     * @param array $ruleData
+     * @return array
+     * @since 2.0.0
+     */
+    private static function validatePagesRule(array $ruleData): array
+    {
+        $errors = [];
+
+        if (!isset($ruleData['visibility']) || !in_array($ruleData['visibility'], ['all', 'specific', 'exclude'])) {
+            $errors[] = __('Invalid page visibility setting.', 'notifal');
+        }
+
+        if ($ruleData['visibility'] === 'specific' && empty($ruleData['post_items'])) {
+            $errors[] = __('Please select at least one page.', 'notifal');
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate posts rule.
+     *
+     * @param array $ruleData
+     * @return array
+     * @since 2.0.0
+     */
+    private static function validatePostsRule(array $ruleData): array
+    {
+        $errors = [];
+
+        if (!isset($ruleData['visibility']) || !in_array($ruleData['visibility'], ['all', 'specific', 'exclude'])) {
+            $errors[] = __('Invalid post visibility setting.', 'notifal');
+        }
+
+        if ($ruleData['visibility'] === 'specific' && empty($ruleData['post_items'])) {
+            $errors[] = __('Please select at least one post.', 'notifal');
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate products rule.
+     *
+     * @param array $ruleData
+     * @return array
+     * @since 2.0.0
+     */
+    private static function validateProductsRule(array $ruleData): array
+    {
+        $errors = [];
+
+        if (!isset($ruleData['mode']) || !in_array($ruleData['mode'], ['exclude', 'specific'])) {
+            $errors[] = __('Invalid product visibility mode.', 'notifal');
+        }
+
+        if ($ruleData['mode'] === 'specific' && empty($ruleData['targets'])) {
+            $errors[] = __('Please select at least one product.', 'notifal');
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Validate post type rule.
+     *
+     * @param array $ruleData
+     * @return array
+     * @since 2.0.0
+     */
+    private static function validatePostTypeRule(array $ruleData): array
+    {
+        $errors = [];
+
+        if (!isset($ruleData['visibility']) || !in_array($ruleData['visibility'], ['all', 'exclude', 'specific'])) {
+            $errors[] = __('Invalid post type visibility mode.', 'notifal');
+        }
+
+        // If visibility is not 'all', post types are required
+        if ($ruleData['visibility'] !== 'all') {
+            if (empty($ruleData['post_types'])) {
+                $errors[] = __('Please select at least one post type.', 'notifal');
+            }
+
+            // Check second level if post types are selected
+            if (!empty($ruleData['post_types']) && isset($ruleData['items_visibility'])) {
+                if (!in_array($ruleData['items_visibility'], ['all', 'exclude', 'specific'])) {
+                    $errors[] = __('Invalid post items visibility mode.', 'notifal');
+                }
+
+                // If items visibility is not 'all', post items are required
+                if ($ruleData['items_visibility'] !== 'all' && empty($ruleData['post_items'])) {
+                    $errors[] = __('Please select at least one post item.', 'notifal');
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Check if a notification should be displayed based on current page and rules.
+     *
+     * @param array $rules
+     * @param string $combinationLogic
+     * @param int|null $currentPostId
+     * @param array $context Optional context data for enhanced rule checking
+     * @return bool
+     * @since 2.0.0
+     */
+    public static function shouldDisplay(array $rules, string $combinationLogic = 'OR', ?int $currentPostId = null, array $context = []): bool
+    {
+        if (empty($rules)) {
+            return true; // No rules means display everywhere
+        }
+
+        $filtered_data = apply_filters(
+            FilterHooks::ONPAGE_DISPLAY_RULES_BEFORE_VALIDATION,
+            compact('rules', 'combinationLogic'),
+            $context
+        );
+
+        $rules = $filtered_data['rules'];
+        $combinationLogic = $filtered_data['combinationLogic'];
+
+        $currentPostId = $currentPostId ?? get_the_ID();
+        $currentUrl = $context['url'] ?? $_SERVER['REQUEST_URI'] ?? '';
+
+        // Allow Pro plugin to override the entire evaluation process
+        $pro_result = apply_filters(
+            FilterHooks::ONPAGE_DISPLAY_RULES_EVALUATION_RESULT,
+            null,
+            $rules,
+            $combinationLogic,
+            compact('currentPostId', 'currentUrl') + $context
+        );
+
+        // If Pro plugin handled the evaluation, return its result
+        if ($pro_result !== null) {
+            return (bool) $pro_result;
+        }
+
+        // Continue with lite version evaluation logic
+        $ruleResults = [];
+
+        foreach ($rules as $ruleType => $ruleData) {
+            // Only process lite rule types in main plugin
+            if (!self::isLiteRuleType($ruleType)) {
+                continue;
+            }
+
+            // Convert rule type to proper method name (handle underscores)
+            $methodName = str_replace('_', '', ucwords($ruleType, '_'));
+            $checkMethod = 'check' . $methodName . 'Rule';
+
+            if (method_exists(self::class, $checkMethod)) {
+                $ruleResults[$ruleType] = self::$checkMethod($ruleData, $currentPostId, $currentUrl, $context);
+            }
+        }
+
+        $finalResult = false;
+        if (empty($ruleResults)) {
+            // No rules evaluated successfully - default to showing
+            $finalResult = true;
+        } elseif ($combinationLogic === 'AND') {
+            $finalResult = !in_array(false, $ruleResults, true);
+        } else {
+            $finalResult = in_array(true, $ruleResults, true);
+        }
+
+        return $finalResult;
+    }
+
+    /**
+     * Check if a rule type is available in the lite version.
+     *
+     * @param string $ruleType Rule type to check
+     * @return bool True if lite rule type
+     * @since 2.0.0
+     */
+    private static function isLiteRuleType(string $ruleType): bool
+    {
+        return array_key_exists($ruleType, self::LITE_RULE_TYPES);
+    }
+
+    /**
+     * Check if pro features are allowed (user has active pro license).
+     * Uses secure hooks that can only be provided by the legitimate pro plugin.
+     *
+     * @return bool True if pro features are allowed
+     * @since 2.0.0
+     */
+    private static function isProFeatureAllowed(): bool
+    {
+        // Use secure hook that only the legitimate pro plugin can provide
+        return apply_filters('notifal_pro_multiple_display_rules_allowed', false);
+    }
+
+    /**
+     * Check post visibility based on rule data.
+     *
+     * @param array $ruleData
+     * @param int $postId
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkPostVisibility(array $ruleData, int $postId): bool
+    {
+        $visibility = $ruleData['visibility'] ?? 'all';
+
+        if ($visibility === 'all') {
+            return true;
+        }
+
+        if ($visibility === 'exclude') {
+            return !in_array($postId, $ruleData['post_items'] ?? []);
+        }
+
+        // Specific visibility
+        return in_array($postId, $ruleData['post_items'] ?? []);
+    }
+
+    /**
+     * Check target-based visibility (used by products and similar rules).
+     *
+     * @param array $ruleData
+     * @param int $postId
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkTargetVisibility(array $ruleData, int $postId): bool
+    {
+        $mode = $ruleData['mode'] ?? 'exclude';
+        $targets = $ruleData['targets'] ?? [];
+
+        // If no targets specified, handle based on mode
+        if (empty($targets)) {
+            return $mode === 'exclude'; // For exclude mode, show everywhere if no targets specified
+        }
+
+        $isTargeted = in_array($postId, $targets);
+        return $mode === 'exclude' ? !$isTargeted : $isTargeted;
+    }
+
+    /**
+     * Check pages rule.
+     *
+     * @param array $ruleData
+     * @param int $currentPostId
+     * @param string $currentUrl
+     * @param array $context
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkPagesRule(array $ruleData, int $currentPostId, string $currentUrl, array $context = []): bool
+    {
+        $currentPost = get_post($currentPostId);
+        if (!$currentPost || $currentPost->post_type !== 'page') {
+            return false; // Not a page, so this rule doesn't match
+        }
+
+        return self::checkPostVisibility($ruleData, $currentPostId);
+    }
+
+    /**
+     * Check posts rule.
+     *
+     * @param array $ruleData
+     * @param int $currentPostId
+     * @param string $currentUrl
+     * @param array $context
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkPostsRule(array $ruleData, int $currentPostId, string $currentUrl, array $context = []): bool
+    {
+        $currentPost = get_post($currentPostId);
+        if (!$currentPost || !in_array($currentPost->post_type, ['post', 'product'])) {
+            return false; // Not a post/product, so this rule doesn't match
+        }
+
+        return self::checkPostVisibility($ruleData, $currentPostId);
+    }
+
+    /**
+     * Check products rule.
+     *
+     * @param array $ruleData
+     * @param int $currentPostId
+     * @param string $currentUrl
+     * @param array $context
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkProductsRule(array $ruleData, int $currentPostId, string $currentUrl, array $context = []): bool
+    {
+        $currentPost = get_post($currentPostId);
+        if (!$currentPost || $currentPost->post_type !== 'product') {
+            return false; // This rule doesn't match non-product post types
+        }
+
+        return self::checkTargetVisibility($ruleData, $currentPostId);
+    }
+
+    /**
+     * Check post type rule.
+     *
+     * @param array $ruleData
+     * @param int $currentPostId
+     * @param string $currentUrl
+     * @param array $context
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function checkPostTypeRule(array $ruleData, int $currentPostId, string $currentUrl, array $context = []): bool
+    {
+        $currentPost = get_post($currentPostId);
+        if (!$currentPost) {
+            return false; // Not a post, so this rule doesn't match
+        }
+
+        $visibility = $ruleData['visibility'] ?? 'all';
+        $postTypes = $ruleData['post_types'] ?? [];
+        $itemsVisibility = $ruleData['items_visibility'] ?? 'all';
+        $postItems = $ruleData['post_items'] ?? [];
+
+        // First level: Check post type visibility
+        $postTypeMatches = false;
+        switch ($visibility) {
+            case 'all':
+                $postTypeMatches = true;
+                break;
+            case 'exclude':
+                $postTypeMatches = !in_array($currentPost->post_type, $postTypes);
+                break;
+            case 'specific':
+                $postTypeMatches = in_array($currentPost->post_type, $postTypes);
+                break;
+        }
+
+        if (!$postTypeMatches) {
+            return false;
+        }
+
+        // Check post items visibility (only if post type matches and items visibility is not 'all')
+        if ($itemsVisibility === 'all') {
+            return true;
+        }
+
+        $itemMatches = in_array($currentPostId, $postItems);
+        $finalItemResult = $itemsVisibility === 'exclude' ? !$itemMatches : $itemMatches;
+
+        return $finalItemResult;
+    }
+
+    /**
+     * Format rules for display in the admin interface.
+     *
+     * @param array $rules
+     * @param string $combinationLogic
+     * @return array
+     * @since 2.0.0
+     */
+    public static function formatRulesForDisplay(array $rules, string $combinationLogic = 'OR'): array
+    {
+        $formatted = [];
+
+        $supported_types = self::getSupportedRuleTypes();
+
+        foreach ($rules as $ruleType => $ruleData) {
+            if (!isset($supported_types[$ruleType])) {
+                continue;
+            }
+
+            $config = $supported_types[$ruleType];
+            $formatted[] = [
+                'type' => $ruleType,
+                'icon' => $config['icon'],
+                'label' => $config['label'],
+                'summary' => self::generateRuleSummary($ruleType, $ruleData),
+            ];
+        }
+
+        // Add combination logic info
+        if (count($formatted) > 1) {
+            $formatted['combination_logic'] = $combinationLogic;
+        }
+
+        return $formatted;
+    }
+
+    /**
+     * Generate a human-readable summary of a rule.
+     *
+     * @param string $ruleType
+     * @param array $ruleData
+     * @return string
+     * @since 2.0.0
+     */
+    private static function generateRuleSummary(string $ruleType, array $ruleData): string
+    {
+        $supported_types = self::getSupportedRuleTypes();
+        $config = $supported_types[$ruleType] ?? [];
+        $mode = $ruleData['mode'] ?? 'specific';
+
+        switch ($ruleType) {
+            case 'pages':
+            case 'posts':
+            case 'products':
+                $visibility = $ruleData['visibility'] ?? 'all';
+                $postTypes = $ruleData['post_types'] ?? [];
+                $itemsVisibility = $ruleData['items_visibility'] ?? 'all';
+                $postItems = $ruleData['post_items'] ?? [];
+
+                if ($visibility === 'all') {
+                    return __('All Post Types', 'notifal');
+                }
+
+                $postTypeCount = count($postTypes);
+                $postTypeText = $postTypeCount === 1 ? __('post type', 'notifal') : __('post types', 'notifal');
+
+                if ($visibility === 'exclude') {
+                    $text = __('All Except', 'notifal');
+                } else {
+                    $text = __('Only', 'notifal');
+                }
+
+                $summary = sprintf('%s %s (%d)', $text, $postTypeText, $postTypeCount);
+
+                // Add post items info if applicable
+                if ($itemsVisibility !== 'all') {
+                    $itemCount = count($postItems);
+                    $itemText = $itemCount === 1 ? __('item', 'notifal') : __('items', 'notifal');
+                    if ($itemsVisibility === 'exclude') {
+                        $summary .= sprintf(' - %s %d %s', __('All Except', 'notifal'), $itemCount, $itemText);
+                    } else {
+                        $summary .= sprintf(' - %s %d %s', __('Only', 'notifal'), $itemCount, $itemText);
+                    }
+                }
+
+                return $summary;
+
+            case 'post_type':
+                $visibility = $ruleData['visibility'] ?? 'all';
+                $postTypes = $ruleData['post_types'] ?? [];
+                $itemsVisibility = $ruleData['items_visibility'] ?? 'all';
+                $postItems = $ruleData['post_items'] ?? [];
+
+                if ($visibility === 'all') {
+                    return __('All Post Types', 'notifal');
+                }
+
+                $postTypeCount = count($postTypes);
+                $postTypeText = $postTypeCount === 1 ? __('post type', 'notifal') : __('post types', 'notifal');
+
+                if ($visibility === 'exclude') {
+                    /* translators: 1: number of post types, 2: "post type" or "post types" */
+                    $text = sprintf(__('All Post Types Except %1$d %2$s', 'notifal'), $postTypeCount, $postTypeText);
+                } else {
+                    /* translators: 1: number of post types, 2: "post type" or "post types" */
+                    $text = sprintf(__('Only %1$d %2$s', 'notifal'), $postTypeCount, $postTypeText);
+                }
+
+                // Add post type names to the summary
+                if (!empty($postTypes)) {
+                    $postTypeLabels = [];
+                    foreach ($postTypes as $postType) {
+                        switch ($postType) {
+                            case 'page':
+                                $postTypeLabels[] = __('Page', 'notifal');
+                                break;
+                            case 'post':
+                                $postTypeLabels[] = __('Post', 'notifal');
+                                break;
+                            case 'product':
+                                $postTypeLabels[] = __('Product', 'notifal');
+                                break;
+                            default:
+                                $postTypeLabels[] = ucfirst($postType);
+                                break;
+                        }
+                    }
+                    $text .= ' (' . implode(', ', $postTypeLabels) . ')';
+                }
+
+                // Add second level information if applicable
+                if ($itemsVisibility !== 'all' && !empty($postItems)) {
+                    $itemCount = count($postItems);
+                    $itemText = $itemCount === 1 ? __('item', 'notifal') : __('items', 'notifal');
+
+                    if ($itemsVisibility === 'exclude') {
+                        /* translators: 1: number of items, 2: "item" or "items" */
+                        $text .= '('. sprintf(__(' All Items Except %1$d %2$s', 'notifal'), $itemCount, $itemText) . ')';
+                    } else {
+                        /* translators: 1: number of items, 2: "item" or "items" */
+                        $text .= '('. sprintf(__(' Only %1$d %2$s', 'notifal'), $itemCount, $itemText) . ')';
+                    }
+                }
+
+                return $text;
+
+            default:
+                return $config['label'];
+        }
+    }
+
+    /**
+     * Get the default combination logic.
+     *
+     * @return string
+     * @since 2.0.0
+     */
+    public static function getDefaultCombinationLogic(): string
+    {
+        return 'OR';
+    }
+
+    /**
+     * Get available combination logic options.
+     *
+     * @return array
+     * @since 2.0.0
+     */
+    public static function getCombinationLogicOptions(): array
+    {
+        return [
+            'OR' => __('OR - Show if ANY rule matches', 'notifal'),
+            'AND' => __('AND - Show if ALL rules match', 'notifal'),
+        ];
+    }
+
+    /**
+     * Get rule type options for UI select field
+     *
+     * @return array Array of rule type options formatted for FieldRenderer::select
+     * @since 2.0.0
+     */
+    public static function getRuleTypeOptions(): array
+    {
+        $supportedTypes = self::getSupportedRuleTypes();
+        $isProActive = self::isProFeatureAllowed();
+        $proLabel = !$isProActive ? ' (PRO)' : '';
+
+        $options = [];
+
+        foreach ($supportedTypes as $ruleType => $config) {
+            $option = [
+                'value' => $ruleType,
+                'label' => $config['label']
+            ];
+
+            if (!self::isLiteRuleType($ruleType) || isset($config['pro_feature'])) {
+                $option['label'] .= $proLabel;
+                $option['data-pro-feature'] = $ruleType;
+                $option['disabled'] = !$isProActive;
+            }
+
+            $options[] = $option;
+        }
+
+        return $options;
+    }
+
+    /**
+     * Sanitize display rules settings
+     *
+     * @since 2.0.0
+     * @param array $settings Raw settings data
+     * @return array Sanitized settings
+     */
+    public static function sanitizeSettings(array $settings): array
+    {
+        $sanitized = [];
+        $supportedTypes = self::getSupportedRuleTypes();
+
+        foreach ($settings as $ruleType => $ruleData) {
+            if (!isset($supportedTypes[$ruleType])) {
+                continue; // Skip unsupported rule types
+            }
+
+            $sanitized[$ruleType] = self::sanitizeRuleData($ruleType, $ruleData);
+        }
+
+        return apply_filters(FilterHooks::ONPAGE_DISPLAY_RULES_SANITIZED_SETTINGS, $sanitized, $settings);
+    }
+
+    /**
+     * Sanitize individual rule data
+     *
+     * @since 2.0.0
+     * @param string $ruleType Rule type
+     * @param array $ruleData Rule data
+     * @return array Sanitized rule data
+     */
+    private static function sanitizeRuleData(string $ruleType, array $ruleData): array
+    {
+        $sanitized = [];
+
+        switch ($ruleType) {
+            case 'pages':
+                $sanitized['visibility'] = Helper::sanitizeInput($ruleData['visibility'] ?? 'all', 'text');
+                $sanitized['post_types'] = self::sanitizePostTypeSlugs($ruleData['post_types'] ?? []);
+                $sanitized['items_visibility'] = Helper::sanitizeInput($ruleData['items_visibility'] ?? 'all', 'text');
+                $sanitized['post_items'] = self::sanitizePostIds($ruleData['post_items'] ?? []);
+                break;
+
+            case 'posts':
+                $sanitized['visibility'] = Helper::sanitizeInput($ruleData['visibility'] ?? 'all', 'text');
+                $sanitized['post_types'] = self::sanitizePostTypeSlugs($ruleData['post_types'] ?? []);
+                $sanitized['items_visibility'] = Helper::sanitizeInput($ruleData['items_visibility'] ?? 'all', 'text');
+                $sanitized['post_items'] = self::sanitizePostIds($ruleData['post_items'] ?? []);
+                break;
+
+            case 'products':
+                $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'exclude', 'text');
+                $sanitized['targets'] = self::sanitizePostIds($ruleData['targets'] ?? []);
+                break;
+
+            case 'post_type':
+                $sanitized['visibility'] = Helper::sanitizeInput($ruleData['visibility'] ?? 'all', 'text');
+                $sanitized['post_types'] = self::sanitizePostTypeSlugs($ruleData['post_types'] ?? []);
+                $sanitized['items_visibility'] = Helper::sanitizeInput($ruleData['items_visibility'] ?? 'all', 'text');
+                $sanitized['post_items'] = self::sanitizePostIds($ruleData['post_items'] ?? []);
+                break;
+
+            case 'categories':
+                $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'specific', 'text');
+                $sanitized['post_types_visibility'] = Helper::sanitizeInput($ruleData['post_types_visibility'] ?? 'specific', 'text');
+                $sanitized['post_types'] = self::sanitizePostTypeSlugs($ruleData['post_types'] ?? []);
+                $sanitized['targets'] = self::sanitizeTermIds($ruleData['targets'] ?? []);
+                break;
+
+            case 'url_match':
+                $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'contains', 'text');
+                $sanitized['keywords'] = self::sanitizeUrlPatterns($ruleData['keywords'] ?? []);
+                break;
+
+            case 'users':
+                $sanitized['user_type'] = Helper::sanitizeInput($ruleData['user_type'] ?? 'guest', 'text');
+                $sanitized['limit_by_roles'] = (bool) ($ruleData['limit_by_roles'] ?? false);
+                $sanitized['roles'] = self::sanitizeUserRoles($ruleData['roles'] ?? []);
+                break;
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize post IDs array
+     *
+     * @param array $postIds Post IDs
+     * @return array Sanitized post IDs
+     * @since 2.0.0
+     */
+    private static function sanitizePostIds(array $postIds): array
+    {
+        return array_map('absint', array_filter($postIds, 'is_numeric'));
+    }
+
+    /**
+     * Sanitize term IDs array
+     *
+     * @param array $termIds Term IDs
+     * @return array Sanitized term IDs
+     * @since 2.0.0
+     */
+    private static function sanitizeTermIds(array $termIds): array
+    {
+        return array_map('absint', array_filter($termIds, 'is_numeric'));
+    }
+
+    /**
+     * Sanitize URL patterns array
+     *
+     * @param array $patterns URL patterns
+     * @return array Sanitized URL patterns
+     * @since 2.0.0
+     */
+    private static function sanitizeUrlPatterns(array $patterns): array
+    {
+        return array_map(function($pattern) {
+            return sanitize_text_field($pattern);
+        }, array_filter($patterns, 'is_string'));
+    }
+
+    /**
+     * Sanitize user roles array
+     *
+     * @param array $roles User roles
+     * @return array Sanitized user roles
+     * @since 2.0.0
+     */
+    private static function sanitizeUserRoles(array $roles): array
+    {
+        return array_map(function($role) {
+            return sanitize_text_field($role);
+        }, array_filter($roles, 'is_string'));
+    }
+
+    /**
+     * Sanitize post type slugs array
+     *
+     * @param array $slugs Post type slugs
+     * @return array Sanitized post type slugs
+     * @since 2.0.0
+     */
+    private static function sanitizePostTypeSlugs(array $slugs): array
+    {
+        return array_map(function($slug) {
+            return sanitize_text_field($slug);
+        }, array_filter($slugs, 'is_string'));
+    }
+}

@@ -1,0 +1,206 @@
+{
+  "apiVersion": 2,
+  "name": "notifal/featured-image",
+  "title": "Featured Image",
+  "description": "Display a featured image that adapts to notification context with advanced styling options",
+  "category": "notifal",
+  "icon": "format-image",
+  "keywords": [
+    "notifal",
+    "featured",
+    "image",
+    "contextual"
+  ],
+  "textdomain": "notifal",
+  "editorScript": "file:../index.js",
+  "editorStyle": "file:../index.css",
+  "style": "file:../style-index.css",
+  "attributes": {
+    "isExample": {
+      "type": "boolean",
+      "default": false
+    },
+    "lazyLoad": {
+      "type": "boolean",
+      "default": true
+    },
+    "imageResolution": {
+      "type": "string",
+      "default": "large"
+    },
+    "alignment": {
+      "type": "string",
+      "default": "center"
+    },
+    "width": {
+      "type": "number",
+      "default": 0
+    },
+    "widthTablet": {
+      "type": "number"
+    },
+    "widthMobile": {
+      "type": "number"
+    },
+    "widthUnit": {
+      "type": "string",
+      "default": "px"
+    },
+    "height": {
+      "type": "number",
+      "default": 0
+    },
+    "heightTablet": {
+      "type": "number"
+    },
+    "heightMobile": {
+      "type": "number"
+    },
+    "heightUnit": {
+      "type": "string",
+      "default": "px"
+    },
+    "borderStyle": {
+      "type": "string",
+      "default": "none"
+    },
+    "borderTop": {
+      "type": "number",
+      "default": 0
+    },
+    "borderRight": {
+      "type": "number",
+      "default": 0
+    },
+    "borderBottom": {
+      "type": "number",
+      "default": 0
+    },
+    "borderLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "borderColor": {
+      "type": "string",
+      "default": ""
+    },
+    "radiusTopLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "radiusTopRight": {
+      "type": "number",
+      "default": 0
+    },
+    "radiusBottomRight": {
+      "type": "number",
+      "default": 0
+    },
+    "radiusBottomLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "radiusTopLeftTablet": {
+      "type": "number"
+    },
+    "radiusTopRightTablet": {
+      "type": "number"
+    },
+    "radiusBottomRightTablet": {
+      "type": "number"
+    },
+    "radiusBottomLeftTablet": {
+      "type": "number"
+    },
+    "radiusTopLeftMobile": {
+      "type": "number"
+    },
+    "radiusTopRightMobile": {
+      "type": "number"
+    },
+    "radiusBottomRightMobile": {
+      "type": "number"
+    },
+    "radiusBottomLeftMobile": {
+      "type": "number"
+    },
+    "boxShadowColor": {
+      "type": "string",
+      "default": "rgba(0, 0, 0, 0.2)"
+    },
+    "boxShadowH": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowV": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowBlur": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowSpread": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowInset": {
+      "type": "boolean",
+      "default": false
+    },
+    "forceTransparent": {
+      "type": "boolean",
+      "default": false
+    },
+    "objectFit": {
+      "type": "string",
+      "default": "cover"
+    },
+    "cssFilterBrightness": {
+      "type": "number",
+      "default": 100
+    },
+    "cssFilterContrast": {
+      "type": "number",
+      "default": 100
+    },
+    "cssFilterSaturation": {
+      "type": "number",
+      "default": 100
+    },
+    "cssFilterBlur": {
+      "type": "number",
+      "default": 0
+    },
+    "cssFilterHue": {
+      "type": "number",
+      "default": 0
+    },
+    "previewImageSource": {
+      "type": "string",
+      "default": "auto"
+    }
+  },
+  "example": {
+    "attributes": {
+      "isExample": true
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": [
+      "left",
+      "center",
+      "right",
+      "wide",
+      "full"
+    ],
+    "spacing": {
+      "margin": true,
+      "padding": true
+    },
+    "dimensions": {
+      "aspectRatio": true
+    }
+  }
+}

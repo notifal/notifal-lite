@@ -1,0 +1,727 @@
+<?php
+
+namespace Notifal\Modules\OnPageNotification\Presentation\Frontend\Assets;
+
+use Notifal\Core\Support\Helpers\UrlHelper;
+use Notifal\Shared\Config\Paths;
+use Notifal\Modules\OnPageNotification\Config\Paths as ModulePaths;
+use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
+use Notifal\Shared\Utils\Helper;
+
+defined('ABSPATH') || exit;
+
+/**
+ * Class FrontendAssetsRegistrar
+ *
+ * Handles registration and enqueuing of OnPageNotification module frontend scripts and styles.
+ * Manages asset loading for public-facing pages where OnPage notifications are displayed.
+ *
+ * @package Notifal\Modules\OnPageNotification\Presentation\Frontend\Assets
+ * @since 2.0.0
+ * @author Hossein <hossein@notifal.com>
+ */
+class FrontendAssetsRegistrar
+{
+    /**
+     * Register WordPress hooks for OnPageNotification frontend assets.
+     *
+     * Uses appropriate hooks to load assets only when needed for optimal performance.
+     * Integrates with WordPress asset management and dependency system.
+     *
+     * @return void
+     * @since 2.0.0
+     */
+    public static function register(): void
+    {
+        // Register assets early but don't enqueue them yet
+        add_action('wp_enqueue_scripts', [self::class, 'registerAssets'], 5);
+        
+        // Enqueue assets conditionally based on page content
+        add_action('wp_enqueue_scripts', [self::class, 'enqueueConditionalAssets'], 10);
+        
+        // Wrap Elementor frontend enqueue so TypeError (illegal offset) in CSS generation does not fatal the page
+        add_action('wp_enqueue_scripts', [self::class, 'wrapElementorEnqueueStyles'], 19);
+        
+        // Enqueue assets when specific OnPage notification content is detected
+        add_action('wp_footer', [self::class, 'enqueueOnDemandAssets'], 5);
+        
+        // Hook to trigger Templates frontend assets loading when notifications use templates
+        add_filter('notifal_has_frontend_content_injection', [self::class, 'maybeEnableTemplatesAssets'], 10, 1);
+    }
+
+    /**
+     * Wrap Elementor frontend enqueue_styles in try-catch so CSS generation errors do not fatal.
+     * On catch, base Elementor frontend style is enqueued. Priority 19 so wrapper runs at 20.
+     *
+     * @return void
+     * @since 2.0.0
+     */
+    public static function wrapElementorEnqueueStyles(): void
+    {
+        if (!PluginDetector::isElementorActive()) {
+            return;
+        }
+
+        $frontend = \Elementor\Plugin::$instance->frontend;
+        $priority = \Elementor\Frontend::ENQUEUED_STYLES_PRIORITY;
+
+        if (!has_action('wp_enqueue_scripts', [$frontend, 'enqueue_styles'])) {
+            return;
+        }
+
+        remove_action('wp_enqueue_scripts', [$frontend, 'enqueue_styles'], $priority);
+
+        add_action('wp_enqueue_scripts', static function () use ($frontend) {
+            try {
+                $frontend->enqueue_styles();
+            } catch (\Throwable $e) {
+                Helper::log('Elementor enqueue_styles failed: ' . $e->getMessage());
+                wp_enqueue_style('elementor-frontend');
+            }
+        }, $priority);
+    }
+
+    /**
+     * Register all OnPageNotification frontend assets without enqueuing them.
+     *
+     * Registers scripts and styles early so they can be enqueued later as needed.
+     * This approach allows for conditional loading based on page content.
+     *
+     * @return void
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function registerAssets(): void
+    {
+        /**
+         * Fires before registering Notifal OnPageNotification frontend assets.
+         *
+         * @since 2.0.0
+         */
+        do_action(ActionHooks::FRONTEND_ASSETS_BEFORE_REGISTER);
+
+        // Register OnPageNotification frontend bundle
+        wp_register_script(
+            'notifal-onpage-frontend-bundle',
+            Paths::jsFrontendBuildUrl() . 'OnPageFrontendBundle.js',
+            [],
+            NOTIFAL_VERSION,
+            true
+        );
+
+        // Register OnPageNotification frontend styles
+        wp_register_style(
+            'notifal-onpage-frontend-style',
+            Paths::cssFrontendBuildUrl() . 'OnPageFrontendStyle.css',
+            [],
+            NOTIFAL_VERSION
+        );
+
+        // Localize frontend bundle with audio configuration
+        wp_localize_script(
+            'notifal-onpage-frontend-bundle',
+            'notifalOnPageAudioConfig',
+            [
+                'audioBaseUrl' => apply_filters(
+                    FilterHooks::ONPAGE_APPEARANCE_AUDIO_FILE_URL,
+                    plugin_dir_url(NOTIFAL_FILE) . 'app/Modules/OnPageNotification/Resources/Assets/audios/',
+                    ''
+                ),
+                'nonce' => wp_create_nonce('notifal_onpage_audio_nonce'),
+            ]
+        );
+
+        /**
+         * Fires after registering Notifal OnPageNotification frontend assets.
+         *
+         * @since 2.0.0
+         */
+        do_action(ActionHooks::FRONTEND_ASSETS_AFTER_REGISTER);
+    }
+
+    /**
+     * Enqueue assets conditionally based on page context.
+     *
+     * Analyzes the current page to determine if OnPageNotification assets should be loaded.
+     * Checks for notification usage, page context, and other indicators.
+     *
+     * @return void
+     * @since 2.0.0
+     */
+    public static function enqueueConditionalAssets(): void
+    {
+        // Check if we're on a page that might contain OnPage notifications
+        if (self::shouldLoadAssets()) {
+            /**
+             * Fires before conditionally enqueuing Notifal OnPageNotification frontend assets.
+             *
+             * @since 2.0.0
+             */
+            do_action(ActionHooks::FRONTEND_ASSETS_BEFORE_ENQUEUE);
+
+            wp_enqueue_script('notifal-onpage-frontend-bundle');
+            wp_enqueue_style('notifal-onpage-frontend-style');
+
+            // Localize the script with configuration data
+            self::localizeScript();
+
+            /**
+             * Fires after conditionally enqueuing Notifal OnPageNotification frontend assets.
+             *
+             * @since 2.0.0
+             */
+            do_action(ActionHooks::FRONTEND_ASSETS_AFTER_ENQUEUE);
+        }
+    }
+
+    /**
+     * Enqueue assets on-demand in the footer if OnPage notification content is detected.
+     *
+     * This is a fallback method to ensure assets are loaded even if
+     * conditional checks missed OnPage notification content in the page.
+     *
+     * @return void
+     * @since 2.0.0
+     */
+    public static function enqueueOnDemandAssets(): void
+    {
+        // Check if OnPage notification bundle is already enqueued
+        $onpage_bundle_enqueued = wp_script_is('notifal-onpage-frontend-bundle', 'enqueued');
+        
+        if ($onpage_bundle_enqueued) {
+            return;
+        }
+
+        // Check if page contains any OnPage notification elements
+        if (self::pageContainsOnPageNotificationElements()) {
+            wp_enqueue_script('notifal-onpage-frontend-bundle');
+            wp_enqueue_style('notifal-onpage-frontend-style');
+
+            // Localize the script with configuration data
+            self::localizeScript();
+        }
+    }
+
+    /**
+     * Determine if OnPageNotification assets should be loaded on the current page.
+     *
+     * Analyzes various factors to decide whether to load frontend assets.
+     * Uses multiple detection methods for comprehensive coverage.
+     * Excludes Elementor editor mode and template preview to prevent unwanted notifications.
+     *
+     * @return bool True if assets should be loaded, false otherwise.
+     * @since 2.0.0
+     */
+    private static function shouldLoadAssets(): bool
+    {
+        // Never load in admin area
+        if (is_admin()) {
+            return false;
+        }
+
+        // Never load in Elementor editor mode
+        if (self::isElementorEditorMode()) {
+            return false;
+        }
+
+        // Never load in template preview mode
+        if (self::isTemplatePreviewMode()) {
+            return false;
+        }
+
+        // Never load during REST API requests for Elementor or template previews
+        if (self::isPreviewRelatedRestRequest()) {
+            return false;
+        }
+
+        global $post;
+
+        // Load on pages where notifications might appear
+        if (is_front_page() || is_home() || is_singular() || is_archive() || is_404()) {
+            return true;
+        }
+
+        // Check if current post contains notification-related content
+        if ($post && self::postContainsNotificationContent($post)) {
+            return true;
+        }
+
+        // Check if page is built with Elementor and might contain notifications
+        if (self::isElementorPage()) {
+            return true;
+        }
+
+        // Check if theme or plugins inject notification content
+        if (self::hasNotificationContentInjection()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a post contains OnPage notification content.
+     *
+     * Searches post content for notification-related markers to determine
+     * if our frontend assets are needed.
+     *
+     * @param \WP_Post $post The post to check.
+     * @return bool True if post contains notification content, false otherwise.
+     * @since 2.0.0
+     */
+    private static function postContainsNotificationContent(\WP_Post $post): bool
+    {
+        // Check for notification-related content markers
+        $notification_markers = [
+            'notifal-notification',
+            'notifal-onpage',
+            'notification',
+            'popup',
+            'modal'
+        ];
+
+        foreach ($notification_markers as $marker) {
+            if (stripos($post->post_content, $marker) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if we're currently in Elementor editor mode.
+     *
+     * Detects various Elementor editor states to prevent notifications from showing
+     * during page editing or preview within Elementor.
+     *
+     * @return bool True if in Elementor editor mode, false otherwise.
+     * @since 2.0.0
+     */
+    private static function isElementorEditorMode(): bool
+    {
+        // Check if Elementor is active
+        if (!PluginDetector::isElementorActive()) {
+            return false;
+        }
+
+        // Check URL parameters that indicate Elementor editor mode (sanitized per WordPress guidelines)
+        $get_action = isset( $_GET['action'] ) ? sanitize_key( wp_unslash( $_GET['action'] ) ) : '';
+        if ( $get_action === 'elementor' ) {
+            return true;
+        }
+
+        // Check if we're in Elementor preview mode
+        if ( isset( $_GET['elementor-preview'] ) ) {
+            return true;
+        }
+
+        // Check if we're in Elementor editor iframe
+        if ( isset( $_GET['elementor-preview'] ) || ( isset( $_GET['preview'] ) && isset( $_GET['preview_id'] ) ) ) {
+            return true;
+        }
+
+        // Check for REST API requests related to Elementor
+        if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+            $request_uri = isset( $_SERVER['REQUEST_URI'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REQUEST_URI'] ) ) : '';
+            if ( $request_uri !== '' && strpos( $request_uri, 'elementor' ) !== false ) {
+                return true;
+            }
+        }
+
+        // Check if Elementor is in preview mode
+        if (PluginDetector::isElementorActive() && \Elementor\Plugin::$instance->preview->is_preview_mode()) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if we're currently in template preview mode.
+     *
+     * Detects if we're viewing a notifal template preview to prevent
+     * OnPage notifications from interfering with template preview.
+     *
+     * @return bool True if in template preview mode, false otherwise.
+     * @since 2.0.0
+     */
+    private static function isTemplatePreviewMode(): bool
+    {
+        // Check for notifal template preview parameter (parameter presence only; value not output)
+        if ( isset( $_GET['notifal_template_preview'] ) ) {
+            return true;
+        }
+
+        // Check if current post is a notifal_template being previewed
+        global $post;
+        if ( $post && $post->post_type === 'notifal_template' ) {
+            // Additional check for preview context
+            if ( isset( $_GET['preview'] ) || isset( $_GET['preview_id'] ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if we're in a REST API request related to previews.
+     *
+     * Prevents OnPage notifications from loading during REST API requests
+     * that are used for editor previews or template operations.
+     *
+     * @return bool True if preview-related REST request, false otherwise.
+     * @since 2.0.0
+     */
+    private static function isPreviewRelatedRestRequest(): bool
+    {
+        // Only check if this is a REST API request
+        if (!defined('REST_REQUEST') || !REST_REQUEST) {
+            return false;
+        }
+
+        $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+
+        // Check for Elementor-related REST endpoints
+        $elementor_endpoints = [
+            'elementor',
+            'preview',
+            'autosave',
+            'revisions'
+        ];
+
+        foreach ($elementor_endpoints as $endpoint) {
+            if (strpos($request_uri, $endpoint) !== false) {
+                return true;
+            }
+        }
+
+        // Check for notifal template-related REST endpoints
+        if (strpos($request_uri, 'notifal_template') !== false) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if current page is built with Elementor.
+     *
+     * Integrates with Elementor to detect if the page is built with Elementor,
+     * which might contain notifications.
+     *
+     * @return bool True if Elementor page, false otherwise.
+     * @since 2.0.0
+     */
+    private static function isElementorPage(): bool
+    {
+        // Check if Elementor is active
+        if (!PluginDetector::isElementorActive()) {
+            return false;
+        }
+
+        global $post;
+        if (!$post) {
+            return false;
+        }
+
+        // Check if post is built with Elementor
+        return ElementorHelper::hasBuilder($post);
+    }
+
+    /**
+     * Check if other plugins or theme inject OnPage notification content.
+     *
+     * Provides a hook-based system for other components to indicate
+     * that OnPageNotification frontend assets should be loaded.
+     *
+     * @return bool True if content injection is detected, false otherwise.
+     * @since 2.0.0
+     */
+    private static function hasNotificationContentInjection(): bool
+    {
+        /**
+         * Filter to indicate if OnPageNotification frontend assets should be loaded.
+         *
+         * Other plugins or theme components can use this filter to force
+         * loading of OnPageNotification frontend assets when they inject notification content.
+         *
+         * @since 2.0.0
+         * @param bool $has_injection Whether OnPage notification content is injected.
+         */
+        return apply_filters('notifal_has_onpage_notification_content_injection', false);
+    }
+
+    /**
+     * Check if the current page contains any OnPage notification elements in DOM.
+     *
+     * This is a fallback method that checks if notification elements
+     * are present in the page content after rendering.
+     *
+     * @return bool True if notification elements are found, false otherwise.
+     * @since 2.0.0
+     */
+    private static function pageContainsOnPageNotificationElements(): bool
+    {
+        
+        /**
+         * Filter to force loading OnPageNotification frontend assets.
+         *
+         * Components can use this filter to indicate that OnPageNotification
+         * JavaScript should be loaded even if not detected earlier.
+         *
+         * @since 2.0.0
+         * @param bool $contains_notifications Whether page contains OnPage notification elements.
+         */
+        return apply_filters('notifal_page_contains_onpage_notification_elements', false);
+    }
+
+    /**
+     * Localize the frontend script with necessary configuration data.
+     *
+     * Provides REST API endpoints, nonces, and localized strings
+     * to the frontend JavaScript for proper functionality.
+     *
+     * @return void
+     * @since 2.0.0
+     */
+    private static function localizeScript(): void
+    {
+        // Get current page context for display rules
+        $currentPageContext = self::getCurrentPageContext();
+
+        // Get immediate notifications for instant display
+        $immediateNotifications = self::getImmediateNotifications($currentPageContext);
+
+        wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', [
+            'apiEndpoint' => rest_url('notifal/v1/onpage/eligible'),
+            'trackingEndpoint' => rest_url('notifal/v1/onpage/track'),
+            'preferencesEndpoint' => rest_url('notifal/v1/onpage/preferences'),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'productClickNonce' => wp_create_nonce('notifal_product_click_tracking'),
+            'url' => UrlHelper::baseAjax(),
+            'debug' => WP_DEBUG,
+            'locale' => get_locale(),
+            'rtl' => is_rtl(),
+            'strings' => self::getFrontendStrings(),
+            'context' => $currentPageContext,
+            'immediateNotifications' => $immediateNotifications,
+            'siteName' => get_bloginfo('name'),
+        ]);
+    }
+
+    /**
+     * Get frontend language strings.
+     *
+     * @return array Localized strings for frontend
+     * @since 2.0.0
+     */
+    private static function getFrontendStrings(): array
+    {
+        // Load frontend language strings
+        $langPath = ModulePaths::jsLangPath() . 'frontend.php';
+        
+        if (file_exists($langPath)) {
+            return include $langPath;
+        }
+        
+        // Return default strings if language file doesn't exist
+        return [
+            'notification' => 'Notification',
+            'close' => 'Close',
+            'loading' => 'Loading...',
+            'error' => 'Error',
+            'success' => 'Success',
+        ];
+    }
+
+    /**
+     * Get immediate notifications that should be shown instantly on page load.
+     *
+     * @param array $context Current page context
+     * @return array Array of immediate notifications ready for frontend
+     * @since 2.0.0
+     */
+    private static function getImmediateNotifications(array $context): array
+    {
+        try {
+            // Use the eligibility service to get eligible notifications
+            $eligibilityService = notifal_app(EligibilityService::class);
+            $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
+
+            // Filter for immediate notifications only
+            $immediateNotifications = array_filter($eligibleNotifications, function($notification) {
+                $timing = $notification['timing'] ?? [];
+                return ($timing['show_timing'] ?? '') === 'immediate';
+            });
+
+            return array_values($immediateNotifications);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Get current page context data for frontend display rules checking.
+     *
+     * Provides page ID, URL, post type, and other context data needed
+     * for proper display rules evaluation on the frontend.
+     *
+     * @return array Current page context data
+     * @since 2.0.0
+     */
+    private static function getCurrentPageContext(): array
+    {
+        // Get current page/post ID
+        $pageId = null;
+        $postType = null;
+        $url = '';
+        
+        // Try to get the current post/page
+        if (is_singular()) {
+            $pageId = get_the_ID();
+            $postType = get_post_type($pageId);
+        } elseif (is_home() && !is_front_page()) {
+            // Blog home page
+            $pageId = get_option('page_for_posts');
+            $postType = 'page';
+        } elseif (is_front_page()) {
+            // Front page
+            if (get_option('show_on_front') === 'page') {
+                $pageId = get_option('page_on_front');
+                $postType = 'page';
+            }
+        } elseif (is_category()) {
+            // Category archive
+            $pageId = get_queried_object_id();
+            $postType = 'category';
+        } elseif (is_tag()) {
+            // Tag archive
+            $pageId = get_queried_object_id();
+            $postType = 'tag';
+        } elseif (function_exists('is_product_category') && is_product_category()) {
+            // WooCommerce product category archive
+            $pageId = get_queried_object_id();
+            $postType = 'product_category';
+        } elseif (function_exists('is_product_tag') && is_product_tag()) {
+            // WooCommerce product tag archive
+            $pageId = get_queried_object_id();
+            $postType = 'product_tag';
+        } elseif (is_archive()) {
+            // Other archives
+            $pageId = get_queried_object_id();
+            $postType = 'archive';
+        }
+
+        // Get current URL
+        if (isset($_SERVER['REQUEST_URI'])) {
+            $url = esc_url_raw($_SERVER['REQUEST_URI']);
+        }
+
+        // Detect device type (basic detection)
+        $deviceType = 'desktop';
+        if (wp_is_mobile()) {
+            $deviceType = 'mobile';
+        }
+
+        // Get taxonomies for categories rules
+        $categories = [];
+        $productCategories = [];
+        if ($pageId && $postType) {
+            if (in_array($postType, ['post', 'page'])) {
+                $terms = wp_get_post_terms($pageId, 'category', ['fields' => 'ids']);
+                $categories = is_array($terms) ? $terms : [];
+            }
+            if ($postType === 'product') {
+                $terms = wp_get_post_terms($pageId, 'product_cat', ['fields' => 'ids']);
+                $productCategories = is_array($terms) ? $terms : [];
+            }
+            // Handle category archive pages
+            if ($postType === 'category') {
+                $categories = [$pageId]; // The category archive page itself
+            }
+            if ($postType === 'product_category') {
+                $productCategories = [$pageId]; // The product category archive page itself
+            }
+        }
+
+        // Build context array
+        $context = [
+            'page_id' => $pageId,
+            'url' => $url,
+            'post_type' => $postType,
+            'device_type' => $deviceType,
+            'user_id' => get_current_user_id(),
+            'is_logged_in' => is_user_logged_in(),
+            'is_admin' => current_user_can('manage_options'),
+            'timestamp' => current_time('timestamp'),
+            'locale' => get_locale(),
+            'categories' => $categories,
+            'product_categories' => $productCategories,
+            'user_roles' => is_user_logged_in() ? wp_get_current_user()->roles : [],
+        ];
+
+        /**
+         * Filter the current page context data passed to frontend JavaScript.
+         *
+         * Allows developers to modify or extend the context data used
+         * for display rules evaluation on the frontend.
+         *
+         * @since 2.0.0
+         * @param array $context Current page context data
+         */
+        return apply_filters(FilterHooks::ONPAGE_FRONTEND_CONTEXT, $context);
+    }
+
+    /**
+     * Check if Templates frontend assets should be loaded due to OnPage notifications.
+     *
+     * This method ensures that when OnPage notifications use templates,
+     * the Templates module's frontend assets are also loaded to support
+     * custom Elementor widgets and blocks.
+     *
+     * @param bool $has_injection Current injection status
+     * @return bool Whether Templates frontend assets should be loaded
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function maybeEnableTemplatesAssets(bool $has_injection): bool
+    {
+        // If already enabled, keep it enabled
+        if ($has_injection) {
+            return true;
+        }
+
+        // Check if OnPage notifications are going to be loaded
+        if (!self::shouldLoadAssets()) {
+            return false;
+        }
+
+        try {
+            // Get eligible notifications to check if any use templates
+            $eligibilityService = notifal_app(\Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService::class);
+            $context = self::getCurrentPageContext();
+            $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
+
+            // Check if any notification has a template
+            foreach ($eligibleNotifications as $notification) {
+                if (!empty($notification['template_id']) || !empty($notification['builder_type'])) {
+                    // Found a notification with template, enable Templates assets
+                    return true;
+                }
+            }
+
+        } catch (\Exception $e) {
+            // If there's an error checking notifications, err on the side of loading assets
+            // to ensure functionality works if we have template-based notifications
+            return true;
+        }
+
+        return false;
+    }
+}

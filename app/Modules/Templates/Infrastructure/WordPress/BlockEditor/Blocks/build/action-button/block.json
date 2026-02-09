@@ -1,0 +1,291 @@
+{
+  "apiVersion": 2,
+  "name": "notifal/action-button",
+  "title": "Action Button",
+  "description": "Display a customizable action button with tracking support for analytics",
+  "category": "notifal",
+  "icon": "button",
+  "keywords": [
+    "notifal",
+    "button",
+    "action",
+    "click",
+    "track",
+    "analytics"
+  ],
+  "textdomain": "notifal",
+  "editorScript": "file:../index.js",
+  "editorStyle": "file:../index.css",
+  "style": "file:../style-index.css",
+  "attributes": {
+    "buttonText": {
+      "type": "string",
+      "default": "Buy now"
+    },
+    "linkType": {
+      "type": "string",
+      "default": "product"
+    },
+    "copyText": {
+      "type": "string",
+      "default": ""
+    },
+    "customUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "customUrlTarget": {
+      "type": "boolean",
+      "default": false
+    },
+    "customUrlNofollow": {
+      "type": "boolean",
+      "default": false
+    },
+    "alignment": {
+      "type": "string",
+      "default": "left"
+    },
+    "fontSize": {
+      "type": "number",
+      "default": 14
+    },
+    "fontSizeTablet": {
+      "type": "number"
+    },
+    "fontSizeMobile": {
+      "type": "number"
+    },
+    "fontWeight": {
+      "type": "string",
+      "default": "400"
+    },
+    "textTransform": {
+      "type": "string",
+      "default": "none"
+    },
+    "letterSpacing": {
+      "type": "number",
+      "default": 0
+    },
+    "backgroundColor": {
+      "type": "string",
+      "default": "#007cba"
+    },
+    "textColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "backgroundType": {
+      "type": "string",
+      "default": "simple"
+    },
+    "gradientFrom": {
+      "type": "string",
+      "default": "#007cba"
+    },
+    "gradientTo": {
+      "type": "string",
+      "default": "#005a87"
+    },
+    "gradientDirection": {
+      "type": "string",
+      "default": "to right"
+    },
+    "borderStyle": {
+      "type": "string",
+      "default": "none"
+    },
+    "borderTop": {
+      "type": "number",
+      "default": 0
+    },
+    "borderRight": {
+      "type": "number",
+      "default": 0
+    },
+    "borderBottom": {
+      "type": "number",
+      "default": 0
+    },
+    "borderLeft": {
+      "type": "number",
+      "default": 0
+    },
+    "borderColor": {
+      "type": "string",
+      "default": "transparent"
+    },
+    "radiusTopLeft": {
+      "type": "number",
+      "default": 4
+    },
+    "radiusTopRight": {
+      "type": "number",
+      "default": 4
+    },
+    "radiusBottomRight": {
+      "type": "number",
+      "default": 4
+    },
+    "radiusBottomLeft": {
+      "type": "number",
+      "default": 4
+    },
+    "radiusTopLeftTablet": {
+      "type": "number"
+    },
+    "radiusTopRightTablet": {
+      "type": "number"
+    },
+    "radiusBottomRightTablet": {
+      "type": "number"
+    },
+    "radiusBottomLeftTablet": {
+      "type": "number"
+    },
+    "radiusTopLeftMobile": {
+      "type": "number"
+    },
+    "radiusTopRightMobile": {
+      "type": "number"
+    },
+    "radiusBottomRightMobile": {
+      "type": "number"
+    },
+    "radiusBottomLeftMobile": {
+      "type": "number"
+    },
+    "paddingTop": {
+      "type": "number",
+      "default": 5
+    },
+    "paddingRight": {
+      "type": "number",
+      "default": 15
+    },
+    "paddingBottom": {
+      "type": "number",
+      "default": 5
+    },
+    "paddingLeft": {
+      "type": "number",
+      "default": 15
+    },
+    "paddingTopTablet": {
+      "type": "number"
+    },
+    "paddingRightTablet": {
+      "type": "number"
+    },
+    "paddingBottomTablet": {
+      "type": "number"
+    },
+    "paddingLeftTablet": {
+      "type": "number"
+    },
+    "paddingTopMobile": {
+      "type": "number"
+    },
+    "paddingRightMobile": {
+      "type": "number"
+    },
+    "paddingBottomMobile": {
+      "type": "number"
+    },
+    "paddingLeftMobile": {
+      "type": "number"
+    },
+    "boxShadowColor": {
+      "type": "string",
+      "default": "rgba(0, 0, 0, 0)"
+    },
+    "boxShadowH": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowV": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowBlur": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowSpread": {
+      "type": "number",
+      "default": 0
+    },
+    "boxShadowInset": {
+      "type": "boolean",
+      "default": false
+    },
+    "hoverBackgroundColor": {
+      "type": "string",
+      "default": "#005a87"
+    },
+    "hoverTextColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "iconSpacing": {
+      "type": "number",
+      "default": 8
+    },
+    "iconSpacingTablet": {
+      "type": "number"
+    },
+    "iconSpacingMobile": {
+      "type": "number"
+    },
+    "iconUrl": {
+      "type": "string",
+      "default": ""
+    },
+    "iconId": {
+      "type": "number"
+    },
+    "iconType": {
+      "type": "string",
+      "default": "image"
+    },
+    "iconWidth": {
+      "type": "number",
+      "default": 24
+    },
+    "iconHeight": {
+      "type": "number",
+      "default": 24
+    },
+    "iconAlt": {
+      "type": "string",
+      "default": ""
+    },
+    "iconColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "hideElements": {
+      "type": "string",
+      "default": ""
+    },
+    "showElements": {
+      "type": "string",
+      "default": ""
+    }
+  },
+  "supports": {
+    "html": false,
+    "align": [
+      "left",
+      "center",
+      "right",
+      "wide",
+      "full"
+    ],
+    "spacing": {
+      "margin": true,
+      "padding": false
+    }
+  }
+}

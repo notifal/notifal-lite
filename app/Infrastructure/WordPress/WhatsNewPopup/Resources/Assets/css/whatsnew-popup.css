@@ -1,0 +1,733 @@
+/* ==========================================================================
+   Notifal What's New Popup Styles - Modern Design
+   ========================================================================== */
+
+/**
+ * Note on Modal Duplication:
+ * This popup shares similar modal foundation styles (overlay, positioning, basic layout)
+ * with deactivation-popup.css and activation-popup.css. However, the content and
+ * specific styling requirements differ significantly enough that sharing would be
+ * complex and could introduce maintenance issues. Each popup serves a different
+ * purpose with unique content structures, so maintaining separate CSS files is
+ * the most maintainable approach.
+ */
+
+/**
+ * Overlay background
+ * Creates the backdrop effect for the popup
+ */
+.notifal-whatsnew-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(2px);
+    z-index: 999999;
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/**
+ * Show state for overlay
+ */
+.notifal-whatsnew-popup-overlay.show {
+    display: block;
+    opacity: 1;
+}
+
+/**
+ * Main popup content container
+ * Modern card-based design with shadow and border radius
+ */
+.notifal-whatsnew-popup-content {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000000;
+    animation: notifal-whatsnew-popup-fade-in 0.3s ease-out;
+}
+
+/**
+ * Popup fade-in animation
+ */
+@keyframes notifal-whatsnew-popup-fade-in {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%);
+    }
+}
+
+/**
+ * Popup header section
+ * Contains close button, icon, and title
+ * Stays fixed at top when scrolling
+ */
+.notifal-whatsnew-popup-header {
+    padding: 30px 30px 20px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    background: #fff;
+    border-bottom: 1px solid #dcdcdc;
+    z-index: 1000001;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/**
+ * Close button styling
+ * Positioned in top-right corner of header (which is now sticky)
+ */
+.notifal-whatsnew-popup-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #fff;
+    border: 2px solid #dcdcdc;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000002; /* Above the header */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.notifal-whatsnew-popup-close:hover {
+    background-color: #f8f9fa;
+    color: #333;
+    border-color: #333;
+}
+
+/**
+ * Welcome icon emoji
+ * Large emoji for visual appeal
+ */
+.notifal-whatsnew-popup-welcome-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+/**
+ * Popup title styling
+ */
+.notifal-whatsnew-popup-header h2 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+}
+
+/**
+ * Popup body content
+ */
+.notifal-whatsnew-popup-body {
+    padding: 30px;
+    padding-bottom: 40px; /* Extra padding for buttons */
+}
+
+/**
+ * Main description text
+ */
+.notifal-whatsnew-popup-description {
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/**
+ * What's new content sections
+ */
+.notifal-whatsnew-content {
+    margin-bottom: 30px;
+}
+
+.notifal-whatsnew-section {
+    margin-bottom: 25px;
+}
+
+/**
+ * Intro section styling
+ */
+.notifal-whatsnew-intro {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: linear-gradient(135deg, #f8f9fa 0%, rgba(126, 43, 210, 0.05) 100%);
+    border-radius: 8px;
+    border-left: 4px solid #7e2bd2;
+}
+
+.notifal-whatsnew-lead {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 15px 0;
+}
+
+/**
+ * Highlight section for important announcements
+ */
+.notifal-whatsnew-highlight {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.1) 0%, rgba(255, 193, 7, 0.05) 100%);
+    border: 2px solid #ffc107;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 25px 0;
+}
+
+.notifal-whatsnew-highlight h3 {
+    color: #856404 !important;
+    margin-bottom: 15px;
+}
+
+/**
+ * Callout box for special messaging
+ */
+.notifal-whatsnew-callout {
+    background: #f8f9fa;
+    border-radius: 6px;
+    padding: 15px;
+    margin: 15px 0;
+    border-left: 3px solid #7e2bd2;
+}
+
+.notifal-whatsnew-callout strong {
+    color: #333;
+}
+
+/**
+ * Support callout - special styling for help section
+ */
+.notifal-whatsnew-support {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+    border-left-color: #22c55e;
+    border: 2px solid #22c55e;
+}
+
+.notifal-whatsnew-support h4 {
+    margin: 0 0 10px 0;
+    color: #16a34a;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.notifal-support-benefits {
+    margin: 10px 0;
+}
+
+.notifal-support-benefits ul {
+    margin: 8px 0 0 15px;
+    padding: 0;
+}
+
+.notifal-support-benefits li {
+    margin-bottom: 4px;
+    color: #666;
+    font-size: 14px;
+}
+
+.notifal-support-button {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    display: inline-block;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.notifal-support-button:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+    color: white !important;
+    text-decoration: none;
+}
+
+/**
+ * Features grid layout
+ */
+.notifal-whatsnew-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.notifal-feature-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.notifal-feature-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.notifal-feature-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.notifal-feature-content h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+}
+
+.notifal-feature-content p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+}
+
+/**
+ * Ready section - call to action
+ */
+.notifal-whatsnew-ready {
+    text-align: center;
+    background: linear-gradient(135deg, #7e2bd2 0%, #651bb0 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 30px;
+}
+
+.notifal-whatsnew-ready h3 {
+    color: white !important;
+    margin-bottom: 15px;
+}
+
+.notifal-whatsnew-ready p {
+    color: rgba(255, 255, 255, 0.9) !important;
+    margin: 0;
+}
+
+/**
+ * External links styling
+ */
+.notifal-whatsnew-link {
+    color: #7e2bd2;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.notifal-whatsnew-link:hover {
+    color: #651bb0;
+    text-decoration: underline;
+}
+
+.notifal-whatsnew-external-link::after {
+    content: " ↗";
+    font-size: 14px;
+}
+
+.notifal-whatsnew-section h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.notifal-whatsnew-section p {
+    margin: 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.notifal-whatsnew-section ul {
+    margin: 10px 0 0 20px;
+    padding: 0;
+    color: #666;
+    line-height: 1.5;
+}
+
+.notifal-whatsnew-section li {
+    margin-bottom: 5px;
+}
+
+/**
+ * Action buttons container
+ */
+.notifal-whatsnew-popup-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #dcdcdc;
+}
+
+/**
+ * Base button styles
+ */
+.notifal-whatsnew-popup-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+    min-height: 44px;
+    box-sizing: border-box;
+}
+
+.notifal-whatsnew-popup-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.notifal-whatsnew-popup-button:active {
+    transform: translateY(0);
+}
+
+/**
+ * Primary button variant
+ */
+.notifal-whatsnew-popup-button-primary {
+    background-color: #7e2bd2;
+    color: #fff;
+    border-color: #7e2bd2;
+}
+
+.notifal-whatsnew-popup-button-primary:hover {
+    background-color: #651bb0;
+    border-color: #651bb0;
+}
+
+/**
+ * External link button variant
+ */
+.notifal-whatsnew-popup-button-external {
+    background-color: transparent;
+    color: #333;
+    border-color: #dcdcdc;
+}
+
+.notifal-whatsnew-popup-button-external:hover {
+    background-color: #f8f9fa;
+    border-color: #333;
+}
+
+/**
+ * Secondary button variant (Got it button)
+ */
+.notifal-whatsnew-popup-button-secondary {
+    background-color: transparent;
+    color: #333;
+    border-color: #dcdcdc;
+    cursor: pointer;
+}
+
+.notifal-whatsnew-popup-button-secondary:hover {
+    background-color: #f8f9fa;
+    border-color: #333;
+}
+
+/**
+ * Button icons
+ */
+.notifal-whatsnew-popup-button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================
+   Responsive Design
+   ========================================================================== */
+
+/**
+ * Tablet and smaller screens
+ */
+@media (max-width: 768px) {
+    .notifal-whatsnew-popup-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .notifal-whatsnew-popup-header {
+        padding: 25px 20px 15px;
+    }
+
+    .notifal-whatsnew-popup-header h2 {
+        font-size: 20px;
+    }
+
+    .notifal-whatsnew-popup-welcome-icon {
+        font-size: 36px;
+    }
+
+    .notifal-whatsnew-popup-body {
+        padding: 20px;
+    }
+
+    .notifal-whatsnew-popup-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .notifal-whatsnew-popup-button {
+        justify-content: center;
+        text-align: center;
+    }
+
+    /* Responsive styles for new content sections */
+    .notifal-whatsnew-intro {
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .notifal-whatsnew-lead {
+        font-size: 16px;
+    }
+
+    .notifal-whatsnew-highlight {
+        padding: 15px;
+        margin: 20px 0;
+    }
+
+    .notifal-whatsnew-callout {
+        padding: 12px;
+        margin: 12px 0;
+    }
+
+    .notifal-whatsnew-support {
+        padding: 12px;
+        margin: 12px 0;
+    }
+
+    .notifal-whatsnew-support h4 {
+        font-size: 15px;
+    }
+
+    .notifal-support-benefits ul {
+        margin-left: 12px;
+    }
+
+    .notifal-support-benefits li {
+        font-size: 13px;
+    }
+
+    .notifal-support-button {
+        padding: 7px 14px;
+        font-size: 13px;
+    }
+
+    .notifal-whatsnew-features {
+        grid-template-columns: 1fr;
+        gap: 15px;
+        margin-top: 15px;
+    }
+
+    .notifal-feature-item {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+        padding: 12px;
+    }
+
+    .notifal-feature-icon {
+        align-self: center;
+        margin-top: 0;
+    }
+
+    .notifal-feature-content h4 {
+        font-size: 15px;
+    }
+
+    .notifal-feature-content p {
+        font-size: 13px;
+    }
+
+    .notifal-whatsnew-ready {
+        padding: 15px;
+        margin-top: 20px;
+    }
+
+    .notifal-whatsnew-ready h3 {
+        font-size: 16px;
+    }
+}
+
+/**
+ * Mobile screens
+ */
+@media (max-width: 480px) {
+    .notifal-whatsnew-popup-content {
+        width: 98%;
+        margin: 10px;
+    }
+
+    .notifal-whatsnew-popup-header {
+        padding: 20px 15px 10px;
+    }
+
+    .notifal-whatsnew-popup-body {
+        padding: 15px;
+    }
+
+    .notifal-whatsnew-popup-button {
+        padding: 14px 20px;
+        font-size: 16px; /* Prevent zoom on iOS */
+    }
+
+    /* Mobile styles for new content sections */
+    .notifal-whatsnew-intro {
+        padding: 12px;
+        margin-bottom: 15px;
+    }
+
+    .notifal-whatsnew-lead {
+        font-size: 15px;
+        margin-bottom: 10px;
+    }
+
+    .notifal-whatsnew-highlight {
+        padding: 12px;
+        margin: 15px 0;
+    }
+
+    .notifal-whatsnew-callout {
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .notifal-whatsnew-support {
+        padding: 10px;
+        margin: 10px 0;
+    }
+
+    .notifal-whatsnew-support h4 {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .notifal-support-benefits ul {
+        margin-left: 10px;
+    }
+
+    .notifal-support-benefits li {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .notifal-support-button {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+
+    .notifal-whatsnew-features {
+        gap: 12px;
+        margin-top: 12px;
+    }
+
+    .notifal-feature-item {
+        padding: 10px;
+    }
+
+    .notifal-feature-icon {
+        font-size: 20px;
+    }
+
+    .notifal-feature-content h4 {
+        font-size: 14px;
+    }
+
+    .notifal-feature-content p {
+        font-size: 12px;
+    }
+
+    .notifal-whatsnew-ready {
+        padding: 12px;
+        margin-top: 15px;
+    }
+
+    .notifal-whatsnew-ready h3 {
+        font-size: 15px;
+    }
+}
+
+/* ==========================================================================
+   Accessibility
+   ========================================================================== */
+
+/**
+ * Focus styles for keyboard navigation
+ */
+.notifal-whatsnew-popup-close:focus,
+.notifal-whatsnew-popup-button:focus {
+    outline: 2px solid #7e2bd2;
+    outline-offset: 2px;
+}
+
+/**
+ * High contrast mode support
+ */
+@media (prefers-contrast: high) {
+    .notifal-whatsnew-popup-overlay {
+        background-color: rgba(0, 0, 0, 0.8);
+    }
+
+    .notifal-whatsnew-popup-content {
+        border: 2px solid #333;
+    }
+
+    .notifal-whatsnew-popup-button {
+        border-width: 3px;
+    }
+}
+
+/**
+ * Reduced motion support
+ */
+@media (prefers-reduced-motion: reduce) {
+    .notifal-whatsnew-popup-overlay,
+    .notifal-whatsnew-popup-content,
+    .notifal-whatsnew-popup-close,
+    .notifal-whatsnew-popup-button {
+        animation: none;
+        transition: none;
+    }
+}
