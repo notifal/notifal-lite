@@ -75,6 +75,8 @@ $component_id = 'precreated-notifications-modal-archive';
         <div class="notifal-modal-footer notifal-modal-detail-footer notifal-hidden" id="notifal-modal-detail-footer">
             <?php render_notification_detail_popup_footer('modal'); ?>
         </div>
+        <!-- Template request note (below footer, shown when template has no builder file) -->
+        <?php render_notification_detail_popup_request_note('modal'); ?>
     </div>
 </div>
 

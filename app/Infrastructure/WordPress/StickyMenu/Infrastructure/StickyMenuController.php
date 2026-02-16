@@ -157,6 +157,14 @@ class StickyMenuController
                         }
                         ?>
                     </div>
+                    <?php if (!empty($item['version'])) : ?>
+                        <span class="notifal-sticky-menu-version" aria-label="<?php echo esc_attr(sprintf(__('Version %s', 'notifal'), $item['version'])); ?>"><?php echo esc_html($item['version']); ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($item['update_available']) && !empty($item['update_url'])) : ?>
+                        <a href="<?php echo esc_url($item['update_url']); ?>" class="notifal-sticky-menu-update-indicator" title="<?php echo esc_attr(__('New update is available. Click to go to Plugins page and update.', 'notifal')); ?>" aria-label="<?php echo esc_attr(__('New update is available', 'notifal')); ?>">
+                            <span class="notifal-sticky-menu-icon notifal-icon-cloud-download" aria-hidden="true"></span>
+                        </a>
+                    <?php endif; ?>
                 </div>
                 <?php
                 break;

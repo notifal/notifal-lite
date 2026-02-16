@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax;
 
 use Notifal\Modules\OnPageNotification\Application\Services\API\PreCreatedNotificationsApiService;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationFilterHelper;
 
 defined('ABSPATH') || exit;
 
@@ -29,6 +30,8 @@ class PreCreatedNotificationsAjaxController
         add_action('wp_ajax_notifal_load_more_precreated_notifications', [self::class, 'loadMoreNotifications']);
         add_action('wp_ajax_notifal_filter_precreated_notifications', [self::class, 'filterNotifications']);
         add_action('wp_ajax_notifal_get_single_precreated_notification', [self::class, 'getSingleNotification']);
+        add_action('wp_ajax_notifal_submit_template_request', [self::class, 'submitTemplateRequest']);
+        add_action('wp_ajax_notifal_precreated_archive_fragment', [self::class, 'archiveFragment']);
 
         // Register import controller
         PreCreatedNotificationsImportController::register();
@@ -234,6 +237,210 @@ class PreCreatedNotificationsAjaxController
 
         } catch (\Exception $e) {
             notifal_json_error(__('An unexpected error occurred.', 'notifal'));
+        }
+    }
+
+    /**
+     * Handle submit template request AJAX.
+     *
+     * Submits a request to notifal.com for a template to be created with Elementor or Block Editor.
+     * The server stores the request, and sends a confirmation email to the user.
+     *
+     * @since 2.0.0
+     * @return void
+     */
+    public static function submitTemplateRequest(): void
+    {
+        try {
+            notifal_verify_ajax_request('notifal_admin_ajax_nonce', 'edit_posts', 'nonce');
+
+            $notificationId = absint($_POST['notification_id'] ?? 0);
+            $builderType    = sanitize_text_field($_POST['builder_type'] ?? '');
+
+            if ($notificationId <= 0) {
+                notifal_json_error(__('Invalid notification ID.', 'notifal'));
+                return;
+            }
+
+            $validTypes = ['elementor', 'block-editor'];
+            if (!in_array($builderType, $validTypes, true)) {
+                notifal_json_error(__('Invalid builder type.', 'notifal'));
+                return;
+            }
+
+            if (self::hasUserAlreadyRequestedTemplate($notificationId, $builderType)) {
+                notifal_json_error(self::getDuplicateRequestMessage());
+                return;
+            }
+
+            $apiService = self::getApiService();
+            $result     = $apiService->submitTemplateRequest($notificationId, $builderType);
+
+            if (!empty($result['success'])) {
+                self::markTemplateRequestedForUser($notificationId, $builderType);
+                notifal_json_success([
+                    'message' => $result['message'] ?? __('We got your request. We will create the template within two days so you can check again and import it. We will inform you via email', 'notifal'),
+                ]);
+                return;
+            }
+
+            notifal_json_error($result['error'] ?? __('Request could not be submitted. Please try again.', 'notifal'));
+
+        } catch (\Exception $e) {
+            notifal_json_error(__('An unexpected error occurred.', 'notifal'));
+        }
+    }
+
+    /**
+     * User meta key for storing template requests (notification_id + builder_type per request).
+     *
+     * @since 2.0.0
+     * @var string
+     */
+    private const USER_META_TEMPLATE_REQUESTS = '_notifal_template_requests';
+
+    /**
+     * Check if the current user has already submitted a request for this template and builder type.
+     *
+     * @since 2.0.0
+     * @param int    $notificationId Notification (template) ID
+     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
+     * @return bool
+     */
+    private static function hasUserAlreadyRequestedTemplate(int $notificationId, string $builderType): bool
+    {
+        $userId = get_current_user_id();
+        if ($userId <= 0) {
+            return false;
+        }
+
+        $raw = get_user_meta($userId, self::USER_META_TEMPLATE_REQUESTS, true);
+        if (!is_array($raw)) {
+            return false;
+        }
+
+        $validTypes = ['elementor', 'block-editor'];
+        foreach ($raw as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $nid = isset($item['notification_id']) ? absint($item['notification_id']) : 0;
+            $builder = isset($item['builder_type']) ? sanitize_text_field($item['builder_type']) : '';
+            if ($nid === $notificationId && $builder !== '' && in_array($builder, $validTypes, true) && $builder === $builderType) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get the error message for duplicate template request (with email when available).
+     *
+     * @since 2.0.0
+     * @return string
+     */
+    private static function getDuplicateRequestMessage(): string
+    {
+        $email = get_option('admin_email', '');
+        $email = is_string($email) ? sanitize_email($email) : '';
+        if ($email !== '') {
+            return sprintf(
+                __('Request already submitted. We will notify %s when it is ready.', 'notifal'),
+                $email
+            );
+        }
+        return __('Request already submitted. We will notify you when it is ready.', 'notifal');
+    }
+
+    /**
+     * Store that the current user has submitted a template request for this notification and builder type.
+     *
+     * @since 2.0.0
+     * @param int    $notificationId Notification (template) ID
+     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
+     * @return void
+     */
+    private static function markTemplateRequestedForUser(int $notificationId, string $builderType): void
+    {
+        $userId = get_current_user_id();
+        if ($userId <= 0) {
+            return;
+        }
+
+        $raw = get_user_meta($userId, self::USER_META_TEMPLATE_REQUESTS, true);
+        $list = is_array($raw) ? $raw : [];
+
+        foreach ($list as $item) {
+            if (is_array($item) && isset($item['notification_id'], $item['builder_type'])
+                && (int) $item['notification_id'] === $notificationId && $item['builder_type'] === $builderType) {
+                return;
+            }
+        }
+
+        $list[] = [
+            'notification_id' => $notificationId,
+            'builder_type'    => $builderType,
+        ];
+
+        update_user_meta($userId, self::USER_META_TEMPLATE_REQUESTS, $list);
+    }
+
+    /**
+     * Handle AJAX request for pre-created archive HTML fragment.
+     *
+     * Fetches taxonomies and notifications from notifal.com (with 15s timeout)
+     * and returns the archive markup so the list page can load without blocking.
+     *
+     * @since 2.0.0
+     * @return void
+     */
+    public static function archiveFragment(): void
+    {
+        try {
+            notifal_verify_ajax_request('notifal_admin_ajax_nonce', 'edit_posts', 'nonce');
+
+            $rawFilters = isset($_POST['filters']) && is_array($_POST['filters']) ? $_POST['filters'] : [];
+            $filters = self::sanitizeFilters($rawFilters);
+            $filters['page'] = 1;
+
+            $apiService = self::getApiService();
+            $taxonomies = $apiService->getTaxonomies();
+            $apiResponse = $apiService->getNotifications($filters);
+
+            $currentFilters = [
+                'search'    => $filters['search'],
+                'orderby'   => $filters['orderby'],
+                'use_case'  => $filters['use_cases'] ?? [],
+                'event'     => $filters['events'] ?? [],
+                'industry'  => $filters['industries'] ?? [],
+                'layout'    => $filters['layouts'] ?? [],
+                'plugin'    => $filters['used_plugins'] ?? [],
+                'is_pro'    => $filters['is_pro'] ?? '',
+            ];
+
+            $preloaded_taxonomies = $taxonomies;
+            $preloaded_api_response = $apiResponse;
+            $preloaded_filters = $currentFilters;
+
+            $viewPath = dirname(__DIR__, 2) . '/Views/components/precreated-notifications-archive.php';
+            if (!is_readable($viewPath)) {
+                notifal_json_error(__('Archive view not found.', 'notifal'));
+                return;
+            }
+
+            ob_start();
+            include $viewPath;
+            $html = ob_get_clean();
+
+            if ($html === false) {
+                notifal_json_error(__('Failed to render archive.', 'notifal'));
+                return;
+            }
+
+            notifal_json_success(['html' => $html]);
+        } catch (\Exception $e) {
+            notifal_json_error(__('Unable to load pre-created notifications. Please try again.', 'notifal'));
         }
     }
 

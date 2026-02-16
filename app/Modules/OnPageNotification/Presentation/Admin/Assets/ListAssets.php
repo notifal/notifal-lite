@@ -6,6 +6,7 @@ use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Shared\Config\Paths;
 
 defined('ABSPATH') || exit;
@@ -205,9 +206,14 @@ class ListAssets
         return [
             'nonce' => NonceManager::create('notifal_admin_ajax_nonce'),
             'ajax_url' => UrlHelper::baseAjax(),
+            'archive_fragment_action' => 'notifal_precreated_archive_fragment',
+            'archive_load_timeout_sec' => 15,
             'strings' => [
                 'loading' => __('Loading...', 'notifal'),
+                'loadingPrecreated' => __('Loading pre-created notifications...', 'notifal'),
                 'error' => __('An error occurred. Please try again.', 'notifal'),
+                'unableToLoad' => __('Unable to Load Notifications', 'notifal'),
+                'tryAgain' => __('Try Again', 'notifal'),
                 'no_results' => __('No notifications found matching your criteria.', 'notifal'),
                 'load_more' => __('Load More', 'notifal'),
                 'search' => __('Search', 'notifal'),
@@ -220,7 +226,84 @@ class ListAssets
                 'importPartialSuccess' => $translations['importPartialSuccess'] ?? __('Import completed: {success} succeeded, {failed} failed.', 'notifal'),
                 'importFailed' => $translations['importFailed'] ?? __('Import failed.', 'notifal'),
                 'networkError' => $translations['networkError'] ?? __('Network error. Please try again.', 'notifal'),
+                'requestHere' => __('Request here', 'notifal'),
+                'requesting' => __('Requesting...', 'notifal'),
+                'requestSubmitted' => __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),
+                'requestAlreadySubmitted' => self::getRequestAlreadySubmittedMessage(),
+                'requestFailed' => __('Request could not be submitted. Please try again.', 'notifal'),
             ],
+            'user_has_elementor' => PluginDetector::isElementorActive(),
+            'requested_templates' => self::getRequestedTemplatesForCurrentUser(),
         ];
+    }
+
+    /**
+     * Get the localized "request already submitted" message, with admin email when available.
+     *
+     * @since 2.0.0
+     * @return string Message safe for use in JS (email is sanitized; wp_localize_script escapes for JS).
+     */
+    private static function getRequestAlreadySubmittedMessage(): string
+    {
+        $email = self::getRequestNotifyEmail();
+        if ($email !== '') {
+            return sprintf(
+                __('Request already submitted. We will notify %s when it is ready.', 'notifal'),
+                $email
+            );
+        }
+        return __('Request already submitted. We will notify you when it is ready.', 'notifal');
+    }
+
+    /**
+     * Get the email address that will be notified when a requested template is ready.
+     * Matches the admin email sent with template requests to the API.
+     *
+     * @since 2.0.0
+     * @return string Sanitized email, or empty string if not set.
+     */
+    private static function getRequestNotifyEmail(): string
+    {
+        $email = get_option('admin_email', '');
+        return is_string($email) ? sanitize_email($email) : '';
+    }
+
+    /**
+     * Get list of template requests already submitted by the current user.
+     * Each item is [ 'notification_id' => int, 'builder_type' => 'elementor'|'block-editor' ].
+     * Used to prevent duplicate requests and to show "Request submitted" in the UI.
+     *
+     * @since 2.0.0
+     * @return array<int, array{notification_id: int, builder_type: string}>
+     */
+    private static function getRequestedTemplatesForCurrentUser(): array
+    {
+        $userId = get_current_user_id();
+        if ($userId <= 0) {
+            return [];
+        }
+
+        $raw = get_user_meta($userId, '_notifal_template_requests', true);
+        if (!is_array($raw)) {
+            return [];
+        }
+
+        $valid = [];
+        $validTypes = ['elementor', 'block-editor'];
+        foreach ($raw as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+            $nid = isset($item['notification_id']) ? absint($item['notification_id']) : 0;
+            $builder = isset($item['builder_type']) ? sanitize_text_field($item['builder_type']) : '';
+            if ($nid > 0 && in_array($builder, $validTypes, true)) {
+                $valid[] = [
+                    'notification_id' => $nid,
+                    'builder_type'    => $builder,
+                ];
+            }
+        }
+
+        return $valid;
     }
 } 
