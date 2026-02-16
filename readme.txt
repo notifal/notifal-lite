@@ -2,8 +2,8 @@
 Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
-Tested up to: 6.8
-Stable tag: 2.0.0
+Tested up to: 6.9
+Stable tag: 2.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -261,7 +261,7 @@ Whatever you build, Notifal helps you grow it.
 
 **Advanced Analytics System**:
 
-* Total Revenue from Notifications
+* Revenue from Notifications (single and total from all)
 * **Total Impressions [PRO]**
 * **Total Clicks [PRO]**
 * **Click-Through Rate [PRO]**
@@ -277,8 +277,8 @@ Whatever you build, Notifal helps you grow it.
 * User Tags
 * Post Tags
 * Page Tags
-* **Product Tags [PRO]**
-* **Order Tags [PRO]**
+* Product Tags
+* Order Tags
 * **Comment Tags [PRO]**
 * **All Post Types Tags [PRO]**
 
@@ -378,6 +378,11 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.0.1 [2025-02-14]
+Added: In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder; submit the request from the template details and we will create it and notify you when it is ready.
+Added: The pre-created notifications list now shows how long until the list refreshes (cache countdown), so you know when new or updated templates will appear.
+Improved: OnPage Notifications list page no longer waits for the pre-created section to load; the section loads in the background with an improved loading state and timeout handling.
+
 2.0.0 [2025-02-08]
 Important: Complete code transformation from 1.x. All previous notifications will be removed after upgrade. Create your notifications again (you can import new notifications with a simple click from the template library). If you need your previous notifications, we recommend backing up your database before updating.
 Added: Enhanced on-page notifications with advanced customization and smart targeting.

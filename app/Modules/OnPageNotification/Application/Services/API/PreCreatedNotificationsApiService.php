@@ -101,7 +101,8 @@ class PreCreatedNotificationsApiService
         $cacheKey = $this->generateCacheKey('notifications', $queryParams);
         $cached = $this->getCachedResponse($cacheKey);
 
-        if ($cached !== false) {
+        if ($cached !== false && is_array($cached)) {
+            $cached = $this->attachCacheExpiresAt($cached, $cacheKey);
             return $cached;
         }
 
@@ -156,6 +157,7 @@ class PreCreatedNotificationsApiService
          */
         do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_API_FETCHED, $data, $args);
 
+        $data = $this->attachCacheExpiresAt($data, $cacheKey, self::CACHE_EXPIRATION_NOTIFICATIONS);
         return $data;
     }
 
@@ -230,6 +232,98 @@ class PreCreatedNotificationsApiService
         do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_API_SINGLE_FETCHED, $data, $notificationId);
 
         return $data;
+    }
+
+    /**
+     * Submit a template request to notifal.com for a builder type (Elementor or Block Editor).
+     * Used when a template does not yet have a file for that builder; the request is stored
+     * on the server, info@notifal.com is notified, and the user receives a confirmation email.
+     *
+     * @since 2.0.0
+     * @param int    $notificationId Notification (template) ID on notifal.com
+     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
+     * @return array<string, mixed>  Result with 'success' and optional 'error' or 'message'
+     */
+    public function submitTemplateRequest(int $notificationId, string $builderType): array
+    {
+        $validTypes = ['elementor', 'block-editor'];
+        if (!in_array($builderType, $validTypes, true)) {
+            return [
+                'success' => false,
+                'error'   => __('Invalid builder type. Must be elementor or block-editor.', 'notifal'),
+            ];
+        }
+
+        if ($notificationId <= 0) {
+            return [
+                'success' => false,
+                'error'   => __('Invalid notification ID.', 'notifal'),
+            ];
+        }
+
+        $siteUrl  = home_url('/');
+        $adminEmail = get_option('admin_email', '');
+        $body = [
+            'notification_id' => $notificationId,
+            'builder_type'    => $builderType,
+            'site_url'        => $siteUrl,
+            'admin_email'     => sanitize_email($adminEmail),
+        ];
+
+        $url  = self::API_BASE_URL . '/template-requests';
+        $args = [
+            'timeout'  => self::API_TIMEOUT,
+            'body'     => wp_json_encode($body),
+            'headers'  => [
+                'Accept'       => 'application/json',
+                'Content-Type' => 'application/json',
+                'User-Agent'   => self::USER_AGENT,
+            ],
+        ];
+
+        /** This filter is documented in makeApiRequest. */
+        $args = apply_filters(FilterHooks::PRE_CREATED_NOTIFICATIONS_API_REQUEST_ARGS, $args, $url, $body);
+
+        $response = wp_remote_post($url, $args);
+
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'error'   => $response->get_error_message(),
+            ];
+        }
+
+        $code = wp_remote_retrieve_response_code($response);
+        if ($code < 200 || $code >= 300) {
+            return [
+                'success' => false,
+                'error'   => sprintf(
+                    /* translators: %d: HTTP status code */
+                    __('Request failed with status %d. Please try again later.', 'notifal'),
+                    $code
+                ),
+            ];
+        }
+
+        $data = $this->parseJsonResponse($response, 'template-requests');
+        if ($data === null) {
+            return [
+                'success' => false,
+                'error'   => __('Invalid response from server. Please try again later.', 'notifal'),
+            ];
+        }
+
+        if (isset($data['success']) && $data['success'] === false) {
+            return [
+                'success' => false,
+                'error'   => isset($data['error']['message']) ? $data['error']['message'] : __('Request could not be submitted.', 'notifal'),
+            ];
+        }
+
+        return [
+            'success' => true,
+            'message' => isset($data['message']) ? $data['message'] : __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),
+        ];
     }
 
     /**
@@ -433,6 +527,28 @@ class PreCreatedNotificationsApiService
     private function getCachedResponse(string $cacheKey)
     {
         return get_transient($cacheKey);
+    }
+
+    /**
+     * Attach cache expiration timestamp to response for UI display.
+     *
+     * @since 2.0.0
+     * @param array<string, mixed> $response Response array (must be array)
+     * @param string $cacheKey Transient key used for caching
+     * @param int|null $expirationSeconds If set, used when timeout option is not found (e.g. fresh set)
+     * @return array<string, mixed> Response with cache_expires_at key added
+     */
+    private function attachCacheExpiresAt(array $response, string $cacheKey, ?int $expirationSeconds = null): array
+    {
+        $expires = get_option('_transient_timeout_' . $cacheKey, false);
+        if ($expires !== false) {
+            $response['cache_expires_at'] = (int) $expires;
+            return $response;
+        }
+        if ($expirationSeconds !== null) {
+            $response['cache_expires_at'] = time() + $expirationSeconds;
+        }
+        return $response;
     }
 
     /**

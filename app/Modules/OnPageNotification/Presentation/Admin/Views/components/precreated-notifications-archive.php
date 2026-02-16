@@ -4,7 +4,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\API\PreCreatedNotificationsApiService;
 use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationFilterHelper;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Components\FilterRenderer;
-use Notifal\Modules\OnPageNotification\Presentation\Admin\Components\NotificationDetailPopupComponent;
+use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 use Notifal\Shared\Services\NotifalIconService;
 
 if (!defined('ABSPATH')) {
@@ -29,22 +29,29 @@ require_once __DIR__ . '/../../Components/NotificationDetailPopupComponent.php';
 $apiService = notifal_app(PreCreatedNotificationsApiService::class);
 $filterRenderer = new FilterRenderer();
 
-// Parse current filter state from URL parameters
-$currentFilters = PreCreatedNotificationFilterHelper::parseCurrentFilters();
+// When preloaded data is provided (e.g. from AJAX), skip API calls so page load is not blocked
+$usePreloaded = isset($preloaded_taxonomies) && isset($preloaded_api_response) && is_array($preloaded_taxonomies) && is_array($preloaded_api_response);
 
-// Get taxonomies from API for filter sidebar
-$taxonomies = $apiService->getTaxonomies();
+if ($usePreloaded) {
+    $currentFilters = isset($preloaded_filters) && is_array($preloaded_filters) ? $preloaded_filters : PreCreatedNotificationFilterHelper::parseCurrentFilters();
+    $taxonomies = $preloaded_taxonomies;
+    $apiResponse = $preloaded_api_response;
+} else {
+    // Parse current filter state from URL parameters
+    $currentFilters = PreCreatedNotificationFilterHelper::parseCurrentFilters();
+    // Get taxonomies from API for filter sidebar
+    $taxonomies = $apiService->getTaxonomies();
+    // Build API query parameters from filters
+    $apiArgs = PreCreatedNotificationFilterHelper::buildApiQueryArgs($currentFilters);
+    // Get notifications data from API
+    $apiResponse = $apiService->getNotifications($apiArgs);
+}
 
 // Component configuration
 $hideHeader = isset($hide_header) ? $hide_header : false;
 $componentId = isset($component_id) ? $component_id : 'precreated-notifications-archive';
 $hideWrapper = isset($hide_wrapper) ? $hide_wrapper : false;
 
-// Build API query parameters from filters
-$apiArgs = PreCreatedNotificationFilterHelper::buildApiQueryArgs($currentFilters);
-
-// Get notifications data from API
-$apiResponse = $apiService->getNotifications($apiArgs);
 $notifications = [];
 $pagination = ['current' => 1, 'pages' => 1, 'total' => 0];
 $hasError = false;
@@ -66,18 +73,66 @@ if (isset($apiResponse['success']) && !$apiResponse['success']) {
  * @param array $apiResponse API response data
  */
 do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_ARCHIVE_BEFORE, [], $apiResponse);
+
+// Build cache "next update" text and tooltip for display (1 hour cache)
+$cacheExpiresAt = isset($apiResponse['cache_expires_at']) ? (int) $apiResponse['cache_expires_at'] : 0;
+$cacheNextUpdateText = '';
+$cacheTooltipText = __(
+    'This list is cached for 1 hour. If you don\'t see a new template or can\'t import a template\'s file builder, try again later after the cache refreshes.',
+    'notifal'
+);
+if ($cacheExpiresAt > 0) {
+    $secondsLeft = $cacheExpiresAt - time();
+    if ($secondsLeft > 0) {
+        $minutesLeft = (int) ceil($secondsLeft / 60);
+        if ($minutesLeft >= 60) {
+            $hours = (int) floor($minutesLeft / 60);
+            $mins = $minutesLeft % 60;
+            $cacheNextUpdateText = $mins > 0
+                ? sprintf(
+                    /* translators: 1: hours, 2: minutes */
+                    __('Next update: %1$s hr %2$s min later', 'notifal'),
+                    (string) $hours,
+                    (string) $mins
+                )
+                : sprintf(
+                    /* translators: %d: number of hours */
+                    _n('Next update: %d hr later', 'Next update: %d hrs later', $hours, 'notifal'),
+                    $hours
+                );
+        } else {
+            $cacheNextUpdateText = sprintf(
+                /* translators: %d: number of minutes */
+                _n('Next update: %d min later', 'Next update: %d min later', $minutesLeft, 'notifal'),
+                $minutesLeft
+            );
+        }
+    } else {
+        $cacheNextUpdateText = __('Next update: refreshing soon', 'notifal');
+    }
+} else {
+    $cacheNextUpdateText = __('List refreshes every hour', 'notifal');
+}
 ?>
 
 <?php if (!$hideWrapper) : ?>
 <div class="notifal-marketplace-archive" data-component="<?php echo esc_attr(sanitize_key($componentId)); ?>">
 <?php endif; ?>
-    <?php if (!$hideHeader) : ?>
+    <?php if (!$hideHeader || $cacheNextUpdateText !== '') : ?>
         <div class="notifal-archive-header">
             <div class="notifal-archive-title-section">
-                <h2 class="notifal-archive-title notifal-page-title">
-                    <?php esc_html_e('Explore Pre-created Notifications', 'notifal'); ?>
-                </h2>
+                <?php if (!$hideHeader) : ?>
+                    <h2 class="notifal-archive-title notifal-page-title">
+                        <?php esc_html_e('Explore Pre-created Notifications', 'notifal'); ?>
+                    </h2>
+                <?php endif; ?>
             </div>
+            <?php if ($cacheNextUpdateText !== '') : ?>
+                <div class="notifal-archive-cache-info notifal-flex notifal-align-center notifal-gap-8">
+                    <span class="notifal-archive-cache-time notifal-text-muted"><?php echo esc_html($cacheNextUpdateText); ?></span>
+                    <?php FieldRenderer::tooltip($cacheTooltipText, ['data-position' => 'bottom']); ?>
+                </div>
+            <?php endif; ?>
         </div>
     <?php endif; ?>
 
@@ -170,6 +225,8 @@ do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_ARCHIVE_BEFORE, [], $apiRespons
             </button>
             <?php render_notification_detail_popup_footer('archive'); ?>
         </div>
+        <!-- Template request note (below footer, shown when template has no builder file) -->
+        <?php render_notification_detail_popup_request_note('archive'); ?>
     </div>
 <?php if (!$hideWrapper) : ?>
 </div>

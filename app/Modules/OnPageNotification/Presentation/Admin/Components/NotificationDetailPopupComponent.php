@@ -119,7 +119,8 @@ function render_notification_detail_popup(string $context = 'archive'): void {
 }
 
 /**
- * Render notification detail popup footer.
+ * Render notification detail popup footer (import buttons only).
+ * Buttons are disabled by JS when the template has no corresponding file.
  *
  * @param string $context Context identifier for element IDs (e.g., 'modal', 'archive')
  * @return void
@@ -128,12 +129,10 @@ function render_notification_detail_popup(string $context = 'archive'): void {
  */
 function render_notification_detail_popup_footer(string $context = 'archive'): void {
     $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
-    $class_prefix = $context === 'modal' ? 'notifal-modal-detail-footer' : 'notifal-popup-footer';
 
     ?>
     <div class="notifal-popup-import-buttons">
         <?php
-        // Only show Import Elementor when Elementor plugin is installed and active on the site.
         if (PluginDetector::isElementorActive()) :
             ?>
             <button type="button" class="notifal-popup-import-btn notifal-popup-import-elementor" id="<?php echo esc_attr($id_prefix); ?>PopupImportElementorBtn" data-file-type="elementor">
@@ -147,6 +146,52 @@ function render_notification_detail_popup_footer(string $context = 'archive'): v
             <?php echo NotifalIconService::render('cloud-download', 16); ?>
             <?php esc_html_e('Import Block Editor', 'notifal'); ?>
         </button>
+    </div>
+    <?php
+}
+
+/**
+ * Render the template request note section (below the popup footer).
+ * Shown by JS when the template does not have Elementor and/or Block Editor file.
+ *
+ * @param string $context Context identifier for element IDs (e.g., 'modal', 'archive')
+ * @return void
+ *
+ * @since 2.0.0
+ */
+function render_notification_detail_popup_request_note(string $context = 'archive'): void {
+    $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
+    $note_classes = 'notifal-popup-template-request-note notifal-popup-hidden';
+    if ($context === 'modal') {
+        $note_classes .= ' notifal-modal-detail-note notifal-hidden';
+    }
+
+    ?>
+    <div class="<?php echo esc_attr($note_classes); ?>" id="<?php echo esc_attr($id_prefix); ?>PopupTemplateRequestNote">
+        <div class="notifal-popup-request-note-item notifal-popup-hidden" data-builder="elementor" id="<?php echo esc_attr($id_prefix); ?>PopupRequestNoteElementor">
+            <p class="notifal-popup-request-note-text">
+                <?php
+                echo esc_html(
+                    __('This template is not created with Elementor yet. You can request it here, we will create it within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal')
+                );
+                ?>
+            </p>
+            <button type="button" class="notifal-button link notifal-template-request-btn" data-builder="elementor">
+                <?php esc_html_e('Request here', 'notifal'); ?>
+            </button>
+        </div>
+        <div class="notifal-popup-request-note-item notifal-popup-hidden" data-builder="block-editor" id="<?php echo esc_attr($id_prefix); ?>PopupRequestNoteBlockEditor">
+            <p class="notifal-popup-request-note-text">
+                <?php
+                echo esc_html(
+                    __('This template is not created with Block Editor yet. You can request it here, we will create it within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal')
+                );
+                ?>
+            </p>
+            <button type="button" class="notifal-button link notifal-template-request-btn" data-builder="block-editor">
+                <?php esc_html_e('Request here', 'notifal'); ?>
+            </button>
+        </div>
     </div>
     <?php
 }

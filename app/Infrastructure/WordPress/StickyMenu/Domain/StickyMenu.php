@@ -15,6 +15,7 @@ namespace Notifal\Infrastructure\WordPress\StickyMenu\Domain;
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain\WhatsNewPopup;
 use Notifal\Shared\Services\NotifalLogoService;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 
@@ -87,6 +88,39 @@ class StickyMenu
     }
 
     /**
+     * Check if a plugin update is available from the WordPress.org repository
+     *
+     * Uses the update_plugins transient populated by WordPress core.
+     *
+     * @return bool True if an update is available for the Notifal plugin
+     * @since 2.0.0
+     */
+    public function hasPluginUpdateAvailable(): bool
+    {
+        if (!defined('NOTIFAL_BASENAME')) {
+            return false;
+        }
+
+        $updates = get_site_transient('update_plugins');
+        if (!is_object($updates) || !isset($updates->response) || !is_array($updates->response)) {
+            return false;
+        }
+
+        return isset($updates->response[NOTIFAL_BASENAME]);
+    }
+
+    /**
+     * Get the URL to the Plugins admin page for updating the plugin
+     *
+     * @return string Admin URL to plugins.php
+     * @since 2.0.0
+     */
+    public function getPluginsPageUrl(): string
+    {
+        return UrlHelper::admin('plugins.php');
+    }
+
+    /**
      * Get menu configuration for the first row
      *
      * @return array First row menu items
@@ -99,6 +133,9 @@ class StickyMenu
                 'type' => 'logo',
                 'svg' => $this->getLogoSvg(),
                 'alt' => __('Notifal', 'notifal'),
+                'version' => $this->getCurrentVersion(),
+                'update_available' => $this->hasPluginUpdateAvailable(),
+                'update_url' => $this->getPluginsPageUrl(),
             ],
             [
                 'type' => 'link',
@@ -165,7 +202,7 @@ class StickyMenu
     {
         $urlService = new UrlService();
 
-        return [
+        $items = [
             [
                 'type' => 'link',
                 'icon' => 'megaphone',
@@ -191,15 +228,48 @@ class StickyMenu
                 'url' => UrlHelper::admin('admin.php?page=notifal-settings'),
                 'icon' => 'sliders2',
             ],
-            [
+        ];
+
+        // Only show What's New button when current version has update content to display
+        if ($this->hasWhatsNewContentForCurrentVersion()) {
+            $items[] = [
                 'type' => 'button',
                 'text' => sprintf(__("What's New %s", 'notifal'), $this->getCurrentVersion()),
                 'action' => 'show_whats_new',
                 'icon' => 'question-circle',
                 'primary' => false,
                 'title' => __("View what's new in this version", 'notifal'),
-            ],
+            ];
+        }
+
+        // Changelog button: opens changelog popup (separate from What's New popup)
+        $items[] = [
+            'type' => 'button',
+            'text' => __('Changelog', 'notifal'),
+            'action' => 'show_changelog',
+            'icon' => 'clock-history',
+            'primary' => false,
+            'title' => __('View plugin changelog by version', 'notifal'),
         ];
+
+        return $items;
+    }
+
+    /**
+     * Check if the current plugin version has what's new content to show
+     *
+     * When there is no update/changelog popup for the current version, the sticky
+     * header should not display the What's New button.
+     *
+     * @return bool True if current version has what's new popup content
+     * @since 2.0.0
+     */
+    private function hasWhatsNewContentForCurrentVersion(): bool
+    {
+        $whatsnew = new WhatsNewPopup();
+        $config = $whatsnew->getVersionConfig();
+
+        return isset($config['show_popup']) && $config['show_popup'] === true;
     }
 
     /**

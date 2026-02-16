@@ -36,12 +36,19 @@ class WhatsNewPopup
     const LEGACY_PLUGIN_VERSION_KEY = 'notifal_plugin_version';
 
     /**
-     * Check if what's new popup should be shown
+     * Check if what's new popup should be shown (auto-show once per version).
      *
-     * Shows popup for:
-     * - Users upgrading from versions below 2.0.0 to 2.0.0+ (detected by 'notifal_plugin_version' option)
-     * - Users upgrading between 2.0.0+ versions (detected by last shown version)
-     * Does NOT show on fresh installations.
+     * Intended behavior:
+     * - For each version with show_popup = true: auto-show once on first visit to a Notifal page
+     *   after update (or on plugins.php if is_important = true). After that, user can still open
+     *   "What's New" from the sticky menu.
+     * - If is_important = true: popup is also rendered on plugins.php so it can show there after
+     *   update; if user visits a Notifal page first without having seen it on plugins.php, it
+     *   shows on that first Notifal visit. One dismissal marks the version as shown everywhere.
+     *
+     * Shows when:
+     * - Current version has show_popup = true, AND
+     * - Legacy upgrade (pre-2.0.0), OR last_shown is empty, OR current version > last_shown.
      *
      * @return bool True if popup should be shown
      * @since 2.0.0
@@ -54,7 +61,7 @@ class WhatsNewPopup
         // Get last shown version
         $last_shown_version = $this->getLastShownVersion();
 
-        // Check if current version should show popup
+        // Current version must be configured to show a popup
         if (!$this->shouldShowForCurrentVersion()) {
             return false;
         }
@@ -66,8 +73,13 @@ class WhatsNewPopup
             return true;
         }
 
-        // Show popup for version updates within 2.0.0+ (when we've shown a popup before and version changed)
-        if (!empty($last_shown_version) && version_compare($current_version, $last_shown_version, '>')) {
+        // Never shown before: show current version popup (covers fresh install and upgrade without prior popup visit)
+        if (empty($last_shown_version)) {
+            return true;
+        }
+
+        // Show popup when current version is newer than last shown version
+        if (version_compare($current_version, $last_shown_version, '>')) {
             return true;
         }
 
@@ -160,8 +172,35 @@ class WhatsNewPopup
     public function getVersionConfig(): array
     {
         $current_version = $this->getCurrentVersion();
+        $all = $this->getAllVersionsConfig();
 
-        $versions = [
+        return $all[$current_version] ?? [
+            'show_popup' => false,
+            'is_important' => false,
+            'title' => sprintf(__("What's New in %s", 'notifal'), $current_version),
+            'content' => __('No update information available for this version.', 'notifal'),
+            'action_buttons' => [],
+        ];
+    }
+
+    /**
+     * Get all version configs (used by getVersionConfig and changelog popup).
+     *
+     * @return array<string, array> Map of version => config
+     * @since 2.0.0
+     */
+    private function getAllVersionsConfig(): array
+    {
+        $current_version = $this->getCurrentVersion();
+
+        return [
+            '2.0.1' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.0.1'),
+                'content' => $this->getVersion201Content(),
+                'action_buttons' => [],
+            ],
             '2.0.0' => [
                 'show_popup' => true,
                 'is_important' => true,
@@ -188,18 +227,53 @@ class WhatsNewPopup
                         'text' => __('Got it', 'notifal'),
                         'url' => '#',
                         'icon' => 'dashicons-yes',
-                        'close' => true, // This button closes the popup
+                        'close' => true,
                     ],
                 ],
             ],
         ];
+    }
 
-        return $versions[$current_version] ?? [
-            'show_popup' => false,
-            'is_important' => false, // Default: not an important update
-            'title' => sprintf(__("What's New in %s", 'notifal'), $current_version),
-            'content' => __('No update information available for this version.', 'notifal'),
-            'action_buttons' => [],
+    /**
+     * Get list of versions that have changelog content (newest first).
+     *
+     * Used by the Changelog popup to build the version selector.
+     *
+     * @return string[] Version strings, e.g. ['2.0.1', '2.0.0']
+     * @since 2.0.0
+     */
+    public function getAvailableChangelogVersions(): array
+    {
+        $versions = array_keys($this->getAllVersionsConfig());
+        usort($versions, 'version_compare');
+
+        return array_reverse($versions);
+    }
+
+    /**
+     * Get title and content for a specific version (for Changelog popup).
+     *
+     * @param string $version Version string, e.g. '2.0.0'
+     * @return array{title: string, content: string}
+     * @since 2.0.0
+     */
+    public function getChangelogContentForVersion(string $version): array
+    {
+        $all = $this->getAllVersionsConfig();
+        $default_content = __('No update information available for this version.', 'notifal');
+
+        if (!isset($all[$version])) {
+            return [
+                'title' => sprintf(__("What's New in %s", 'notifal'), $version),
+                'content' => $default_content,
+            ];
+        }
+
+        $config = $all[$version];
+
+        return [
+            'title' => $config['title'],
+            'content' => $config['content'],
         ];
     }
 
@@ -305,6 +379,48 @@ class WhatsNewPopup
             <div class="notifal-whatsnew-section notifal-whatsnew-ready">
                 <h3><?php echo '🎯 ' . esc_html( __( 'Ready to Build Trust and Boost Conversions?', 'notifal' ) ); ?></h3>
                 <p><?php esc_html_e("Explore your new Notifal dashboard and discover how real, authentic notifications can transform your website's performance. Your customers will thank you for the genuine engagement!", 'notifal'); ?></p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.0.1
+     *
+     * @return string HTML content for version 2.0.1
+     * @since 2.0.1
+     */
+    private function getVersion201Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.0.1", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📋</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Request Your Preferred Builder for Any Template', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder. Submit your request from the template details; we will create it and notify you when it is ready.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⏱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Cache Refresh Countdown', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The pre-created notifications list now shows how long until the list refreshes, so you know when new or updated templates will appear.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⚡</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Faster OnPage List Page', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The pre-created notifications section now loads in the background so the page is not blocked; improved loading state and timeout handling.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php

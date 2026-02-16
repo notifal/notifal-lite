@@ -25,6 +25,7 @@ use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\DeactivationPopup\DeactivationPopupService;
 use Notifal\Infrastructure\WordPress\ActivationPopup\ActivationPopupService;
 use Notifal\Infrastructure\WordPress\WhatsNewPopup\WhatsNewPopupService;
+use Notifal\Infrastructure\WordPress\ChangelogPopup\ChangelogPopupService;
 
 defined('ABSPATH') || exit;
 
@@ -116,6 +117,7 @@ class Plugin
             DeactivationPopupService::class,
             ActivationPopupService::class,
             WhatsNewPopupService::class,
+            ChangelogPopupService::class,
             StickyMenuServiceProvider::class,
         ];
 

@@ -80,9 +80,12 @@ do_action(ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_BEFORE, $notification_total, $
         $listView->render();
         ?>
 
-        <!-- Pre-created Notifications Archive Container -->
-        <div id="notifal-precreated-archive-container" class="notifal-precreated-archive-container">
-            <?php include_once __DIR__ . '/components/precreated-notifications-archive.php'; ?>
+        <!-- Pre-created Notifications Archive Container (loaded asynchronously to avoid blocking page) -->
+        <div id="notifal-precreated-archive-container" class="notifal-precreated-archive-container" data-notifal-archive-async="1">
+            <div class="notifal-precreated-archive-loading" aria-live="polite" role="status" aria-label="<?php esc_attr_e('Loading pre-created notifications...', 'notifal'); ?>">
+                <div class="notifal-precreated-archive-loading-spinner" aria-hidden="true"></div>
+                <p class="notifal-precreated-archive-loading-text"><?php esc_html_e('Loading pre-created notifications...', 'notifal'); ?></p>
+            </div>
         </div>
     </div>
 </div>
