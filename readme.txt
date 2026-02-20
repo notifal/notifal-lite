@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.0.1
+Stable tag: 2.0.2
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -378,6 +378,9 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.0.2 [2025-02-19]
+Fixed: Audio Settings — default notification sounds now work correctly.
+
 2.0.1 [2025-02-14]
 Added: In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder; submit the request from the template details and we will create it and notify you when it is ready.
 Added: The pre-created notifications list now shows how long until the list refreshes (cache countdown), so you know when new or updated templates will appear.
