@@ -162,79 +162,6 @@ class PreCreatedNotificationsApiService
     }
 
     /**
-     * Get single notification details from the API.
-     *
-     * @since 2.0.0
-     * @param int $notificationId Notification ID
-     * @return array<string, mixed> API response data or error array
-     */
-    public function getSingleNotification(int $notificationId): array
-    {
-        $cacheKey = $this->generateCacheKey('notification_' . $notificationId, []);
-        $cached = $this->getCachedResponse($cacheKey);
-
-        if ($cached !== false) {
-            return $cached;
-        }
-
-        $rateLimitCheck = $this->checkRateLimit('single_notification');
-        if (!$rateLimitCheck['allowed']) {
-            return [
-                'success' => false,
-                'error' => __('Too many requests. Please wait a moment and try again.', 'notifal'),
-                'rate_limit' => true,
-            ];
-        }
-
-        // Make API request
-        $response = $this->makeApiRequest('notifications/' . $notificationId, []);
-
-        if (is_wp_error($response)) {
-            return [
-                'success' => false,
-                'error' => $response->get_error_message(),
-            ];
-        }
-
-        if (!$this->validateHttpStatus($response, 200, 'single notification ' . $notificationId)) {
-            return [
-                'success' => false,
-                'error' => sprintf(
-                    /* translators: %d: HTTP status code */
-                    __('API request failed with status %d', 'notifal'),
-                    wp_remote_retrieve_response_code($response)
-                ),
-            ];
-        }
-
-        $data = $this->parseJsonResponse($response, 'single notification ' . $notificationId);
-
-        if ($data === null) {
-            return [
-                'success' => false,
-                'error' => __('Invalid JSON response from API', 'notifal'),
-            ];
-        }
-
-        // Do not cache error responses so that when the server recovers, the next request gets fresh data
-        $isApiError = isset($data['success']) && $data['success'] === false;
-        if (!$isApiError) {
-            $this->setCachedResponse($cacheKey, $data, self::CACHE_EXPIRATION_NOTIFICATIONS);
-        }
-
-        /**
-         * Fires after successfully fetching a single notification from API.
-         *
-         * @since 2.0.0
-         * @param array $data API response data
-         * @param int $notificationId Notification ID
-         */
-        do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_API_SINGLE_FETCHED, $data, $notificationId);
-
-        return $data;
-    }
-
-    /**
      * Submit a template request to notifal.com for a builder type (Elementor or Block Editor).
      * Used when a template does not yet have a file for that builder; the request is stored
      * on the server, info@notifal.com is notified, and the user receives a confirmation email.
@@ -459,8 +386,21 @@ class PreCreatedNotificationsApiService
     {
         $url = self::API_BASE_URL . '/' . ltrim($endpoint, '/');
 
-        // Build query string manually to handle arrays properly
-        if (!empty($params)) {
+        $args = [
+            'timeout' => self::API_TIMEOUT,
+            'user-agent' => self::USER_AGENT,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ],
+        ];
+
+        // Handle parameters based on request method
+        if ($method === 'POST' && !empty($params)) {
+            // For POST requests, send data in body as JSON
+            $args['body'] = wp_json_encode($params);
+        } elseif ($method === 'GET' && !empty($params)) {
+            // For GET requests, build query string manually to handle arrays properly
             $queryParts = [];
             foreach ($params as $key => $value) {
                 if (is_array($value)) {
@@ -473,15 +413,6 @@ class PreCreatedNotificationsApiService
             }
             $url .= '?' . implode('&', $queryParts);
         }
-
-        $args = [
-            'timeout' => self::API_TIMEOUT,
-            'user-agent' => self::USER_AGENT,
-            'headers' => [
-                'Accept' => 'application/json',
-                'Content-Type' => 'application/json',
-            ],
-        ];
 
         /**
          * Filter the HTTP request arguments before making the API call.
@@ -631,26 +562,56 @@ class PreCreatedNotificationsApiService
     }
 
     /**
-     * Get download URL for a notification file.
+     * Get single notification details from marketplace API.
+     *
      *
      * @since 2.0.0
      * @param int $notificationId Notification ID
-     * @param string $fileType File type: 'elementor' or 'block-editor'
-     * @return array<string, mixed> API response with download URL or error
+     * @return array<string, mixed> API response data or error
      */
-    public function getDownloadUrl(int $notificationId, string $fileType): array
+    public function getSingleNotification(int $notificationId): array
     {
-        $validTypes = ['elementor', 'block-editor'];
-        if (!in_array($fileType, $validTypes, true)) {
+        if ($notificationId <= 0) {
             return [
                 'success' => false,
-                'error' => __('Invalid file type. Must be elementor or block-editor.', 'notifal'),
+                'error' => __('Invalid notification ID.', 'notifal'),
             ];
         }
 
-        // Make API request to get download URL
-        $endpoint = 'downloads/' . $notificationId . '/' . $fileType;
-        $response = $this->makeApiRequest($endpoint, [], 'POST');
+        $cacheKey = $this->generateCacheKey('single_notification_' . $notificationId, []);
+
+        // Try cache first
+        $cached = $this->getCachedResponse($cacheKey);
+        if ($cached !== false) {
+            return $cached;
+        }
+
+        $rateLimitCheck = $this->checkRateLimit('single_notification');
+        if (!$rateLimitCheck['allowed']) {
+            return [
+                'success' => false,
+                'error' => __('Too many requests. Please wait a moment and try again.', 'notifal'),
+                'rate_limit' => true,
+            ];
+        }
+
+        // Build tracking context
+        $requestParams = [];
+        $siteUrl = home_url('/');
+        $parsedUrl = function_exists('wp_parse_url') ? wp_parse_url($siteUrl) : parse_url($siteUrl);
+        $domain = is_array($parsedUrl) && isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
+        $adminEmail = get_option('admin_email', '');
+
+        if ($domain !== '') {
+            $requestParams['domain'] = sanitize_text_field($domain);
+        }
+
+        if ($adminEmail !== '') {
+            $requestParams['admin_email'] = sanitize_email($adminEmail);
+        }
+
+        // Make API request
+        $response = $this->makeApiRequest('notifications/' . $notificationId, $requestParams);
 
         if (is_wp_error($response)) {
             return [
@@ -659,10 +620,92 @@ class PreCreatedNotificationsApiService
             ];
         }
 
-        if (!$this->validateHttpStatus($response, 200, 'download URL for ' . $notificationId . '/' . $fileType)) {
+        if (!$this->validateHttpStatus($response, 200, 'single notification ' . $notificationId)) {
             return [
                 'success' => false,
                 'error' => sprintf(
+                    /* translators: %d: HTTP status code */
+                    __('API request failed with status %d', 'notifal'),
+                    wp_remote_retrieve_response_code($response)
+                ),
+            ];
+        }
+
+        $data = $this->parseJsonResponse($response, 'single notification ' . $notificationId);
+
+        if ($data === null) {
+            return [
+                'success' => false,
+                'error' => __('Invalid JSON response from API', 'notifal'),
+            ];
+        }
+
+        // Do not cache error responses so that when the server recovers, the next request gets fresh data
+        $isApiError = isset($data['success']) && $data['success'] === false;
+        if (!$isApiError) {
+            $this->setCachedResponse($cacheKey, $data, self::CACHE_EXPIRATION_NOTIFICATIONS);
+        }
+
+        /**
+         * Fires after successfully fetching a single notification from API.
+         *
+         * @since 2.0.0
+         * @param array $data API response data
+         * @param int $notificationId Notification ID
+         */
+        do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_API_SINGLE_FETCHED, $data, $notificationId);
+
+        return $data;
+    }
+
+    /**
+     * Get download URL for a notification file.
+     *
+     * @since 2.0.0
+     * @param int    $notificationId Notification ID
+     * @param string $fileType       File type: 'elementor' or 'block-editor'
+     * @return array<string, mixed>  API response with download URL or error
+     */
+    public function getDownloadUrl(int $notificationId, string $fileType): array
+    {
+        $validTypes = ['elementor', 'block-editor'];
+        if (!in_array($fileType, $validTypes, true)) {
+            return [
+                'success' => false,
+                'error'   => __('Invalid file type. Must be elementor or block-editor.', 'notifal'),
+            ];
+        }
+
+        // Build tracking context
+        $requestBody = [];
+        $siteUrl     = home_url('/');
+        $parsedUrl   = function_exists('wp_parse_url') ? wp_parse_url($siteUrl) : parse_url($siteUrl);
+        $domain      = is_array($parsedUrl) && isset($parsedUrl['host']) ? $parsedUrl['host'] : '';
+        $adminEmail  = get_option('admin_email', '');
+
+        if ($domain !== '') {
+            $requestBody['domain'] = sanitize_text_field($domain);
+        }
+
+        if ($adminEmail !== '') {
+            $requestBody['admin_email'] = sanitize_email($adminEmail);
+        }
+
+        // Make API request to get download URL
+        $endpoint = 'downloads/' . $notificationId . '/' . $fileType;
+        $response = $this->makeApiRequest($endpoint, $requestBody, 'POST');
+
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'error'   => $response->get_error_message(),
+            ];
+        }
+
+        if (!$this->validateHttpStatus($response, 200, 'download URL for ' . $notificationId . '/' . $fileType)) {
+            return [
+                'success' => false,
+                'error'   => sprintf(
                     /* translators: %d: HTTP status code */
                     __('API request failed with status %d', 'notifal'),
                     wp_remote_retrieve_response_code($response)
@@ -675,7 +718,7 @@ class PreCreatedNotificationsApiService
         if ($data === null) {
             return [
                 'success' => false,
-                'error' => __('Invalid JSON response from API', 'notifal'),
+                'error'   => __('Invalid JSON response from API', 'notifal'),
             ];
         }
 

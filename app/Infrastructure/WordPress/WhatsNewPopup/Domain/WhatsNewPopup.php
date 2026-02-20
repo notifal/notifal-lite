@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.0.0';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.0.2';
     }
 
     /**
@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.0.2' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.0.2'),
+                'content' => $this->getVersion202Content(),
+                'action_buttons' => [],
+            ],
             '2.0.1' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -379,6 +386,34 @@ class WhatsNewPopup
             <div class="notifal-whatsnew-section notifal-whatsnew-ready">
                 <h3><?php echo '🎯 ' . esc_html( __( 'Ready to Build Trust and Boost Conversions?', 'notifal' ) ); ?></h3>
                 <p><?php esc_html_e("Explore your new Notifal dashboard and discover how real, authentic notifications can transform your website's performance. Your customers will thank you for the genuine engagement!", 'notifal'); ?></p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.0.2
+     *
+     * @return string HTML content for version 2.0.2
+     * @since 2.0.2
+     */
+    private function getVersion202Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.0.2", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔊</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Audio Settings', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Default notification sounds in Appearance settings now work correctly.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
