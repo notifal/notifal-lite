@@ -346,7 +346,6 @@ class ActionButtonRenderer
                         }
                     }
                     
-                    // Add context data for JavaScript
                     if ($contextUrl) {
                         $link_attrs[] = 'data-post-url="' . esc_url($contextUrl) . '"';
                     }

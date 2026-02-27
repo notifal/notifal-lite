@@ -25,7 +25,7 @@ class MenuController
      */
     public static function register(): void
     {
-        add_action('admin_menu', [self::class, 'addMenu'],20);
+        add_action('admin_menu', [self::class, 'addMenu'], 20);
         add_filter('submenu_file', [self::class, 'hideEditPageFromMenu']);
     }
 

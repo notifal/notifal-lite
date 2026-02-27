@@ -44,6 +44,9 @@ class ApiRegistrar
         // Register eligibility endpoint
         register_rest_route('notifal/v1', '/onpage/eligible', self::getEligibleRouteArgs());
 
+        // Register preview endpoint (admin only; same response shape as eligible)
+        register_rest_route('notifal/v1', '/onpage/preview', self::getPreviewRouteArgs());
+
         // Register tracking endpoint
         register_rest_route('notifal/v1', '/onpage/track', self::getTrackingRouteArgs());
 
@@ -82,6 +85,42 @@ class ApiRegistrar
                     'required'          => false,
                     'type'              => 'integer',
                     'sanitize_callback' => 'absint',
+                ],
+                'device_type' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'enum'              => ['desktop', 'mobile', 'tablet'],
+                    'default'           => 'desktop',
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * Get route arguments for preview endpoint (admin only).
+     *
+     * @return array Route configuration array
+     * @since 2.0.0
+     */
+    private static function getPreviewRouteArgs(): array
+    {
+        return [
+            'methods'             => 'GET',
+            'callback'            => [new OnPageNotificationApiController(), 'getPreviewNotification'],
+            'permission_callback' => '__return_true',
+            'args'                => [
+                'id' => [
+                    'required'          => true,
+                    'type'              => 'integer',
+                    'sanitize_callback' => 'absint',
+                    'validate_callback' => static function ($param) {
+                        return $param > 0;
+                    },
+                ],
+                '_preview_token' => [
+                    'required'          => false,
+                    'type'              => 'string',
+                    'sanitize_callback' => 'sanitize_text_field',
                 ],
                 'device_type' => [
                     'required'          => false,

@@ -105,6 +105,11 @@ class NotificationDataPreparer
             'builder_type' => $renderedContent['builder_type'] ?? null,
         ];
 
+        // For Elementor + immediate show: pass deferred featured image HTML for frontend to inject after delay
+        if (!empty($renderedContent['deferred_featured_image_html'])) {
+            $frontendData['deferred_featured_image_html'] = $renderedContent['deferred_featured_image_html'];
+        }
+
         // Add calculated priority score for frontend conflict resolution
         $frontendData['priority'] = $this->getNotificationPriority($frontendData);
 

@@ -17,7 +17,9 @@ use WP_Post;
  * Class PreviewRouteController
  *
  * Handles frontend preview route for notifal_template post.
- * Renders minimal HTML without theme header/footer for iframe usage.
+ * Renders minimal HTML at wp_loaded and exits, so the preview always
+ * displays regardless of theme or main query.  Post context is set so
+ * wp_head() and content rendering see the correct template post.
  *
  * @since 2.0.0
  * @package Notifal\Modules\Templates\Presentation\Frontend\Routes
@@ -39,7 +41,10 @@ class PreviewRouteController
     }
 
     /**
-     * Checks for preview query param and renders template if valid.
+     * If preview query param is present, render minimal template page and exit.
+     *
+     * Does not rely on main query or template_include; outputs HTML directly
+     * so the preview works on any WordPress setup.
      *
      * @since 2.0.0
      * @return void
@@ -50,83 +55,60 @@ class PreviewRouteController
             return;
         }
 
-        // Verify nonce for security
         if (!notifal_verify_get_request('notifal_template_preview', 'edit_posts')) {
             return;
         }
 
         $postId = absint($_GET['notifal_template_preview']);
-        $post = get_post($postId);
+        $post   = get_post($postId);
 
         if (
             !$post ||
             $post->post_type !== 'notifal_template' ||
             $post->post_status !== 'publish'
         ) {
-            wp_die(__('Invalid or inaccessible template.', 'notifal'));
+            wp_die(esc_html__('Invalid or inaccessible template.', 'notifal'));
         }
 
         do_action(ActionHooks::TEMPLATE_PREVIEW_BEFORE, $post);
 
-        $isElementorTemplate = ElementorHelper::hasBuilder($post);
-        $isElementorActive = PluginDetector::isElementorActive();
+        $GLOBALS['post'] = $post;
+        setup_postdata($post);
 
-        // Ensure blocks are registered for preview context
-        if (!$isElementorTemplate) {
+        if (!ElementorHelper::hasBuilder($post)) {
             self::ensureBlocksRegistered();
         }
 
-        // For Elementor templates, trigger widget registration via hook
-        if ($isElementorTemplate) {
-            add_filter('elementor/widgets/widgets_registered', function() use ($post) {
-                $original_post = $GLOBALS['post'] ?? null;
+        if (ElementorHelper::hasBuilder($post) && PluginDetector::isElementorActive()) {
+            add_filter('elementor/widgets/widgets_registered', function () use ($post) {
+                $original_post   = $GLOBALS['post'] ?? null;
                 $GLOBALS['post'] = $post;
-
                 if (class_exists('\Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Widgets\WidgetsRegistrar')) {
                     \Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Widgets\WidgetsRegistrar::register_widgets();
                 }
-
                 $GLOBALS['post'] = $original_post;
             }, 999);
         }
 
-        // Enqueue Elementor assets if needed
-        if ($isElementorTemplate) {
-            \Elementor\Plugin::$instance->frontend->enqueue_styles();
-            \Elementor\Plugin::$instance->frontend->enqueue_scripts();
+        if (ElementorHelper::hasBuilder($post) && PluginDetector::isElementorActive()) {
+            self::initElementorForPreview($post);
         }
 
-        self::renderMinimalTemplate($post, $isElementorTemplate, $isElementorActive);
+        wp_enqueue_style(
+            'notifal-template-preview',
+            ModulePaths::cssFrontendUrl() . 'notifal-template-preview.css',
+            [],
+            NOTIFAL_VERSION
+        );
 
-        do_action(ActionHooks::TEMPLATE_PREVIEW_AFTER, $post);
-
-        exit;
-    }
-
-    /**
-     * Renders a minimal HTML page for iframe preview.
-     *
-     * @param WP_Post $post The template post object
-     * @param bool|null $isElementorTemplate Whether the template uses Elementor
-     * @param bool|null $isElementorActive Whether Elementor plugin is active
-     * @since 2.0.0
-     * @return void
-     */
-    protected static function renderMinimalTemplate(WP_Post $post, ?bool $isElementorTemplate = null, ?bool $isElementorActive = null): void
-    {
-        $isElementorTemplate = $isElementorTemplate ?? ElementorHelper::hasBuilder($post);
-        $isElementorActive = $isElementorActive ?? PluginDetector::isElementorActive();
+        $renderedContent = '';
+        add_action('wp_enqueue_scripts', static function () use ($post, &$renderedContent) {
+            $renderedContent = self::renderPreviewContent($post);
+        }, PHP_INT_MAX);
 
         status_header(200);
         nocache_headers();
-        header('Content-Type: text/html; charset=' . get_option('blog_charset'));
-
-        // Hide PHP errors in preview to prevent breaking the iframe display
-        // regardless of WP_DEBUG_DISPLAY setting in wp-config.php
-        // This ensures clean preview output for templates
-        ini_set('display_errors', '0');
-        error_reporting(0);
-
+        header('Content-Type: text/html; charset=' . get_bloginfo('charset'));
         add_filter('show_admin_bar', '__return_false');
         remove_all_actions('admin_notices');
         remove_all_actions('all_admin_notices');
@@ -134,183 +116,173 @@ class PreviewRouteController
         remove_all_actions('network_admin_notices');
         remove_all_actions('in_admin_header');
         ?>
-        <!DOCTYPE html>
-        <html <?php language_attributes(); ?>>
-        <head>
-            <meta charset="<?php bloginfo('charset'); ?>">
-            <meta name="viewport" content="width=device-width, initial-scale=1">
-            <?php
-            // Enqueue Elementor assets if needed
-            if ($isElementorTemplate && $isElementorActive) {
-                try {
-                    \Elementor\Plugin::$instance->frontend->init();
-                    \Elementor\Plugin::$instance->frontend->enqueue_styles();
-                    \Elementor\Plugin::$instance->frontend->enqueue_scripts();
-
-                    \Elementor\Plugin::$instance->widgets_manager->enqueue_widgets_styles();
-
-                    wp_enqueue_style('elementor-icons');
-                    wp_enqueue_style('elementor-animations');
-                    wp_enqueue_style('elementor-frontend');
-                } catch (\Exception $e) {
-                    // Silently handle Elementor initialization errors to prevent breaking preview
-                }
-            }
-            
-            // Enqueue preview-specific styles
-            wp_enqueue_style(
-                'notifal-template-preview',
-                ModulePaths::cssFrontendUrl() . 'notifal-template-preview.css',
-                [],
-                NOTIFAL_VERSION
-            );
-
-            // Always load WP head for proper asset loading
-            wp_head();
-            ?>
-        </head>
-        <body>
-        <div class="notifal-template-preview-wrapper">
-            <?php
-            if ($isElementorTemplate) {
-                $content = \Elementor\Plugin::$instance->frontend->get_builder_content_for_display($post->ID);
-
-                try {
-                    $templateBuilder = notifal_app(\Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Services\ElementorTemplateBuilder::class);
-                    $content = $templateBuilder->buildPreviewContent($content);
-                } catch (\Exception $e) {
-                    // Fallback to basic tag processing if service unavailable
-                    $tagManager = notifal_app(\Notifal\Domain\Tags\TagManager::class);
-                    $previewDataResolver = notifal_app(\Notifal\Modules\Templates\Application\Services\PreviewDataResolver::class);
-                    $previewData = $previewDataResolver->resolve($content);
-
-                    if ($previewData) {
-                        $orderFetcher = notifal_app(\Notifal\Domain\Orders\OrderFetcherInterface::class);
-                        $context = [
-                            'product' => $previewData->getProduct(),
-                            'order' => $orderFetcher->getRandom(),
-                            'is_preview' => true,
-                        ];
-                        $content = $tagManager->render($content, $context);
-                    }
-                }
-            } else {
-                global $wp_query, $wp_the_query;
-
-                $original_post = $GLOBALS['post'] ?? null;
-                $original_query = $wp_query;
-                $original_the_query = $wp_the_query;
-
-                $GLOBALS['post'] = $post;
-                setup_postdata($post);
-
-                $wp_query = new \WP_Query([
-                    'p' => $post->ID,
-                    'post_type' => 'notifal_template',
-                    'posts_per_page' => 1
-                ]);
-                $wp_the_query = $wp_query;
-
-                if (function_exists('do_blocks')) {
-                    $content = do_blocks($post->post_content);
-                } else {
-                    $content = apply_filters('the_content', $post->post_content);
-                }
-
-                if (class_exists('\Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\BlockEditorTemplateBuilder')) {
-                    try {
-                        $templateBuilder = notifal_app(\Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\BlockEditorTemplateBuilder::class);
-                        $content = $templateBuilder->buildPreviewContent($content);
-                    } catch (\Exception $e) {
-                        // Continue with original content if service unavailable
-                    }
-                }
-
-                $GLOBALS['post'] = $original_post;
-                $wp_query = $original_query;
-                $wp_the_query = $original_the_query;
-                if ($original_post) {
-                    setup_postdata($original_post);
-                } else {
-                    wp_reset_postdata();
-                }
-
-                if (self::isContentMinimal($content)) {
-                    $content = self::generateFallbackPreview($post);
-                }
-            }
-
-            echo apply_filters(FilterHooks::TEMPLATE_PREVIEW_OUTPUT, $content, $post);
-            ?>
-        </div>
-        <?php wp_footer(); ?>
-        </body>
-        </html>
+<!DOCTYPE html>
+<html <?php language_attributes(); ?>>
+<head>
+    <meta charset="<?php bloginfo('charset'); ?>">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+        <?php wp_head(); ?>
+</head>
+<body <?php body_class('notifal-template-preview-body'); ?>>
+<div class="notifal-template-preview-wrapper">
         <?php
+        echo apply_filters(FilterHooks::TEMPLATE_PREVIEW_OUTPUT, $renderedContent, $post);
+        ?>
+</div>
+        <?php
+        wp_footer();
+        do_action(ActionHooks::TEMPLATE_PREVIEW_AFTER, $post);
+        wp_reset_postdata();
+        ?>
+</body>
+</html>
+        <?php
+        exit;
     }
 
     /**
-     * Check if content is minimal or empty.
+     * Initialise Elementor frontend for preview (register and enqueue base assets).
      *
-     * @param string $content The processed content
-     * @return bool True if content is minimal, false otherwise
-     * @since 2.0.0
-     */
-    private static function isContentMinimal(string $content): bool
-    {
-        $cleanContent = trim(strip_tags($content));
-        return empty($cleanContent) || strlen($cleanContent) < 10;
-    }
-
-    /**
-     * Generate fallback preview content for minimal templates.
-     *
-     * @param WP_Post $post The template post
-     * @return string Fallback preview HTML
-     * @since 2.0.0
-     */
-    private static function generateFallbackPreview(WP_Post $post): string
-    {
-        $title = esc_html($post->post_title ?: __('Untitled Template', 'notifal'));
-
-        return sprintf(
-            '<div style="padding: 40px; text-align: center; background: #f9f9f9; border: 2px dashed #ddd; border-radius: 8px; margin: 20px;">
-                <h3 style="color: #666; margin: 0 0 10px 0; font-family: sans-serif;">%s</h3>
-                <p style="color: #999; margin: 0; font-family: sans-serif; font-size: 14px;">%s</p>
-                <p style="color: #999; margin: 10px 0 0 0; font-family: sans-serif; font-size: 12px;">%s</p>
-            </div>',
-            $title,
-            esc_html__('This template needs content to display a preview.', 'notifal'),
-            esc_html__('Click Edit to add blocks and design your notification.', 'notifal')
-        );
-    }
-
-    /**
-     * Ensure Notifal blocks are registered for preview context.
-     *
-     * @since 2.0.0
+     * @param WP_Post $post Template post.
      * @return void
      */
-    private static function ensureBlocksRegistered(): void
+    private static function initElementorForPreview(WP_Post $post): void
     {
-        if (class_exists('\Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\RegisterBlocks')) {
-            // Check if blocks are already registered to avoid duplicate registration errors
-            $registry = \WP_Block_Type_Registry::get_instance();
-            $notifal_blocks = ['notifal/action-button', 'notifal/close-icon', 'notifal/featured-image'];
-
-            $blocks_registered = true;
-            foreach ($notifal_blocks as $block_name) {
-                if (!$registry->is_registered($block_name)) {
-                    $blocks_registered = false;
-                    break;
-                }
+        try {
+            $frontend = \Elementor\Plugin::$instance->frontend;
+            $frontend->init();
+            $frontend->register_styles();
+            $frontend->register_scripts();
+            $frontend->enqueue_styles();
+            $frontend->enqueue_scripts();
+            if (method_exists(\Elementor\Plugin::$instance->widgets_manager, 'enqueue_widgets_styles')) {
+                \Elementor\Plugin::$instance->widgets_manager->enqueue_widgets_styles();
             }
-
-            // Only register if blocks are not already registered
-            if (!$blocks_registered) {
-                RegisterBlocks::registerAllBlocks();
-            }
+            wp_enqueue_style('elementor-icons');
+            wp_enqueue_style('elementor-animations');
+            wp_enqueue_style('elementor-frontend');
+        } catch (\Exception $e) {
+            // continue
         }
     }
 
+    /**
+     * Render template content for preview (Elementor or block editor).
+     *
+     * @param WP_Post $post Template post.
+     * @return string HTML content.
+     */
+    private static function renderPreviewContent(WP_Post $post): string
+    {
+        $isElementor = ElementorHelper::hasBuilder($post) && PluginDetector::isElementorActive();
+
+        if ($isElementor) {
+            $saved = $GLOBALS['post'] ?? null;
+            unset($GLOBALS['post']);
+            $content = \Elementor\Plugin::instance()->frontend->get_builder_content_for_display($post->ID);
+            $GLOBALS['post'] = $saved;
+            if ($saved) {
+                setup_postdata($saved);
+            }
+            $content = self::processElementorPreviewTags($content);
+        } else {
+            $content = $post->post_content;
+            if (function_exists('do_blocks')) {
+                $content = do_blocks($content);
+            } else {
+                $content = apply_filters('the_content', $content);
+            }
+            $content = self::processBlockEditorPreviewTags($content, $post);
+        }
+
+        $content = self::processPreviewContent($content, $post);
+        return $content;
+    }
+
+    /**
+     * Process preview content with Notifal tags (wrapper).
+     *
+     * @param string  $content Rendered HTML.
+     * @param WP_Post $post    Template post.
+     * @return string Processed content.
+     */
+    public static function processPreviewContent(string $content, WP_Post $post): string
+    {
+        $isElementor = ElementorHelper::hasBuilder($post) && PluginDetector::isElementorActive();
+        if ($isElementor) {
+            return self::processElementorPreviewTags($content);
+        }
+        return self::processBlockEditorPreviewTags($content, $post);
+    }
+
+    private static function processElementorPreviewTags(string $content): string
+    {
+        try {
+            $templateBuilder = notifal_app(
+                \Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Services\ElementorTemplateBuilder::class
+            );
+            return $templateBuilder->buildPreviewContent($content);
+        } catch (\Exception $e) {
+            // fallback
+        }
+        try {
+            $tagManager          = notifal_app(\Notifal\Domain\Tags\TagManager::class);
+            $previewDataResolver = notifal_app(\Notifal\Modules\Templates\Application\Services\PreviewDataResolver::class);
+            $previewData         = $previewDataResolver->resolve($content);
+            if ($previewData) {
+                $orderFetcher = notifal_app(\Notifal\Domain\Orders\OrderFetcherInterface::class);
+                $context     = [
+                    'product'    => $previewData->getProduct(),
+                    'order'      => $orderFetcher->getRandom(),
+                    'is_preview' => true,
+                ];
+                $content = $tagManager->render($content, $context);
+            }
+        } catch (\Exception $e) {
+            // keep content
+        }
+        return $content;
+    }
+
+    private static function processBlockEditorPreviewTags(string $content, WP_Post $post): string
+    {
+        if (class_exists('\Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\BlockEditorTemplateBuilder')) {
+            try {
+                $templateBuilder = notifal_app(
+                    \Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\BlockEditorTemplateBuilder::class
+                );
+                return $templateBuilder->buildPreviewContent($content);
+            } catch (\Exception $e) {
+                // keep content
+            }
+        }
+        return $content;
+    }
+
+    public static function getPreviewPost(): ?WP_Post
+    {
+        return $GLOBALS['post'] ?? null;
+    }
+
+    public static function renderPreviewOutput(WP_Post $post): void
+    {
+        $GLOBALS['post'] = $post;
+        setup_postdata($post);
+        self::maybeRenderPreview();
+    }
+
+    private static function ensureBlocksRegistered(): void
+    {
+        if (!class_exists('\Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\RegisterBlocks')) {
+            return;
+        }
+        $registry       = \WP_Block_Type_Registry::get_instance();
+        $notifal_blocks = ['notifal/action-button', 'notifal/close-icon', 'notifal/featured-image'];
+        foreach ($notifal_blocks as $block_name) {
+            if (!$registry->is_registered($block_name)) {
+                RegisterBlocks::registerAllBlocks();
+                break;
+            }
+        }
+    }
 }

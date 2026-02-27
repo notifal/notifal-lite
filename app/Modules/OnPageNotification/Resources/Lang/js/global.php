@@ -23,6 +23,8 @@ return [
     'free_version_limit'     => __( 'You can only have one active notification in the free version. Upgrade to Notifal Pro to activate multiple notifications simultaneously.', 'notifal' ),
     'unexpected_error'       => __( 'An unexpected error occurred. Please try again.', 'notifal' ),
     'select_post_items'      => __( 'Please select at least one post item.', 'notifal' ),
+    'preview_url_required'   => __( 'Please enter a path or URL.', 'notifal' ),
+    'preview_url_invalid'    => __( 'Please enter a valid path or URL.', 'notifal' ),
     'displayTypes' => [
         'toast' => [
             'description' => __( 'A small notification that slides in from the side (usually top-right). Perfect for quick messages, success confirmations, or alerts. Users can dismiss it or it auto-hides after a few seconds.', 'notifal' ),

@@ -4,9 +4,11 @@ namespace Notifal\Modules\OnPageNotification\Presentation\Frontend\Controllers;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\CacheManager;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationDataPreparer;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\TrackingService;
+use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
 use Notifal\Shared\Utils\Helper;
 use WP_REST_Request;
 use WP_REST_Response;
@@ -42,6 +44,11 @@ class OnPageNotificationApiController
     private $templateRenderer;
 
     /**
+     * @var NotificationDataPreparer
+     */
+    private $dataPreparer;
+
+    /**
      * Constructor
      *
      * @since 2.0.0
@@ -51,6 +58,7 @@ class OnPageNotificationApiController
         $this->eligibilityService = notifal_app(EligibilityService::class);
         $this->trackingService = notifal_app(TrackingService::class);
         $this->templateRenderer = notifal_app(FrontendTemplateRenderer::class);
+        $this->dataPreparer = notifal_app(NotificationDataPreparer::class);
     }
 
     /**
@@ -142,6 +150,63 @@ class OnPageNotificationApiController
     }
 
     /**
+     * Get a single notification for admin preview (same shape as eligible response).
+     * Admin-only; bypasses display rules, frequency, and schedule.
+     *
+     * @param WP_REST_Request $request Request with id (notification ID)
+     * @return WP_REST_Response|WP_Error
+     * @since 2.0.0
+     */
+    public function getPreviewNotification(WP_REST_Request $request)
+    {
+        $id = absint($request->get_param('id'));
+        if ($id <= 0) {
+            return notifal_wp_error(
+                'notifal_preview_invalid_id',
+                __('Invalid notification ID.', 'notifal'),
+                ['status' => 400]
+            );
+        }
+
+        if (!$this->canAccessPreview($request, $id)) {
+            return new \WP_REST_Response(
+                ['code' => 'notifal_preview_forbidden', 'message' => __('Sorry, you are not allowed to view this preview.', 'notifal')],
+                403
+            );
+        }
+
+        $post = NotificationQuery::get($id);
+        if (!$post || $post->post_type !== 'notifal_onpage_notif') {
+            return notifal_wp_error(
+                'notifal_preview_not_found',
+                __('Notification not found.', 'notifal'),
+                ['status' => 404]
+            );
+        }
+
+        $context = $this->buildContextFromRequest($request);
+        $context['is_preview'] = true;
+
+        $prepared = $this->dataPreparer->prepareForFrontend($post, $context);
+        if ($prepared === null) {
+            return notifal_wp_error(
+                'notifal_preview_render_error',
+                __('Unable to prepare notification for preview.', 'notifal'),
+                ['status' => 500]
+            );
+        }
+
+        return new WP_REST_Response([
+            'success' => true,
+            'notifications' => [$prepared],
+            'count' => 1,
+            'is_preview' => true,
+            'timestamp' => current_time('timestamp'),
+            'context' => $context,
+        ], 200);
+    }
+
+    /**
      * Track a notification event.
      *
      * Records user interactions with notifications for analytics and
@@ -154,6 +219,14 @@ class OnPageNotificationApiController
     public function trackEvent(WP_REST_Request $request)
     {
         try {
+            // Do not track when request is from preview (admin preview mode)
+            if ($this->isPreviewRequest($request)) {
+                return new WP_REST_Response([
+                    'success' => true,
+                    'message' => __('Preview mode: analytics not recorded.', 'notifal'),
+                ], 200);
+            }
+
             // Verify nonce for security
             $nonce = $request->get_header('X-WP-Nonce') ?: $request->get_param('nonce');
             if (!wp_verify_nonce($nonce, 'wp_rest')) {
@@ -446,6 +519,45 @@ class OnPageNotificationApiController
     }
 
     /**
+     * Check if the current request is allowed to access the preview endpoint.
+     * Allows: (1) user with edit_posts, or (2) valid short-lived preview token.
+     *
+     * @param WP_REST_Request $request REST request
+     * @param int             $id     Notification ID being previewed
+     * @return bool True if access is allowed
+     * @since 2.0.0
+     */
+    private function canAccessPreview(WP_REST_Request $request, int $id): bool
+    {
+        if (current_user_can('edit_posts')) {
+            return true;
+        }
+        $token = $request->get_param('_preview_token');
+        if (!is_string($token) || $token === '') {
+            return false;
+        }
+        $token = sanitize_text_field($token);
+        $stored_id = get_transient('notifal_onpage_preview_token_' . $token);
+        return $stored_id !== false && (int) $stored_id === $id;
+    }
+
+    /**
+     * Check if the request is from the admin preview context (no analytics).
+     *
+     * @param WP_REST_Request $request REST request
+     * @return bool True if request is a preview request
+     * @since 2.0.0
+     */
+    private function isPreviewRequest(WP_REST_Request $request): bool
+    {
+        if ($request->get_header('X-Notifal-Preview') === '1') {
+            return true;
+        }
+        $referer = $request->get_header('Referer') ?: '';
+        return strpos($referer, 'notifal_onpage_preview') !== false;
+    }
+
+    /**
      * Build context from request parameters.
      *
      * Constructs a context array containing page, user, and device information
@@ -473,6 +585,9 @@ class OnPageNotificationApiController
         if (empty($context['url'])) {
             $context['url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
         }
+
+        // Parse URL query parameters for UTM/query-parameter display rules
+        $context['query_params'] = $this->parseQueryParamsForContext($context['url']);
 
         // If no user_id provided, use current user
         if (empty($context['user_id'])) {
@@ -516,6 +631,36 @@ class OnPageNotificationApiController
         $context['is_logged_in'] = is_user_logged_in();
 
         return $context;
+    }
+
+    /**
+     * Parse query parameters from URL or current request for display rule evaluation.
+     *
+     * @param string $url Full URL or path with query string
+     * @return array<string, string> Map of parameter name to value
+     * @since 2.0.0
+     */
+    private function parseQueryParamsForContext(string $url): array
+    {
+        if ($url !== '' && strpos($url, '?') !== false) {
+            $query = wp_parse_url($url, PHP_URL_QUERY);
+            if (is_string($query) && $query !== '') {
+                wp_parse_str($query, $parsed);
+                if (is_array($parsed)) {
+                    return array_map(function ($v) {
+                        return is_array($v) ? (string) reset($v) : (string) $v;
+                    }, $parsed);
+                }
+            }
+        }
+
+        if (!empty($_GET) && is_array($_GET)) {
+            return array_map(function ($v) {
+                return is_array($v) ? (string) reset($v) : (string) $v;
+            }, $_GET);
+        }
+
+        return [];
     }
 
     /**

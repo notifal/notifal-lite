@@ -21,7 +21,7 @@ trait FilterRendererTrait
      * Render taxonomy filter section.
      *
      * Renders a complete filter section for a specific taxonomy including
-     * checkboxes, show more/less functionality, and proper accessibility.
+     * checkboxes and collapse/expand toggle. All terms are shown by default (no Show More/Less).
      *
      * @param string $taxonomy_slug The taxonomy slug (e.g., 'use_cases', 'events')
      * @param string $taxonomy_label The human-readable label for the taxonomy
@@ -45,8 +45,6 @@ trait FilterRendererTrait
             return;
         }
 
-        $initial_display = 5;
-        $total_count = count($terms);
         $input_name = $taxonomy_slug . '[]';
         $data_taxonomy = $taxonomy_slug;
 
@@ -68,44 +66,44 @@ trait FilterRendererTrait
             $data_taxonomy = 'layouts';
         }
 
+        $wrapper_id = 'notifal-filter-options-' . $data_taxonomy . ( $id_prefix ? '-' . sanitize_key( $id_prefix ) : '' );
+        $collapse_label = __( 'Collapse', $text_domain );
         ?>
-        <div class="filter-section" data-taxonomy="<?php echo esc_attr($data_taxonomy); ?>">
-            <h3><?php echo esc_html($taxonomy_label); ?></h3>
-            <div class="filter-options-wrapper">
+        <div class="filter-section filter-section--taxonomy" data-taxonomy="<?php echo esc_attr( $data_taxonomy ); ?>">
+            <div class="filter-section-header">
+                <h3><?php echo esc_html( $taxonomy_label ); ?></h3>
+                <button type="button" class="filter-section-toggle" aria-expanded="true" aria-controls="<?php echo esc_attr( $wrapper_id ); ?>" aria-label="<?php echo esc_attr( $collapse_label . ' ' . $taxonomy_label ); ?>">
+                    <span class="filter-section-toggle-icon">
+                        <?php echo NotifalIconService::render( 'arrow-up-short', 16 ); ?>
+                    </span>
+                </button>
+            </div>
+            <div class="filter-options-wrapper" id="<?php echo esc_attr( $wrapper_id ); ?>">
                 <?php
                 foreach ($terms as $index => $term) :
-                    $is_hidden = $index >= $initial_display;
                     $term_slug = $term['slug'] ?? '';
                     $term_name = $term['name'] ?? '';
                     $term_count = $term['count'] ?? 0;
                     $input_id = $id_prefix . $taxonomy_slug . '-' . $term_slug;
                     $current_values = $current_filters[$taxonomy_slug] ?? [];
                 ?>
-                    <div class="filter-option <?php echo $is_hidden ? 'filter-option-hidden' : ''; ?>" data-index="<?php echo esc_attr($index); ?>">
+                    <div class="filter-option" data-index="<?php echo esc_attr( $index ); ?>">
                         <input
                             type="checkbox"
-                            id="<?php echo esc_attr($input_id); ?>"
+                            id="<?php echo esc_attr( $input_id ); ?>"
                             class="filter-checkbox"
-                            name="<?php echo esc_attr($input_name); ?>"
-                            value="<?php echo esc_attr($term_slug); ?>"
-                            data-taxonomy="<?php echo esc_attr($data_taxonomy); ?>"
-                            <?php checked(in_array($term_slug, $current_values)); ?>
+                            name="<?php echo esc_attr( $input_name ); ?>"
+                            value="<?php echo esc_attr( $term_slug ); ?>"
+                            data-taxonomy="<?php echo esc_attr( $data_taxonomy ); ?>"
+                            <?php checked( in_array( $term_slug, $current_values ) ); ?>
                         />
-                        <label for="<?php echo esc_attr($input_id); ?>">
-                            <?php echo esc_html($term_name); ?>
-                            <span class="taxonomy-filter-count">(<?php echo esc_html($term_count); ?>)</span>
+                        <label for="<?php echo esc_attr( $input_id ); ?>">
+                            <?php echo esc_html( $term_name ); ?>
+                            <span class="taxonomy-filter-count">(<?php echo esc_html( $term_count ); ?>)</span>
                         </label>
                     </div>
                 <?php endforeach; ?>
             </div>
-            <?php if ($total_count > $initial_display) : ?>
-                <a href="#" class="filter-load-more" data-taxonomy="<?php echo esc_attr($data_taxonomy); ?>" data-total="<?php echo esc_attr($total_count); ?>" data-show-more="<?php echo esc_attr__('Show More', $text_domain); ?>" data-show-less="<?php echo esc_attr__('Show Less', $text_domain); ?>">
-                    <span class="load-more-text"><?php esc_html_e('Show More', $text_domain); ?></span>
-                    <span class="load-more-icon">
-                        <?php echo NotifalIconService::render('arrow-down-short', 20); ?>
-                    </span>
-                </a>
-            <?php endif; ?>
         </div>
         <?php
     }

@@ -38,15 +38,9 @@ class FeaturedImageResolver
     public static function getFeaturedImageHtml(?array $context, string $size = 'large', array $attributes = [], string $source = 'auto'): string
     {
         try {
-            // If source is specified and not 'auto', prioritize that source
-            // UNLESS we have special contexts that should take priority for consistency with tags
+            // When user has explicitly selected a source, respect it (do not override with comment)
             if ($source !== 'auto') {
-                // Special case: If we have comment context, always use comment's post image for consistency with comment_post_title tag
-                if (isset($context['comment']) && $context['comment']) {
-                    return self::getCommentContextImageHtml($context['comment'], $size, $attributes);
-                }
-
-                // Special case: If source is 'product' but we have order context, use order for consistency
+                // When source is 'product' and we have order context, use order image for consistency with order notifications
                 if ($source === 'product' && isset($context['order']) && $context['order']) {
                     return self::getOrderContextImageHtml($context['order'], $size, $attributes, $context);
                 }

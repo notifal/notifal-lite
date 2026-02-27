@@ -422,6 +422,7 @@ class PreCreatedNotificationsAjaxController
             $preloaded_taxonomies = $taxonomies;
             $preloaded_api_response = $apiResponse;
             $preloaded_filters = $currentFilters;
+            $preloaded_trending = $apiService->getTrendingCategories();
 
             $viewPath = dirname(__DIR__, 2) . '/Views/components/precreated-notifications-archive.php';
             if (!is_readable($viewPath)) {

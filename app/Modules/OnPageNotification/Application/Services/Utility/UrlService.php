@@ -56,6 +56,34 @@ class UrlService
     }
 
     /**
+     * Get URL to preview an OnPage notification on the frontend (admin only).
+     *
+     * @param int $notificationId The notification ID
+     * @return string Preview URL with nonce
+     * @since 2.0.0
+     */
+    public function getPreviewUrl(int $notificationId): string
+    {
+        $base = home_url('/');
+        return $this->getPreviewUrlForPage($notificationId, $base);
+    }
+
+    /**
+     * Get URL to preview an OnPage notification on a specific page (admin only).
+     * Appends preview query param and nonce to the given base URL.
+     *
+     * @param int    $notificationId The notification ID
+     * @param string $baseUrl         The full URL of the page to preview on (e.g. any page of the site)
+     * @return string Preview URL with notifal_onpage_preview and _wpnonce query args
+     * @since 2.0.0
+     */
+    public function getPreviewUrlForPage(int $notificationId, string $baseUrl): string
+    {
+        $url = add_query_arg('notifal_onpage_preview', $notificationId, $baseUrl);
+        return wp_nonce_url($url, 'notifal_onpage_preview', '_wpnonce');
+    }
+
+    /**
      * Get nonce for OnPage notification actions.
      *
      * @param string $action The action name

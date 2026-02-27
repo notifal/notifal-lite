@@ -37,9 +37,24 @@ class FeaturedImageApiRegister
             register_rest_route('notifal/v1', '/featured-image-preview', [
                 'methods'             => 'GET',
                 'callback'            => [new FeaturedImageApiController(), 'getFeaturedImagePreview'],
-                'permission_callback' => function() {
+                'permission_callback' => function () {
                     return current_user_can('edit_posts');
                 },
+                'args'                => [
+                    'source'             => [
+                        'type'              => 'string',
+                        'default'           => 'auto',
+                        'sanitize_callback' => 'sanitize_text_field',
+                    ],
+                    'notification_id'   => [
+                        'type'              => 'integer',
+                        'minimum'           => 1,
+                        'sanitize_callback' => 'absint',
+                    ],
+                    'template_content'   => [
+                        'type' => 'string',
+                    ],
+                ],
             ]);
         });
     }

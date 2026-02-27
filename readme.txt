@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.0.2
+Stable tag: 2.1.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -144,7 +144,7 @@ Target by:
 
 * **📄 Pages, Posts or Products**: Show notifications only on specific pages or blog posts.
 
-* **🔗 URLs [PRO]**: Target exact URLs or URL patterns for precise control.
+* **🔗 URLs [PRO]**: Show different notifications on specific URLs or even based on URL parameters (for example, visitors coming from `?source=facebook` can see a different message than `?source=google`).
 
 * **📁 Categories [PRO]**: Display popups based on post or product categories.
 
@@ -378,6 +378,20 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.1.0 [2025-02-26]
+Added: On-page notification preview — see how your notification will look on your site before publishing. Use the Preview button on the edit page or in the notifications list to open a live preview on your site and fine-tune design and placement with confidence.
+Added: Search for notifications in Explore Pre-created Notifications.
+Added: URL targeting options in Pro now support more precise campaign and traffic-source conditions.
+Fixed: Improved reliability of template selection and listing for on-page notifications.
+Fixed: Ensured Elementor and Block Editor template sections only show templates relevant to each builder.
+Fixed: Template previews now look and behave the same as your live notifications on the frontend.
+Fixed: Elementor templates — when a notification is set to show immediately on page load, the product or post image in the notification now appears correctly.
+Improved: Appearance improvements in Explore Pre-created Notifications.
+Improved: Featured Image Auto source now follows template tags in Block Editor and Elementor.
+Improved: Notifications that use templates now load styles and scripts from your theme and builders more reliably, so third‑party widgets (like countdown timers) work correctly inside notifications.
+Improved: Better handling of template assets across different themes to keep everything compatible and fast.
+Improved: WooCommerce and other plugin shortcodes now render correctly inside notification templates.
+
 2.0.2 [2025-02-19]
 Fixed: Audio Settings — default notification sounds now work correctly.
 

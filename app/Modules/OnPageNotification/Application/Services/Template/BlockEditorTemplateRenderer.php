@@ -9,6 +9,12 @@ defined('ABSPATH') || exit;
 /**
  * Handles Block Editor-specific template rendering for frontend notifications.
  *
+ * Extends AbstractTemplateRenderer to render Gutenberg block content via
+ * the standard 'the_content' filter pipeline.  Asset capture is handled
+ * entirely by the base class — any CSS/JS that blocks or third-party
+ * plugins enqueue during content rendering is captured automatically
+ * via queue snapshotting.
+ *
  * @since 2.0.0
  * @author Hossein <hossein@notifal.com>
  */
@@ -21,18 +27,18 @@ class BlockEditorTemplateRenderer extends AbstractTemplateRenderer
      * blocks have access to the correct post data and can render properly.
      * Uses WordPress core 'the_content' filter which processes all registered blocks.
      *
-     * @param \WP_Post $template Template post
-     * @param array $frontendContext Frontend context
-     * @return string Rendered content
+     * Asset-queue snapshotting is handled by the base class around this call,
+     * so any CSS/JS enqueued by third-party blocks (e.g. theme countdown
+     * blocks) is captured automatically.
+     *
+     * @param \WP_Post $template Template post.
+     * @param array    $frontendContext Frontend context.
+     * @return string Rendered HTML content.
      * @since 2.0.0
      */
     protected function renderContent(\WP_Post $template, array $frontendContext): string
     {
-        // Use helper method for safe post context management during block rendering
-        // This ensures blocks have proper post data context for dynamic content
-        return Helper::withPostContext($template, function() use ($template) {
-            // Apply WordPress content filters to render blocks with proper context
-            // the_content filter processes all registered blocks and their dynamic content
+        return Helper::withPostContext($template, function () use ($template) {
             return apply_filters('the_content', $template->post_content);
         });
     }
@@ -40,31 +46,28 @@ class BlockEditorTemplateRenderer extends AbstractTemplateRenderer
     /**
      * Get Block Editor-specific assets for the template.
      *
-     * Block Editor templates embed their styles directly within the content
-     * using WordPress block editor's inline styling approach. Unlike Elementor,
-     * Block Editor does not require separate CSS files as styles are embedded
-     * within the block HTML markup.
+     * Returns an empty array because Block Editor templates do not have
+     * builder-specific asset files (unlike Elementor's Post-CSS).
+     * All required CSS/JS is captured generically by the base class's
+     * asset-queue snapshotting mechanism.
      *
-     * @param \WP_Post $template Template post
-     * @return array Asset URLs or inline content (empty for block editor)
+     * @param \WP_Post $template Template post.
+     * @return array Empty array — captured assets are merged by base class.
      * @since 2.0.0
      */
     protected function getAssets(\WP_Post $template): array
     {
-        // Block editor templates embed styles inline in content, no external assets needed
-        // This differs from Elementor which requires separate CSS files
         return [];
     }
 
     /**
      * Get the builder type identifier.
      *
-     * @return string Builder type string
+     * @return string Builder type string.
      * @since 2.0.0
      */
     protected function getBuilderType(): string
     {
         return 'block_editor';
     }
-
 }

@@ -13,6 +13,11 @@ defined('ABSPATH') || exit;
  * Provides context data to Elementor widgets and Block Editor blocks during frontend rendering.
  * Ensures widgets display data that matches the notification's content source settings.
  *
+ * Uses a stack-based approach so that overlapping or nested render()
+ * calls (e.g. Elementor re-entering the renderer during widget
+ * registration) each preserve their own context.  setContext() pushes
+ * onto the stack, clearContext() pops, and getContext() reads the top.
+ *
  * @package Notifal\Modules\OnPageNotification\Application\Services
  * @since 2.0.0
  * @author Hossein <hossein@notifal.com>
@@ -20,14 +25,12 @@ defined('ABSPATH') || exit;
 class WidgetContextProvider
 {
     /**
-     * @var array Current context data for widget rendering
+     * Stack of context arrays.  The most recently pushed context is
+     * the "active" one that widgets see via getContext().
+     *
+     * @var array[]
      */
-    private static $currentContext = null;
-
-    /**
-     * @var bool Whether context injection is active
-     */
-    private static $isActive = false;
+    private static $contextStack = [];
 
     /**
      * Register hooks for context injection.
@@ -38,59 +41,71 @@ class WidgetContextProvider
     {
         // Hook into Elementor widget product data filter
         add_filter(FilterHooks::ELEMENTOR_RANDOM_PRODUCT_DATA, [$this, 'provideProductContext'], 10, 1);
-        
-        // Hook into Block Editor product data (we'll need to add this filter to blocks)
+
+        // Hook into Block Editor product data
         add_filter('notifal_block_product_data', [$this, 'provideProductContext'], 10, 1);
-        
+
         // Clean up context after rendering
         add_action(ActionHooks::ONPAGE_ELIGIBILITY_AFTER_PROCESS, [$this, 'clearContextAfterProcessing'], 10, 2);
     }
 
     /**
-     * Set the current context for widget rendering.
+     * Push a new context onto the stack for the current render pass.
      *
-     * This should be called before rendering templates that contain widgets.
+     * Every call to setContext() MUST be paired with a corresponding
+     * clearContext() call (even on error paths) to keep the stack balanced.
      *
-     * @param array $context Context data containing product, order, user objects
+     * @param array $context Context data containing product, order, user objects.
      * @since 2.0.0
      */
     public static function setContext(array $context): void
     {
-        self::$currentContext = $context;
-        self::$isActive = true;
+        self::$contextStack[] = $context;
     }
 
     /**
-     * Clear the current context after rendering.
+     * Pop the most recent context from the stack.
+     *
+     * If multiple render passes are active, only the innermost one is
+     * removed; outer renders retain their context.
      *
      * @since 2.0.0
      */
     public static function clearContext(): void
     {
-        self::$currentContext = null;
-        self::$isActive = false;
+        array_pop(self::$contextStack);
     }
 
     /**
      * Check if context injection is currently active.
      *
-     * @return bool True if context is active, false otherwise
+     * @return bool True if at least one context is on the stack.
      * @since 2.0.0
      */
     public static function isActive(): bool
     {
-        return self::$isActive && !empty(self::$currentContext);
+        if (empty(self::$contextStack)) {
+            return false;
+        }
+
+        $top = end(self::$contextStack);
+
+        return !empty($top);
     }
 
     /**
-     * Get the current context data.
+     * Get the current (top-of-stack) context data.
      *
-     * @return array|null Current context or null if not set
+     * @return array|null Current context or null if stack is empty.
      * @since 2.0.0
      */
     public static function getContext(): ?array
     {
-        return self::$currentContext;
+        if (empty(self::$contextStack)) {
+            return null;
+        }
+
+        return end(self::$contextStack) ?: null;
     }
 
     /**
@@ -105,14 +120,12 @@ class WidgetContextProvider
      */
     public function provideProductContext($product)
     {
-        // Only provide context during frontend notification rendering
         if (!self::isActive()) {
             return $product;
         }
 
         $context = self::getContext();
-        
-        // Return context product if available, otherwise fall back to original
+
         if (isset($context['product']) && $context['product']) {
             return $context['product'];
         }
@@ -133,6 +146,7 @@ class WidgetContextProvider
         }
 
         $context = self::getContext();
+
         return $context['order'] ?? null;
     }
 
@@ -149,12 +163,18 @@ class WidgetContextProvider
         }
 
         $context = self::getContext();
+
         return $context['user'] ?? null;
     }
 
-
     /**
      * Hook cleanup method for after eligibility processing.
+     *
+     * Drains the stack only when it is already empty, so we do not wipe context
+     * for an outer render when this hook runs during a nested render (e.g. when
+     * a cached/inner render completes and triggers the hook). Each render()
+     * balances with clearContext() (pop); we only reset the array when no render
+     * is active to avoid leaking context between evaluation cycles.
      *
      * @param array $eligibleNotifications
      * @param array $context
@@ -162,7 +182,11 @@ class WidgetContextProvider
      */
     public function clearContextAfterProcessing($eligibleNotifications = [], $context = []): void
     {
-        self::clearContext();
+        $depth = count(self::$contextStack);
+        if ($depth > 0) {
+            return;
+        }
+        self::$contextStack = [];
     }
-}
 
+}

@@ -36,6 +36,7 @@ if ($usePreloaded) {
     $currentFilters = isset($preloaded_filters) && is_array($preloaded_filters) ? $preloaded_filters : PreCreatedNotificationFilterHelper::parseCurrentFilters();
     $taxonomies = $preloaded_taxonomies;
     $apiResponse = $preloaded_api_response;
+    $trending = isset($preloaded_trending) && is_array($preloaded_trending) ? $preloaded_trending : $apiService->getTrendingCategories();
 } else {
     // Parse current filter state from URL parameters
     $currentFilters = PreCreatedNotificationFilterHelper::parseCurrentFilters();
@@ -45,6 +46,8 @@ if ($usePreloaded) {
     $apiArgs = PreCreatedNotificationFilterHelper::buildApiQueryArgs($currentFilters);
     // Get notifications data from API
     $apiResponse = $apiService->getNotifications($apiArgs);
+    // Get trending categories from API (use case slugs for filtering)
+    $trending = $apiService->getTrendingCategories();
 }
 
 // Component configuration
@@ -136,15 +139,47 @@ if ($cacheExpiresAt > 0) {
         </div>
     <?php endif; ?>
 
-    <div class="archive-container">
-        <aside class="archive-sidebar">
-            <h3><?php esc_html_e('Available Filters', 'notifal'); ?></h3>
+    <div class="archive-container" id="notifal-precreated-archive-container">
+        <aside class="archive-sidebar" id="notifal-archive-sidebar" aria-label="<?php esc_attr_e( 'Filters', 'notifal' ); ?>">
             <div class="filter-sidebar">
-                <?php $filterRenderer->renderArchiveFilters($taxonomies, $currentFilters); ?>
+                <?php $filterRenderer->renderArchiveFilters( $taxonomies, $currentFilters ); ?>
             </div>
         </aside>
 
         <main class="archive-main-content">
+            <?php if (!empty($trending)) : ?>
+            <div class="notifal-precreated-archive-trending" role="navigation" aria-label="<?php esc_attr_e('Trending categories', 'notifal'); ?>">
+                <span class="notifal-precreated-archive-trending-label"><?php esc_html_e('Trending', 'notifal'); ?></span>
+                <div class="notifal-precreated-archive-trending-tags">
+                    <?php foreach ($trending as $item) :
+                        $is_active = !empty($currentFilters['use_case']) && in_array($item['use_case_slug'], (array) $currentFilters['use_case'], true);
+                        ?>
+                        <button type="button"
+                                class="notifal-trending-tag<?php echo $is_active ? ' is-active' : ''; ?>"
+                                data-use-case="<?php echo esc_attr($item['use_case_slug']); ?>"
+                                aria-pressed="<?php echo $is_active ? 'true' : 'false'; ?>">
+                            <?php echo esc_html($item['title']); ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            <!-- Search: by name, template code, or taxonomy (aligned with marketplace) -->
+            <div class="archive-search-section">
+                <div class="archive-search-inner">
+                    <input
+                        type="search"
+                        id="notifal-precreated-archive-search"
+                        class="archive-search-input"
+                        name="search"
+                        placeholder="<?php esc_attr_e( 'Search by name, template code (e.g. 80 or 80,82), or category…', 'notifal' ); ?>"
+                        value="<?php echo esc_attr( $currentFilters['search'] ?? '' ); ?>"
+                        autocomplete="off"
+                        aria-label="<?php esc_attr_e( 'Search notifications', 'notifal' ); ?>"
+                    />
+                </div>
+            </div>
+
             <div class="notifications-grid-wrapper">
                 <?php if ($hasError) : ?>
                     <div class="notifal-archive-error notifal-text-center notifal-mt-30">

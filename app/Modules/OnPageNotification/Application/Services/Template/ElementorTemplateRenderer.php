@@ -11,8 +11,11 @@ defined('ABSPATH') || exit;
 /**
  * Handles Elementor-specific template rendering for frontend notifications.
  *
- * This renderer is responsible for rendering Elementor templates with proper
- * widget registration and asset loading for frontend notification display.
+ * Extends AbstractTemplateRenderer to add Elementor-specific initialisation
+ * (frontend subsystem, widget registration, Post-CSS, base JS) while
+ * leveraging the base class for generic asset-queue snapshotting so that
+ * every CSS/JS handle enqueued by ANY widget or third-party plugin during
+ * content rendering is captured automatically.
  *
  * @since 2.0.0
  * @author Hossein <hossein@notifal.com>
@@ -22,23 +25,46 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
     /**
      * Expected Notifal Elementor widget names that should be registered.
      *
-     * @var array
+     * @var string[]
      */
     private const NOTIFAL_WIDGETS = [
         'notifal-close-icon',
         'notifal-action-button',
-        'notifal-product-image'
+        'notifal-product-image',
     ];
+
+    /**
+     * Initialise Elementor subsystems before rendering.
+     *
+     * Registers Notifal widgets, initialises the Elementor frontend
+     * (register + enqueue styles/scripts with proper post context),
+     * so that widget handles resolve during content rendering.
+     *
+     * @param \WP_Post $template Template post being rendered.
+     * @return void
+     * @since 2.0.0
+     */
+    protected function initializeForRendering(\WP_Post $template): void
+    {
+        if (!PluginDetector::isElementorActive()) {
+            return;
+        }
+
+        $this->ensureElementorWidgetsRegistered($template);
+        $this->initializeElementorFrontend($template);
+    }
 
     /**
      * Render the actual Elementor template content.
      *
-     * Prepares Elementor frontend system and renders the template content.
-     * Elementor's dynamic widget loading system handles initialization automatically.
+     * Asset-queue snapshotting is handled by the base class around
+     * this call, so any CSS/JS enqueued by Elementor widgets during
+     * get_builder_content_for_display() is captured automatically.
      *
-     * @param \WP_Post $template Template post
-     * @param array $frontendContext Frontend context
-     * @return string Rendered content
+     * @param \WP_Post $template Template post.
+     * @param array    $frontendContext Frontend context.
+     * @return string Rendered HTML content.
+     * @throws \Exception If Elementor is not active.
      * @since 2.0.0
      */
     protected function renderContent(\WP_Post $template, array $frontendContext): string
@@ -47,28 +73,37 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
             throw new \Exception('Elementor plugin is not active or available');
         }
 
-        $this->ensureElementorWidgetsRegistered($template);
-        $this->initializeElementorFrontend($template);
-
         return \Elementor\Plugin::instance()->frontend->get_builder_content_for_display($template->ID);
     }
 
     /**
      * Get Elementor-specific assets for the template.
      *
-     * @param \WP_Post $template Template post
-     * @return array Asset URLs or inline content
+     * Returns only Elementor-specific assets:
+     *   - Post-CSS (generated stylesheet with per-widget styles)
+     *   - Base Elementor JS files (webpack runtime, frontend modules, etc.)
+     *
+     * Generic widget/third-party assets captured via queue snapshotting
+     * are merged automatically by the base class.
+     *
+     * @param \WP_Post $template Template post.
+     * @return array{css?: string[], js?: string[]} Asset URLs or inline content.
      * @since 2.0.0
      */
     protected function getAssets(\WP_Post $template): array
     {
-        return $this->getElementorAssets($template->ID);
+        $assets = $this->getElementorPostCss($template->ID);
+
+        // Ensure base Elementor JS is always included
+        $assets['js'] = $this->ensureBaseElementorJs($assets['js'] ?? []);
+
+        return $assets;
     }
 
     /**
      * Get the builder type identifier.
      *
-     * @return string Builder type string
+     * @return string Builder type string.
      * @since 2.0.0
      */
     protected function getBuilderType(): string
@@ -77,22 +112,22 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
     }
 
     /**
-     * Get Elementor assets for a template.
+     * Get the Elementor Post-CSS for a template.
      *
-     * Loads template-specific CSS and JS. Catches Throwable so Elementor CSS
-     * generation errors on some sites do not fatal; falls back to base Elementor CSS.
+     * The Post-CSS file is a single generated stylesheet that contains
+     * all widget-specific CSS rules used in the template.
      *
-     * @param int $templateId Template ID
-     * @return array Asset URLs
+     * @param int $templateId Template ID.
+     * @return array Asset array (may contain css key).
      * @since 2.0.0
      */
-    private function getElementorAssets(int $templateId): array
+    private function getElementorPostCss(int $templateId): array
     {
         $assets = [];
 
         try {
             if (class_exists('\Elementor\Core\Files\CSS\Post')) {
-                $cssFile = new \Elementor\Core\Files\CSS\Post($templateId);
+                $cssFile    = new \Elementor\Core\Files\CSS\Post($templateId);
                 $cssContent = $cssFile->get_content();
 
                 if (!empty($cssContent)) {
@@ -100,90 +135,66 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
                 }
             }
 
-            // Fallback to basic Elementor CSS if no template-specific CSS
             if (empty($assets['css'])) {
                 $elementorCssUrl = plugins_url('assets/css/frontend.min.css', ELEMENTOR__FILE__);
                 if (file_exists(ELEMENTOR_PATH . 'assets/css/frontend.min.css')) {
                     $assets['css'] = [$elementorCssUrl];
                 }
             }
-
-            // Load Elementor JavaScript assets for dynamic widgets
-            $elementorJsAssets = $this->getElementorJavaScriptAssets($templateId);
-            if (!empty($elementorJsAssets)) {
-                $assets['js'] = $elementorJsAssets;
-            }
-
         } catch (\Throwable $e) {
             $elementorCssUrl = plugins_url('assets/css/frontend.min.css', ELEMENTOR__FILE__);
-            $assets['css'] = [$elementorCssUrl];
-            Helper::log('Elementor assets failed for template ' . $templateId . ': ' . $e->getMessage());
+            $assets['css']   = [$elementorCssUrl];
+            Helper::log('Elementor Post-CSS failed for template ' . $templateId . ': ' . $e->getMessage());
         }
 
         return $assets;
     }
 
     /**
-     * Get Elementor JavaScript assets required for dynamic widgets.
+     * Ensure base Elementor JS files are always present in the JS assets.
      *
-     * Loads essential Elementor JavaScript files for frontend functionality,
-     * including the dynamic widget handler system.
-     *
-     * @param int $templateId Template ID
-     * @return array JavaScript asset URLs
+     * @param string[] $jsAssets Current JS asset list.
+     * @return string[] Updated JS asset list.
      * @since 2.0.0
      */
-    private function getElementorJavaScriptAssets(int $templateId): array
+    private function ensureBaseElementorJs(array $jsAssets): array
     {
-        $jsAssets = [];
+        $requiredFiles = [
+            'assets/js/webpack.runtime.min.js',
+            'assets/js/frontend-modules.min.js',
+            'assets/js/frontend.min.js',
+            'assets/js/elements-handlers.min.js',
+        ];
 
-        try {
-            // Load Elementor frontend JavaScript
-            $elementorJsUrl = plugins_url('assets/js/frontend.min.js', ELEMENTOR__FILE__);
-            if (file_exists(ELEMENTOR_PATH . 'assets/js/frontend.min.js')) {
-                $jsAssets[] = $elementorJsUrl;
+        foreach ($requiredFiles as $file) {
+            $fullPath = ELEMENTOR_PATH . $file;
+            if (!file_exists($fullPath)) {
+                continue;
             }
-
-            // Also load Elementor webpack runtime and modules for dynamic imports
-            $webpackRuntimeUrl = plugins_url('assets/js/webpack.runtime.min.js', ELEMENTOR__FILE__);
-            if (file_exists(ELEMENTOR_PATH . 'assets/js/webpack.runtime.min.js')) {
-                $jsAssets[] = $webpackRuntimeUrl;
+            $url = plugins_url($file, ELEMENTOR__FILE__);
+            if (!in_array($url, $jsAssets, true)) {
+                $jsAssets[] = $url;
             }
+        }
 
-            $modulesUrl = plugins_url('assets/js/frontend-modules.min.js', ELEMENTOR__FILE__);
-            if (file_exists(ELEMENTOR_PATH . 'assets/js/frontend-modules.min.js')) {
-                $jsAssets[] = $modulesUrl;
-            }
-
-            // Load Elementor elements handlers for dynamic widget loading
-            $handlersUrl = plugins_url('assets/js/elements-handlers.min.js', ELEMENTOR__FILE__);
-            if (file_exists(ELEMENTOR_PATH . 'assets/js/elements-handlers.min.js')) {
-                $jsAssets[] = $handlersUrl;
-            }
-
-            // Load Elementor frontend modules if available (Elementor Pro features)
-            if (defined('ELEMENTOR_PRO_VERSION') && defined('ELEMENTOR_PRO_PATH')) {
-                $elementorModulesUrl = plugins_url('assets/js/frontend-modules.min.js', ELEMENTOR_PRO__FILE__);
-                if (file_exists(ELEMENTOR_PRO_PATH . 'assets/js/frontend-modules.min.js')) {
-                    $jsAssets[] = $elementorModulesUrl;
+        // Elementor Pro frontend modules
+        if (defined('ELEMENTOR_PRO_VERSION') && defined('ELEMENTOR_PRO_PATH') && defined('ELEMENTOR_PRO__FILE__')) {
+            $proFile = 'assets/js/frontend-modules.min.js';
+            if (file_exists(ELEMENTOR_PRO_PATH . $proFile)) {
+                $url = plugins_url($proFile, ELEMENTOR_PRO__FILE__);
+                if (!in_array($url, $jsAssets, true)) {
+                    $jsAssets[] = $url;
                 }
             }
-
-        } catch (\Exception $e) {
-            Helper::log('Elementor JS assets failed for template ' . $templateId . ': ' . $e->getMessage());
         }
 
         return $jsAssets;
     }
 
-
     /**
      * Ensure Notifal Elementor widgets are registered for frontend rendering.
      *
-     * This method checks if required Notifal widgets are registered and registers
-     * them if missing. This ensures widgets are available during frontend rendering.
-     *
-     * @param \WP_Post $template Template post being rendered
+     * @param \WP_Post $template Template post being rendered.
      * @return void
      * @since 2.0.0
      */
@@ -194,57 +205,79 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
         }
 
         try {
-            $widgets_manager = \Elementor\Plugin::instance()->widgets_manager;
+            $widgets_manager    = \Elementor\Plugin::instance()->widgets_manager;
             $registered_widgets = $widgets_manager->get_widget_types();
 
             $missing_widgets = array_filter(
                 self::NOTIFAL_WIDGETS,
-                fn($widget_name) => !isset($registered_widgets[$widget_name])
+                function ($widget_name) use ($registered_widgets) {
+                    return !isset($registered_widgets[$widget_name]);
+                }
             );
 
             if (empty($missing_widgets)) {
                 return;
             }
 
-            // Set temporary post context for widget registration (without setup_postdata)
-            Helper::withPostContext($template, function() {
-                // Register missing Notifal widgets
+            Helper::withPostContext($template, function () {
                 if (class_exists(WidgetsRegistrar::class)) {
                     WidgetsRegistrar::register_widgets();
                 }
             }, false);
 
         } catch (\Exception $e) {
-            // Log widget registration failure but continue rendering
             Helper::log('Elementor widget registration failed for template ' . $template->ID . ': ' . $e->getMessage());
         }
     }
 
     /**
-     * Initialize Elementor frontend system for proper widget functionality.
+     * Initialise the Elementor frontend subsystem for rendering.
      *
-     * Ensures Elementor recognizes there's Elementor content on the page and loads
-     * the necessary frontend scripts and handlers.
+     * Registers base styles/scripts, then calls enqueue_styles() and
+     * enqueue_scripts() with the template post context.  This makes
+     * Elementor read the template's _elementor_data meta, determine
+     * which widgets are used, and enqueue their individual CSS/JS
+     * handles (e.g. widget-countdown.min.css).  Without this, only
+     * the Post-CSS (user customisations) would load and widget base
+     * styles would be missing.
      *
-     * @param \WP_Post $template Template post being rendered
+     * @param \WP_Post $template Template post being rendered.
      * @return void
      * @since 2.0.0
      */
     private function initializeElementorFrontend(\WP_Post $template): void
     {
         try {
-            $elementor_frontend = \Elementor\Plugin::instance()->frontend;
+            $frontend = \Elementor\Plugin::instance()->frontend;
 
-            // Force Elementor to recognize that there's Elementor content on this page
-            // This ensures Elementor loads its frontend scripts and handlers
-            if (!has_action('wp_enqueue_scripts', [$elementor_frontend, 'enqueue_scripts'])) {
-                add_action('wp_enqueue_scripts', [$elementor_frontend, 'enqueue_scripts'], 5);
+            // Register base Elementor style/script handles
+            if (method_exists($frontend, 'register_styles')) {
+                $frontend->register_styles();
+            }
+            if (method_exists($frontend, 'register_scripts')) {
+                $frontend->register_scripts();
+            }
+
+            // Enqueue widget-specific CSS/JS for this template.
+            // Must run with post context so Elementor reads the template's
+            // _elementor_data meta and enqueues each widget's stylesheet.
+            Helper::withPostContext($template, function () use ($frontend) {
+                if (method_exists($frontend, 'enqueue_styles')) {
+                    $frontend->enqueue_styles();
+                }
+                if (method_exists($frontend, 'enqueue_scripts')) {
+                    $frontend->enqueue_scripts();
+                }
+            }, false);
+
+            // Also enqueue widget-level styles via the widgets manager
+            $widgets_manager = \Elementor\Plugin::instance()->widgets_manager;
+            if (method_exists($widgets_manager, 'enqueue_widgets_styles')) {
+                $widgets_manager->enqueue_widgets_styles();
             }
 
         } catch (\Exception $e) {
             Helper::log('Elementor frontend init failed for template ' . $template->ID . ': ' . $e->getMessage());
         }
     }
-
-
 }

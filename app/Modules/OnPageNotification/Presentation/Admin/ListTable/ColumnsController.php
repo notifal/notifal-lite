@@ -177,6 +177,19 @@ class ColumnsController
             );
         }
 
+        // Add Preview row action for users who can edit
+        if (current_user_can('edit_posts')) {
+            $urlService = notifal_app(UrlService::class);
+            $previewUrl = $urlService->getPreviewUrl($post->ID);
+            $actions['preview'] = sprintf(
+                '<a href="%s" class="notifal-button secondary" title="%s" target="_blank" rel="noopener noreferrer" aria-label="%s">%s</a>',
+                esc_url($previewUrl),
+                esc_attr__('Preview', 'notifal'),
+                esc_attr(sprintf(__('Preview %s', 'notifal'), $post->post_title)),
+                NotifalIconService::render('eye', 20)
+            );
+        }
+
         return $actions;
     }
 

@@ -84,6 +84,9 @@ class ContentExtractor
     /**
      * Extract text content from Elementor data array.
      *
+     * Includes all string values from settings so that Notifal tags (e.g. {product_name})
+     * are detected regardless of which widget field they appear in.
+     *
      * @param array $data Elementor data array
      * @return string Concatenated text content
      * @since 2.0.0
@@ -93,20 +96,14 @@ class ContentExtractor
         $textContent = '';
 
         foreach ($data as $element) {
-            // Extract text from element settings
             if (isset($element['settings']) && is_array($element['settings'])) {
-                foreach ($element['settings'] as $key => $value) {
-                    if (is_string($value) && !empty($value)) {
-                        // Common text fields that might contain tags
-                        $textFields = ['title', 'editor', 'text', 'content', 'description', 'label', 'placeholder'];
-                        if (in_array($key, $textFields) || strpos($key, 'text') !== false || strpos($key, 'content') !== false) {
-                            $textContent .= ' ' . $value;
-                        }
+                foreach ($element['settings'] as $value) {
+                    if (is_string($value) && $value !== '') {
+                        $textContent .= ' ' . $value;
                     }
                 }
             }
 
-            // Recursively check nested elements
             if (isset($element['elements']) && is_array($element['elements'])) {
                 $textContent .= ' ' . self::extractTextFromElementorData($element['elements']);
             }
@@ -134,15 +131,11 @@ class ContentExtractor
                 $textContent .= ' ' . $blockText;
             }
 
-            // Extract text from block attributes (might contain tags in settings)
+            // Extract all string attributes so Notifal tags are found in any block field
             if (isset($block['attrs']) && is_array($block['attrs'])) {
-                foreach ($block['attrs'] as $key => $value) {
-                    if (is_string($value) && !empty($value)) {
-                        // Common text fields that might contain tags
-                        $textFields = ['text', 'content', 'title', 'description', 'label', 'placeholder', 'caption'];
-                        if (in_array($key, $textFields) || strpos($key, 'text') !== false || strpos($key, 'content') !== false) {
-                            $textContent .= ' ' . $value;
-                        }
+                foreach ($block['attrs'] as $value) {
+                    if (is_string($value) && $value !== '') {
+                        $textContent .= ' ' . $value;
                     }
                 }
             }

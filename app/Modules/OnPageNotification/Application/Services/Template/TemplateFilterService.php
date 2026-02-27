@@ -2,6 +2,7 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
+use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Modules\Templates\Infrastructure\WordPress\Repositories\TemplateQuery;
 use WP_Post;
 
@@ -16,6 +17,23 @@ defined('ABSPATH') || exit;
  */
 class TemplateFilterService
 {
+    /**
+     * Check whether a template was created with the given builder (Elementor or Block Editor).
+     *
+     * @param WP_Post|null $post   The template post object.
+     * @param string       $builder The builder type ('elementor' or 'block-editor').
+     * @return bool True if the template belongs to the builder, false otherwise.
+     * @since 2.0.3
+     */
+    public static function templateBelongsToBuilder(?WP_Post $post, string $builder): bool
+    {
+        if (!$post) {
+            return false;
+        }
+        $isElementor = ElementorHelper::hasBuilder($post);
+        return ($builder === 'elementor' && $isElementor) || ($builder === 'block-editor' && !$isElementor);
+    }
+
     /**
      * Validate content source type and builder parameters.
      *
@@ -62,10 +80,13 @@ class TemplateFilterService
         $filteredTemplates = [];
         $selectedTemplate = null;
 
-        // First, check if selected template exists and belongs to this builder
-        if ($selectedTemplateId > 0) {
+        // When offset > 0 (load more), do not prepend selected template — it was already sent on the first page.
+        $prependSelected = ($offset === 0);
+
+        // First, check if selected template exists and belongs to this builder (only prepend on first page)
+        if ($prependSelected && $selectedTemplateId > 0) {
             $selectedPost = TemplateQuery::get($selectedTemplateId);
-            if ($selectedPost && TemplateQuery::hasTemplateContent($selectedPost, $builder)) {
+            if ($selectedPost && self::templateBelongsToBuilder($selectedPost, $builder) && TemplateQuery::hasTemplateContent($selectedPost, $builder)) {
                 $hasNotifalTags = TemplateQuery::hasNotifalTags($selectedPost, $builder);
 
                 // Check if selected template matches the content source type
@@ -77,8 +98,15 @@ class TemplateFilterService
                     $filteredTemplates[] = $selectedPost;
                 }
             }
+        } elseif ($selectedTemplateId > 0) {
+            $selectedPost = TemplateQuery::get($selectedTemplateId);
+            if ($selectedPost && self::templateBelongsToBuilder($selectedPost, $builder) && TemplateQuery::hasTemplateContent($selectedPost, $builder)) {
+                $selectedTemplate = $selectedPost;
+            }
         }
 
+        // First page shows 1 selected + (limit-1) from list; load more sends total count as offset. So skip (offset - 1) when selected was prepended.
+        $effectiveOffset = ($offset > 0 && $selectedTemplate !== null) ? $offset - 1 : $offset;
         $skippedCount = 0;
 
         foreach ($allTemplates as $template) {
@@ -94,8 +122,8 @@ class TemplateFilterService
                           ($contentSourceType === 'dynamic' && $hasNotifalTags);
 
             if ($matchesType) {
-                // Skip templates based on offset
-                if ($skippedCount < $offset) {
+                // Skip templates based on offset (effectiveOffset accounts for selected already shown on first page)
+                if ($skippedCount < $effectiveOffset) {
                     $skippedCount++;
                     continue;
                 }
@@ -130,11 +158,11 @@ class TemplateFilterService
 
         // Retrieve all templates for the specified builder
         $allTemplates = TemplateQuery::getAllByBuilder($builder);
-        
+
         $count = 0;
         foreach ($allTemplates as $template) {
             $hasNotifalTags = TemplateQuery::hasNotifalTags($template, $builder);
-            
+
             // Count based on content source type
             if ($contentSourceType === 'static' && !$hasNotifalTags) {
                 $count++;
@@ -142,7 +170,7 @@ class TemplateFilterService
                 $count++;
             }
         }
-        
+
         return $count;
     }
     

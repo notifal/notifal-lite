@@ -218,6 +218,8 @@ class ListAssets
                 'load_more' => __('Load More', 'notifal'),
                 'search' => __('Search', 'notifal'),
                 'clear_filters' => __('Clear All Filters', 'notifal'),
+                'collapse_taxonomy' => __('Collapse', 'notifal'),
+                'expand_taxonomy' => __('Expand', 'notifal'),
                 'close' => __('Close', 'notifal'),
                 'view_details' => __('View Details', 'notifal'),
                 'import' => $translations['importNotifications'] ?? __('Import', 'notifal'),

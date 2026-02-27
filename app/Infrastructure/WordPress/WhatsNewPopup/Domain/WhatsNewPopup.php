@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.0.2';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.1.0';
     }
 
     /**
@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.1.0' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.1.0'),
+                'content' => $this->getVersion210Content(),
+                'action_buttons' => [],
+            ],
             '2.0.2' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -386,6 +393,62 @@ class WhatsNewPopup
             <div class="notifal-whatsnew-section notifal-whatsnew-ready">
                 <h3><?php echo '🎯 ' . esc_html( __( 'Ready to Build Trust and Boost Conversions?', 'notifal' ) ); ?></h3>
                 <p><?php esc_html_e("Explore your new Notifal dashboard and discover how real, authentic notifications can transform your website's performance. Your customers will thank you for the genuine engagement!", 'notifal'); ?></p>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.1.0
+     *
+     * @return string HTML content for version 2.1.0
+     * @since 2.1.0
+     */
+    private function getVersion210Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.1.0", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">👁️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Preview on-page notifications before publishing', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('See how your notification will look on your live site before you publish it. Use the Preview button on the edit page or from the notifications list to open a preview on your site, so you can fine-tune design and placement with confidence.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Search for notifications', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Search has been added to Explore Pre-created Notifications so you can find templates quickly.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✨</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Appearance improvements', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Explore Pre-created Notifications has been updated with appearance improvements for a better experience.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🖼️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smarter featured images', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Featured Image Auto source now follows your template tags consistently in both the Block Editor and Elementor.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎯</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('More precise URL targeting [PRO]', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('URL targeting options in Pro now make it easier to show different campaigns and offers to visitors based on how they arrived on your site.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
