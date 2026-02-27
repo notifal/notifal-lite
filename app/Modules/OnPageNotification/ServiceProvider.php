@@ -18,6 +18,7 @@ use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\EditP
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\ImportController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\ExportController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Routes\AdminRouteController;
+use Notifal\Modules\OnPageNotification\Presentation\Frontend\Routes\OnPagePreviewRouteController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\LoadMoreTemplatesController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\GetFilteredTemplatesController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\AnalyticsTableController;
@@ -98,6 +99,7 @@ class ServiceProvider extends AbstractServiceProvider
         AnalyticsAssets::class,
         FrontendAssetsRegistrar::class,
         ApiRegistrar::class,
+        OnPagePreviewRouteController::class,
         MenuController::class,
         ColumnsController::class,
         AdminRouteController::class,

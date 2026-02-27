@@ -71,6 +71,14 @@ class PreCreatedNotificationsApiService
     private const CACHE_EXPIRATION_TAXONOMIES = 3600; // 1 hour
 
     /**
+     * Cache expiration time for trending categories in seconds (1 hour)
+     *
+     * @since 2.0.0
+     * @var int
+     */
+    private const CACHE_EXPIRATION_TRENDING = 3600; // 1 hour
+
+    /**
      * Rate limit: Maximum requests per minute per user
      *
      * @since 2.0.0
@@ -310,6 +318,50 @@ class PreCreatedNotificationsApiService
         $this->setCachedResponse($cacheKey, $result, self::CACHE_EXPIRATION_TAXONOMIES);
 
         return $result;
+    }
+
+    /**
+     * Get trending categories from notifal.com (from precreate-archive-trending-notification menu).
+     *
+     * Each item contains title and use_case_slug for filtering the archive by use case.
+     *
+     * @since 2.0.0
+     * @return array<int, array{title: string, use_case_slug: string}> List of trending items
+     */
+    public function getTrendingCategories(): array
+    {
+        $cacheKey = $this->generateCacheKey('trending_categories', []);
+        $cached = $this->getCachedResponse($cacheKey);
+
+        if ($cached !== false && is_array($cached)) {
+            return $cached;
+        }
+
+        $response = $this->makeApiRequest('trending-categories', []);
+
+        if (is_wp_error($response) || !$this->validateHttpStatus($response, 200, 'trending-categories')) {
+            return [];
+        }
+
+        $data = $this->parseJsonResponse($response, 'trending-categories');
+
+        if ($data === null || empty($data['data']['trending']) || !is_array($data['data']['trending'])) {
+            return [];
+        }
+
+        $trending = [];
+        foreach ($data['data']['trending'] as $item) {
+            if (!empty($item['title']) && !empty($item['use_case_slug'])) {
+                $trending[] = [
+                    'title' => is_string($item['title']) ? sanitize_text_field($item['title']) : '',
+                    'use_case_slug' => is_string($item['use_case_slug']) ? sanitize_text_field($item['use_case_slug']) : '',
+                ];
+            }
+        }
+
+        $this->setCachedResponse($cacheKey, $trending, self::CACHE_EXPIRATION_TRENDING);
+
+        return $trending;
     }
 
     /**

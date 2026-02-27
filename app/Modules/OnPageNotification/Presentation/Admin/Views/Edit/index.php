@@ -4,6 +4,7 @@
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Shared\Services\NotifalIconService;
+use Notifal\Shared\Utils\Helper;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -53,8 +54,9 @@ if ( $get_action === 'edit' && $get_id > 0 ) {
                 $GLOBALS['notifal_notification_data'] = $notification_data;
             }
         } catch ( \Exception $e ) {
-            // Log error for debugging but continue with empty notification data
-            error_log( 'Notifal: Failed to load notification data for ID ' . $notification_id . ': ' . $e->getMessage() );
+            Helper::log(
+                'Failed to load notification data for ID ' . $notification_id . ': ' . $e->getMessage()
+            );
             $notification_data = null;
         }
     }
@@ -144,8 +146,19 @@ if ( $get_action === 'edit' && $get_id > 0 ) {
                     <?php endif; ?>
                 </div>
 
-                <!-- Primary Action Button -->
+                <?php if ( $is_edit && $notification_id ) : ?>
+                <!-- Preview Button -->
                 <div class="notifal-mt-20 notifal-justify-center notifal-flex">
+                    <a href="<?php echo esc_url( $urlService->getPreviewUrl( $notification_id ) ); ?>"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="notifal-button secondary notifal-flex notifal-gap-10 notifal-align-center">
+                       <?php esc_html_e( 'Preview', 'notifal' ); ?>
+                    </a>
+                </div>
+                <?php endif; ?>
+                <!-- Primary Action Button -->
+                <div class="notifal-justify-center notifal-flex">
                     <button type="button" class="notifal-button notifal-save-notification-btn">
                         <?php esc_html_e( 'Save Notification', 'notifal' ); ?>
                     </button>

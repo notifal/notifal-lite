@@ -657,6 +657,20 @@ class ActionHooks {
     public const TEMPLATE_CREATED = 'notifal/template/created';
 
     /**
+     * Fires after shortcode-related context is initialised for rendering
+     * a template in REST / AJAX context.
+     *
+     * This is typically used to bootstrap heavy subsystems that are
+     * normally skipped outside a full frontend page load, such as
+     * WooCommerce cart/session initialisation required by shortcodes
+     * like [woocommerce_cart].
+     *
+     * @param \WP_Post $template The template post being rendered.
+     * @since 2.0.3
+     */
+    public const TEMPLATE_RENDERER_SHORTCODE_CONTEXT = 'notifal/template_renderer/shortcode_context';
+
+    /**
      * Fires after a Notifal template is duplicated.
      *
      * @param int $original_id The original template post ID.
@@ -717,7 +731,21 @@ class ActionHooks {
      */
     public const TEMPLATE_PREVIEW_AFTER = 'notifal/template/preview/after';
 
+    /**
+     * Fires before rendering the OnPage notification preview page.
+     *
+     * @param \WP_Post $post The notification post object.
+     * @since 2.0.0
+     */
+    public const ONPAGE_PREVIEW_BEFORE = 'notifal/onpage/preview/before';
 
+    /**
+     * Fires after rendering the OnPage notification preview page.
+     *
+     * @param \WP_Post $post The notification post object.
+     * @since 2.0.0
+     */
+    public const ONPAGE_PREVIEW_AFTER = 'notifal/onpage/preview/after';
 
     /**
      * Fires after templates are queried by builder.

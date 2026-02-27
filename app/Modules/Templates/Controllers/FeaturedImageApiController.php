@@ -3,7 +3,9 @@
 namespace Notifal\Modules\Templates\Controllers;
 
 use Notifal\Domain\Products\ProductFetcherInterface;
+use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\Templates\Application\Services\FeaturedImageAutoSourceResolver;
 use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 use Notifal\Modules\Templates\Application\Services\ImagePreviewService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
@@ -37,9 +39,15 @@ class FeaturedImageApiController
     {
         $requestedSource = Helper::sanitizeInput($request->get_param('source') ?? 'auto', 'text');
 
+        // When source is auto, resolve effective source from template content (used tags).
+        $effectiveSource = $requestedSource;
+        if ($requestedSource === 'auto') {
+            $templateContent = $this->getTemplateContentForAuto($request);
+            $effectiveSource = FeaturedImageAutoSourceResolver::resolve($templateContent);
+        }
         try {
             $context = $this->buildContext();
-            $imageHtml = FeaturedImageResolver::getFeaturedImageHtml($context, 'large', [], $requestedSource);
+            $imageHtml = FeaturedImageResolver::getFeaturedImageHtml($context, 'large', [], $effectiveSource);
 
             if (empty($imageHtml)) {
                 return ImagePreviewService::createErrorResponse(__('No featured image available.', 'notifal'));
@@ -50,9 +58,9 @@ class FeaturedImageApiController
                 return ImagePreviewService::createErrorResponse(__('Unable to parse image data.', 'notifal'));
             }
 
-            $thumbnailId = $this->findThumbnailId($context);
+            $thumbnailId = $this->findThumbnailId($context, $effectiveSource);
             $images = $thumbnailId ? ImagePreviewService::getImageData($thumbnailId) : [];
-            $contentInfo = $this->determineContentInfo($context);
+            $contentInfo = $this->determineContentInfo($context, $effectiveSource);
 
             $responseData = [
                 'id'               => $contentInfo['id'],
@@ -100,6 +108,43 @@ class FeaturedImageApiController
     }
 
     /**
+     * Get template content used to resolve "auto" source from used tags.
+     *
+     * Uses template_content param if provided. Otherwise loads post by notification_id
+     * and extracts content: Elementor templates from _elementor_data, Block Editor
+     * templates via parse_blocks so order/product/post/page/comment tags are detected.
+     *
+     * @param \WP_REST_Request $request REST request (optional template_content, notification_id).
+     * @return string Template content (may be empty).
+     * @since 2.0.0
+     */
+    private function getTemplateContentForAuto(\WP_REST_Request $request): string
+    {
+        $templateContent = $request->get_param('template_content');
+        if (is_string($templateContent) && $templateContent !== '') {
+            return $templateContent;
+        }
+
+        $notificationId = $request->get_param('notification_id');
+        $postId = is_numeric($notificationId) ? absint($notificationId) : 0;
+        if ($postId <= 0) {
+            return '';
+        }
+
+        $post = get_post($postId);
+        if (!$post) {
+            return '';
+        }
+
+        $elementorData = get_post_meta($postId, '_elementor_data', true);
+        if (is_string($elementorData) && $elementorData !== '') {
+            return ContentExtractor::extractFromElementorTemplate($post);
+        }
+
+        return ContentExtractor::extractFromBlockTemplate($post);
+    }
+
+    /**
      * Extract image data from HTML.
      *
      * Parses the generated HTML to extract image source and alt text.
@@ -127,15 +172,24 @@ class FeaturedImageApiController
     /**
      * Find thumbnail ID from context.
      *
-     * Searches through available context to find a valid thumbnail ID.
+     * When a specific source is requested, uses that entity first so response metadata
+     * matches the rendered image. Otherwise uses priority order.
      *
      * @param array $context Context data
+     * @param string $requestedSource Requested source ('auto', 'post', 'page', 'product', 'order')
      * @return int|null Thumbnail ID or null if not found
      * @since 2.0.0
      */
-    private function findThumbnailId(array $context): ?int
+    private function findThumbnailId(array $context, string $requestedSource = 'auto'): ?int
     {
         $sources = ['product', 'post', 'page', 'order'];
+
+        if ($requestedSource !== 'auto' && isset($context[$requestedSource]) && $context[$requestedSource]) {
+            $id = $this->getThumbnailIdForEntity($context[$requestedSource], $requestedSource);
+            if ($id) {
+                return $id;
+            }
+        }
 
         foreach ($sources as $source) {
             if (isset($context[$source]) && $context[$source]) {
@@ -152,15 +206,21 @@ class FeaturedImageApiController
     /**
      * Determine content information from context.
      *
-     * Analyzes the context to determine content type and name for UX.
+     * When a specific source is requested, uses that entity so response name/type
+     * match the rendered image. Otherwise uses priority order.
      *
      * @param array $context Context data
-     * @return array Content information
+     * @param string $requestedSource Requested source ('auto', 'post', 'page', 'product', 'order')
+     * @return array Content information (id, name, type)
      * @since 2.0.0
      */
-    private function determineContentInfo(array $context): array
+    private function determineContentInfo(array $context, string $requestedSource = 'auto'): array
     {
         $sources = ['product', 'post', 'page', 'order'];
+
+        if ($requestedSource !== 'auto' && isset($context[$requestedSource]) && $context[$requestedSource]) {
+            return $this->getContentInfoForEntity($context[$requestedSource], $requestedSource);
+        }
 
         foreach ($sources as $source) {
             if (isset($context[$source]) && $context[$source]) {

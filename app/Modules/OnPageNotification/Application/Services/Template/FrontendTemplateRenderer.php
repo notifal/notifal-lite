@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
 use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -79,6 +80,11 @@ class FrontendTemplateRenderer
             // Build frontend context
             $frontendContext = $this->contextBuilder->buildContext($rawContent, $context, $contentSourceSettings);
 
+            // Preserve immediate-display flag so Elementor can apply deferred featured image
+            if (!empty($context['for_immediate_display'])) {
+                $frontendContext['for_immediate_display'] = true;
+            }
+
             // Check for no matching data
             if ($this->contextBuilder->hasNoMatchingData($frontendContext)) {
                 return [
@@ -92,10 +98,18 @@ class FrontendTemplateRenderer
 
             // Render using appropriate renderer
             if ($isElementor) {
-                return $this->elementorRenderer->render($template, $frontendContext);
-            } else {
-                return $this->blockEditorRenderer->render($template, $frontendContext);
+                $result = $this->elementorRenderer->render($template, $frontendContext);
+
+                // For immediate display, Elementor may serve cached content so featured image has no context.
+                // Replace featured image area with placeholder and attach real image HTML for deferred frontend swap.
+                if (!empty($frontendContext['for_immediate_display']) && !empty($result['html'])) {
+                    $result = self::applyDeferredFeaturedImageForElementor($result, $frontendContext);
+                }
+
+                return $result;
             }
+
+            return $this->blockEditorRenderer->render($template, $frontendContext);
 
         } catch (\Exception $e) {
             // Fallback: return the raw template content so notifications can still display
@@ -132,5 +146,57 @@ class FrontendTemplateRenderer
     public static function clearContextCache(): void
     {
         TemplateContextBuilder::clearContextCache();
+    }
+
+    /**
+     * For Elementor + immediate display: replace featured image widget output with a placeholder
+     * and attach the context-resolved featured image HTML for deferred frontend swap.
+     *
+     * Elementor may serve cached content when get_builder_content_for_display runs during
+     * page load, so the Product Image widget can render without WidgetContextProvider and show
+     * a placeholder. This method swaps that area for a known placeholder and provides the
+     * correct image HTML (using the same context as tags) so the frontend can inject it after a short delay.
+     *
+     * @param array $result Render result with 'html', 'assets', 'builder_type'.
+     * @param array $frontendContext Frontend context used for tag resolution (product, order, etc.).
+     * @return array Result with modified 'html' and added 'deferred_featured_image_html' when applicable.
+     * @since 2.0.0
+     */
+    private static function applyDeferredFeaturedImageForElementor(array $result, array $frontendContext): array
+    {
+        $html = $result['html'] ?? '';
+        if ($html === '') {
+            return $result;
+        }
+
+        // Match Elementor Product Image widget output: wrapper div containing inner notifal-pulse-img div
+        $pattern = '/<div[^>]*notifal-featured-image-wrapper[^>]*>[\s\S]*?<\/div>\s*<\/div>/';
+        $placeholder = '<div class="notifal-featured-image-deferred-placeholder" data-notifal-deferred-image="1"></div>';
+
+        if (!preg_match($pattern, $html)) {
+            return $result;
+        }
+
+        // Resolve featured image HTML with same context as tag resolution (matches product/order/post etc.)
+        $imageHtml = FeaturedImageResolver::getFeaturedImageHtml(
+            $frontendContext,
+            'large',
+            [
+                'loading' => 'lazy',
+                'class'   => 'notifal-featured-image',
+            ],
+            'auto'
+        );
+
+        // Wrap in same structure as widget so styling (e.g. wrapper alignment) still applies
+        $deferredHtml = '<div class="notifal-featured-image-wrapper notifal-flex notifal-full-width">'
+            . '<div class="notifal-pulse-img">'
+            . $imageHtml
+            . '</div></div>';
+
+        $result['html'] = preg_replace($pattern, $placeholder, $html, 1);
+        $result['deferred_featured_image_html'] = $deferredHtml;
+
+        return $result;
     }
 }

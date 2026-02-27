@@ -8,7 +8,9 @@ use Elementor\Group_Control_Box_Shadow;
 use Elementor\Group_Control_Css_Filter;
 use Notifal\Domain\Products\ProductFetcherInterface;
 use Notifal\Infrastructure\WordPress\Media\ImageSizeService;
+use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\Templates\Application\Services\FeaturedImageAutoSourceResolver;
 use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 
 defined('ABSPATH') || exit;
@@ -118,9 +120,7 @@ class ProductImageWidget extends BaseWidget
             $preview_options['product'] = __('Product', 'notifal');
         }
         
-        $description = PluginDetector::isWooCommerceActive() 
-            ? __('Select which source to use for the preview image. Auto follows the priority order: post → page → product.', 'notifal')
-            : __('Select which source to use for the preview image. Auto follows the priority order: post → page.', 'notifal');
+        $description = __('Auto detects from tags used in this template: product/order tags → product image, post tags → post image, page tags → page image, comment tags → product image (with WooCommerce) or post image.', 'notifal');
 
         $this->add_control(
             'preview_image_source',
@@ -414,6 +414,12 @@ class ProductImageWidget extends BaseWidget
         $force_trans = $settings['force_transparent_bg'] === 'yes';
         $source = $settings['preview_image_source'] ?? 'auto';
 
+        // When source is auto, resolve effective source from template content (used tags)
+        if ($source === 'auto') {
+            $template_content = $this->getTemplateContentForAuto();
+            $source = FeaturedImageAutoSourceResolver::resolve($template_content);
+        }
+
         // Get widget context for featured image resolution
         $context = $this->getWidgetContext();
 
@@ -463,6 +469,58 @@ class ProductImageWidget extends BaseWidget
         <?php
     }
 
+
+    /**
+     * Get template content for auto source resolution (used in editor preview).
+     *
+     * Returns the current document/post content so Auto can resolve to product/post/page
+     * based on which tags are used in the template. For Elementor templates, content is
+     * read from _elementor_data (not post_content) so tags like {product_name} are found.
+     *
+     * @since 2.0.0
+     * @return string Template content (may be empty)
+     */
+    private function getTemplateContentForAuto(): string
+    {
+        $post_id = $this->getTemplatePostIdForAuto();
+        if ($post_id <= 0) {
+            return '';
+        }
+        $post = get_post($post_id);
+        if (!$post) {
+            return '';
+        }
+        return ContentExtractor::extractFromElementorTemplate($post);
+    }
+
+    /**
+     * Get the template (document) post ID for auto source resolution.
+     *
+     * Tries get_the_ID() first; in Elementor editor preview falls back to current document.
+     *
+     * @since 2.0.0
+     * @return int Post ID or 0
+     */
+    private function getTemplatePostIdForAuto(): int
+    {
+        $post_id = get_the_ID();
+        if ($post_id > 0) {
+            return (int) $post_id;
+        }
+        if (class_exists(\Elementor\Plugin::class)) {
+            $documents = \Elementor\Plugin::$instance->documents;
+            if ($documents && method_exists($documents, 'get_current')) {
+                $document = $documents->get_current();
+                if ($document && method_exists($document, 'get_main_id')) {
+                    $post_id = $document->get_main_id();
+                    if ($post_id > 0) {
+                        return (int) $post_id;
+                    }
+                }
+            }
+        }
+        return 0;
+    }
 
     /**
      * Get preview context data for Elementor editor.

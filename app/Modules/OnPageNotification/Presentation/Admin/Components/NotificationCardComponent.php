@@ -135,9 +135,9 @@ function render_notification_card(array $notification, int $max_badges = 5, stri
                 </div>
             </div>
 
-            <!-- Title -->
+            <!-- Title (full title; no truncation; decode entities for correct display) -->
             <h3 class="notification-title">
-                <?php echo esc_html(wp_trim_words($title, 8, '...')); ?>
+                <?php echo esc_html( html_entity_decode( $title, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) ); ?>
             </h3>
 
             <!-- Badges Container -->

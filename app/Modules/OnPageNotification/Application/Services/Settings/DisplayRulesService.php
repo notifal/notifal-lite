@@ -638,6 +638,38 @@ class DisplayRulesService
 
                 return $text;
 
+            case 'url_match':
+                $paramName = $ruleData['param_name'] ?? '';
+                if ($paramName !== '') {
+                    $operator = $ruleData['operator'] ?? 'equals';
+                    $operatorLabel = ucfirst(str_replace('_', ' ', $operator));
+                    if (in_array($operator, ['exists', 'not_exists'], true)) {
+                        return sprintf(
+                            /* translators: 1: parameter name, 2: operator */
+                            __('URL parameter [%1$s] %2$s', 'notifal'),
+                            $paramName,
+                            $operatorLabel
+                        );
+                    }
+                    $value = $ruleData['value'] ?? '';
+                    return sprintf(
+                        /* translators: 1: parameter name, 2: operator, 3: value */
+                        __('URL parameter [%1$s] %2$s [%3$s]', 'notifal'),
+                        $paramName,
+                        $operatorLabel,
+                        $value
+                    );
+                }
+                $keywords = $ruleData['keywords'] ?? [];
+                $mode = $ruleData['mode'] ?? 'contains';
+                $count = is_array($keywords) ? count($keywords) : 0;
+                return sprintf(
+                    /* translators: 1: mode (Contains/Equal/etc.), 2: count */
+                    __('URL %1$s (%2$d)', 'notifal'),
+                    ucfirst($mode),
+                    $count
+                );
+
             default:
                 return $config['label'];
         }
@@ -769,10 +801,19 @@ class DisplayRulesService
                 $sanitized['targets'] = self::sanitizeTermIds($ruleData['targets'] ?? []);
                 break;
 
-            case 'url_match':
+            case 'url_match': {
                 $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'contains', 'text');
                 $sanitized['keywords'] = self::sanitizeUrlPatterns($ruleData['keywords'] ?? []);
+                $paramName = isset($ruleData['param_name']) ? sanitize_text_field($ruleData['param_name']) : '';
+                if ($paramName !== '') {
+                    $allowedOperators = ['equals', 'contains', 'not_equals', 'not_contains', 'exists', 'not_exists'];
+                    $operator = Helper::sanitizeInput($ruleData['operator'] ?? 'equals', 'text');
+                    $sanitized['param_name'] = $paramName;
+                    $sanitized['operator'] = in_array($operator, $allowedOperators, true) ? $operator : 'equals';
+                    $sanitized['value'] = sanitize_text_field($ruleData['value'] ?? '');
+                }
                 break;
+            }
 
             case 'users':
                 $sanitized['user_type'] = Helper::sanitizeInput($ruleData['user_type'] ?? 'guest', 'text');

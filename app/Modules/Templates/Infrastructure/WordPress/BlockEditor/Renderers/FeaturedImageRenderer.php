@@ -2,13 +2,15 @@
 
 namespace Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Renderers;
 
-use Notifal\Core\Foundation\Container;
 use Notifal\Domain\Products\ProductFetcherInterface;
+use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\Templates\Application\Services\FeaturedImageAutoSourceResolver;
+use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
+use Notifal\Modules\Templates\Infrastructure\Shared\Traits\PreviewContextTrait;
 use Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\FeaturedImageStyleBuilder;
 use Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Traits\BlockRendererTrait;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\WidgetContextProvider;
-use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -26,6 +28,7 @@ defined('ABSPATH') || exit;
  */
 class FeaturedImageRenderer {
     use BlockRendererTrait;
+    use PreviewContextTrait;
 
     /**
      * Render Featured Image block with context-aware image data.
@@ -262,6 +265,16 @@ class FeaturedImageRenderer {
         string $responsive_css,
         int $block_instance
     ): string {
+        // Resolve auto source based on template content in template preview mode.
+        $resolvedSource = $image_attrs['preview_image_source'];
+        if ($resolvedSource === 'auto' && self::isTemplatePreviewMode()) {
+            $templatePost = get_post(get_the_ID());
+            if ($templatePost instanceof \WP_Post) {
+                $templateContent = ContentExtractor::extractFromBlockTemplate($templatePost);
+                $resolvedSource = FeaturedImageAutoSourceResolver::resolve($templateContent);
+            }
+        }
+
         // Start output buffering for clean HTML generation
         ob_start();
         ?>
@@ -283,7 +296,7 @@ class FeaturedImageRenderer {
                         'class' => esc_attr(implode(' ', $image_classes)),
                         'style' => !empty($image_styles) ? esc_attr($image_styles) : '',
                     ],
-                    $image_attrs['preview_image_source']
+                    $resolvedSource
                 );
                 ?>
             </div>

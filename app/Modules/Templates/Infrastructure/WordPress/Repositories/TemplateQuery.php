@@ -152,32 +152,28 @@ class TemplateQuery
     public static function hasNotifalTags(WP_Post $post, string $builder): bool
     {
         $isElementor = \Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper::hasBuilder($post);
-        
+
         if ($isElementor) {
             // For Elementor templates, check Elementor data for tags
             $elementor_data = get_post_meta($post->ID, '_elementor_data', true);
-            
+
             if (!empty($elementor_data)) {
                 $data = json_decode($elementor_data, true);
                 if (is_array($data)) {
-                    return self::elementorDataHasTags($data);
+                    if (self::elementorDataHasTags($data)) {
+                        return true;
+                    }
                 }
             }
-            
+
             // Also check post content as fallback (some Elementor templates might store content there too)
-            $content = $post->post_content;
-            $hasTagsInContent = self::contentHasNotifalTags($content);
-            
-            return $hasTagsInContent;
-        } else {
-            // For block editor templates, check post content for tags
-            $content = $post->post_content;
-            $hasTags = self::contentHasNotifalTags($content);
-            
-            return $hasTags;
+            $content = $post->post_content ?? '';
+            return self::contentHasNotifalTags($content);
         }
-        
-        return false;
+
+        // For block editor templates, check post content for tags
+        $content = $post->post_content ?? '';
+        return self::contentHasNotifalTags($content);
     }
 
     /**

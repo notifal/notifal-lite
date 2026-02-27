@@ -238,6 +238,11 @@ class FrontendAssetsRegistrar
             return false;
         }
 
+        // Always load when OnPage preview URL is present (valid param + nonce + capability)
+        if (self::isPreviewMode()) {
+            return true;
+        }
+
         global $post;
 
         // Load on pages where notifications might appear
@@ -495,24 +500,67 @@ class FrontendAssetsRegistrar
         // Get current page context for display rules
         $currentPageContext = self::getCurrentPageContext();
 
-        // Get immediate notifications for instant display
+        // Get immediate notifications for instant display (skip in preview mode)
         $immediateNotifications = self::getImmediateNotifications($currentPageContext);
 
-        wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', [
+        $config = [
             'apiEndpoint' => rest_url('notifal/v1/onpage/eligible'),
             'trackingEndpoint' => rest_url('notifal/v1/onpage/track'),
             'preferencesEndpoint' => rest_url('notifal/v1/onpage/preferences'),
             'nonce' => wp_create_nonce('wp_rest'),
             'productClickNonce' => wp_create_nonce('notifal_product_click_tracking'),
             'url' => UrlHelper::baseAjax(),
-            'debug' => WP_DEBUG,
+            'debug' => defined('WP_DEBUG') && WP_DEBUG,
             'locale' => get_locale(),
             'rtl' => is_rtl(),
             'strings' => self::getFrontendStrings(),
             'context' => $currentPageContext,
             'immediateNotifications' => $immediateNotifications,
             'siteName' => get_bloginfo('name'),
-        ]);
+        ];
+
+        if (self::isPreviewMode()) {
+            $previewId = isset($_GET['notifal_onpage_preview']) ? absint($_GET['notifal_onpage_preview']) : 0;
+            if ($previewId > 0) {
+                $config['isPreview'] = true;
+                $config['previewNotificationId'] = $previewId;
+                $config['previewEndpoint'] = self::getPreviewEndpointWithToken($previewId);
+                $config['immediateNotifications'] = [];
+            }
+        }
+
+        wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', $config);
+    }
+
+    /**
+     * Build preview REST URL with a short-lived token so the endpoint can authenticate without cookie.
+     *
+     * @param int $previewId Notification post ID
+     * @return string Preview endpoint URL with _preview_token query arg
+     * @since 2.0.0
+     */
+    private static function getPreviewEndpointWithToken(int $previewId): string
+    {
+        $token = wp_generate_password(32, false);
+        set_transient('notifal_onpage_preview_token_' . $token, $previewId, 60);
+        $url = add_query_arg('id', $previewId, rest_url('notifal/v1/onpage/preview'));
+        return add_query_arg('_preview_token', $token, $url);
+    }
+
+    /**
+     * Check if the current request is a valid OnPage notification preview (admin, nonce, param).
+     *
+     * @return bool
+     * @since 2.0.0
+     */
+    private static function isPreviewMode(): bool
+    {
+        $previewId = isset($_GET['notifal_onpage_preview']) ? absint($_GET['notifal_onpage_preview']) : 0;
+        if ($previewId <= 0) {
+            return false;
+        }
+        $nonce = isset($_GET['_wpnonce']) ? sanitize_text_field(wp_unslash($_GET['_wpnonce'])) : '';
+        return wp_verify_nonce($nonce, 'notifal_onpage_preview') && current_user_can('edit_posts');
     }
 
     /**
@@ -550,6 +598,9 @@ class FrontendAssetsRegistrar
     private static function getImmediateNotifications(array $context): array
     {
         try {
+            // Mark context so template renderer can apply deferred featured image for Elementor (immediate show)
+            $context = array_merge($context, ['for_immediate_display' => true]);
+
             // Use the eligibility service to get eligible notifications
             $eligibilityService = notifal_app(EligibilityService::class);
             $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
