@@ -232,7 +232,6 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             ?>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'desktop_bar_position')); ?>
         </div>
-
         <!-- Mobile Position Settings -->
         <div class="notifal-field-group notifal-mobile-position-group notifal-position-group-for-toast notifal-position-group-for-floating">
             <h3><?php esc_html_e( 'Mobile Position Settings', 'notifal' ); ?></h3>
@@ -308,6 +307,39 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             ?>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'mobile_bar_position')); ?>
         </div>
+
+           <!-- Floating Bar Placement (for Top Bar display type) -->
+           <div class="notifal-field-group notifal-topbar-placement-group notifal-position-group-for-topbar notifal-hidden">
+            <h3><?php esc_html_e( 'Floating Bar Placement', 'notifal' ); ?></h3>
+            <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_BEFORE, $tab, 'topbar_placement')); ?>
+
+            <?php
+            FieldRenderer::select(
+                'topbar_placement',
+                [
+                    ['value' => 'fixed_top', 'label' => __('Fixed at top of viewport', 'notifal')],
+                    ['value' => 'above_header', 'label' => __('Above header (first element)', 'notifal')],
+                ],
+                $appearance_settings['topbar_placement'] ?? 'fixed_top',
+                __( 'Bar position', 'notifal' ),
+                __( 'Fixed: bar stays on top of all content including header. Above header: bar is inserted as the first element before the site header.', 'notifal' )
+            );
+
+            $is_above_header = ($appearance_settings['topbar_placement'] ?? 'fixed_top') === 'above_header';
+            ?>
+            <div class="notifal-topbar-sticky-wrap notifal-mt-15 <?php echo $is_above_header ? '' : 'notifal-hidden'; ?>">
+                <?php
+                FieldRenderer::toggle(
+                    'topbar_sticky_on_scroll',
+                    $appearance_settings['topbar_sticky_on_scroll'] ?? true,
+                    __( 'Sticky on scroll', 'notifal' ),
+                    __( 'When enabled, the bar sticks to the top when the user scrolls. When disabled, the bar scrolls away with the page.', 'notifal' )
+                );
+                ?>
+            </div>
+            <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'topbar_placement')); ?>
+        </div>
+
 
         <!-- Animation Settings -->
         <div class="notifal-field-group">

@@ -21,6 +21,14 @@ return [
     'show_less' => __('Show Less', 'notifal'),
     'retry' => __('Retry', 'notifal'),
     'cancel' => __('Cancel', 'notifal'),
+    /**
+     * Shown when Ajax Add to Cart is used for a variable product on the same page but no variation is chosen yet.
+     */
+    'ajax_add_to_cart_select_variation_here' => __('Please select a variation on this page, then try again.', 'notifal'),
+    /**
+     * Fallback when variable product add-to-cart is requested without a variation (e.g. from another page).
+     */
+    'ajax_add_to_cart_select_variation' => __('Go to the product page, select a variation, then add to cart.', 'notifal'),
     'continue' => __('Continue', 'notifal'),
     'learn_more' => __('Learn More', 'notifal'),
     'get_started' => __('Get Started', 'notifal'),

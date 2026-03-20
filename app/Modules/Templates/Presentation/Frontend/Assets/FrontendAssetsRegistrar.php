@@ -425,14 +425,23 @@ class FrontendAssetsRegistrar
      */
     private static function localizeScript(): void
     {
-        wp_localize_script('notifal-templates-frontend-bundle', 'notifalTemplatesConfig', [
+        $config = [
             'apiEndpoint' => rest_url('notifal/v1/templates/preview'),
             'nonce' => wp_create_nonce('notifal_templates_frontend_nonce'),
-            'debug' => WP_DEBUG,
+            'debug' => defined('WP_DEBUG') && WP_DEBUG,
             'locale' => get_locale(),
             'rtl' => is_rtl(),
             'strings' => self::getFrontendStrings(),
-        ]);
+        ];
+
+        if (PluginDetector::isWooCommerceActive()) {
+            $config['ajaxAddToCartUrl'] = admin_url('admin-ajax.php');
+            $config['ajaxAddToCartNonce'] = wp_create_nonce('notifal_ajax_add_to_cart');
+            $config['strings']['ajax_add_to_cart_select_variation_here'] = __('Please select a variation on this page, then try again.', 'notifal');
+            $config['strings']['ajax_add_to_cart_select_variation'] = __('Go to the product page, select a variation, then add to cart.', 'notifal');
+        }
+
+        wp_localize_script('notifal-templates-frontend-bundle', 'notifalTemplatesConfig', $config);
     }
 
     /**

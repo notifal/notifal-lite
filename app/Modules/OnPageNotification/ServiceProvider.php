@@ -75,6 +75,7 @@ use Notifal\Infrastructure\WordPress\Services\NullOrderFetcher;
 use Notifal\Infrastructure\WordPress\Services\NullProductFetcher;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Shared\Utils\Helper;
+use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 
 defined('ABSPATH') || exit;
 
@@ -219,8 +220,46 @@ class ServiceProvider extends AbstractServiceProvider
         // Register label service hooks for cache management
         $labelService = $container->get(LabelService::class);
         $labelService->register();
+
+        /**
+         * Clear OnPage caches on plugin lifecycle events (activation/update).
+         *
+         * Using core hooks ensures that any cached ACTIVE notification data is
+         * invalidated when the plugin is first activated or updated to a new version.
+         */
+        add_action(ActionHooks::PLUGIN_ACTIVATED, [$this, 'clearOnPageCachesOnLifecycleEvent']);
+        add_action(
+            ActionHooks::DATABASE_MIGRATIONS_AFTER_RUN,
+            [$this, 'clearOnPageCachesOnLifecycleEvent'],
+            10,
+            2
+        );
     }
 
+    /**
+     * Clear OnPage notification caches on plugin activation or update.
+     *
+     * Ensures that cached notification pools, templates, and WordPress
+     * object cache are refreshed so ACTIVE notifications always reflect
+     * the latest configuration after lifecycle events.
+     *
+     * @since 2.1.5
+     * @return void
+     */
+    public function clearOnPageCachesOnLifecycleEvent(): void
+    {
+        try {
+            $container = Container::getInstance();
+            /** @var CacheManager $cacheManager */
+            $cacheManager = $container->get(CacheManager::class);
+            $cacheManager->clearAllCaches();
+        } catch (\Throwable $exception) {
+            Helper::log(
+                'OnPage ServiceProvider: Failed to clear caches on lifecycle event - ' .
+                $exception->getMessage()
+            );
+        }
+    }
 
     /**
      * Register database-level constraints for notification security.

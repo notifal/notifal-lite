@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.1.0
+Stable tag: 2.1.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -378,6 +378,13 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.1.5 [2025-03-09]
+Added: Customizable loading text for Action Button — when link type is Post Link or Custom Link, you can set the text shown while redirecting (default "Loading..."); leave empty to show no loading text and redirect after a short delay. Available in both Elementor and Block Editor.
+Added: Ajax Add to Cart (WooCommerce) — new Action Button link type when WooCommerce is active. Adds the notification's product to the cart via AJAX with settings for quantity, redirect after add (stay on page, cart, or checkout), and success text.
+Improved: On-page notifications now work better with page caching and clear their internal caches when you save settings, toggle status, or activate/update the plugin, so changes are reflected without extra steps.
+Fixed: On-page notification preview now correctly respects device-specific position settings for mobile and tablet viewports so previews match the live frontend behavior.
+Fixed: On-page notifications that are set to appear again after being closed now refresh their content more reliably, even on sites using caching.
+
 2.1.0 [2025-02-26]
 Added: On-page notification preview — see how your notification will look on your site before publishing. Use the Preview button on the edit page or in the notifications list to open a live preview on your site and fine-tune design and placement with confidence.
 Added: Search for notifications in Explore Pre-created Notifications.

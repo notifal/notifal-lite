@@ -42,6 +42,22 @@
       "type": "boolean",
       "default": false
     },
+    "loadingText": {
+      "type": "string",
+      "default": "Loading..."
+    },
+    "addToCartQuantity": {
+      "type": "number",
+      "default": 1
+    },
+    "addToCartRedirect": {
+      "type": "string",
+      "default": "none"
+    },
+    "addToCartSuccessText": {
+      "type": "string",
+      "default": "Added!"
+    },
     "alignment": {
       "type": "string",
       "default": "left"
@@ -272,6 +288,54 @@
     "showElements": {
       "type": "string",
       "default": ""
+    },
+    "viewCartTextColor": {
+      "type": "string",
+      "default": "#ffffff"
+    },
+    "viewCartBackgroundColor": {
+      "type": "string",
+      "default": "#007cba"
+    },
+    "viewCartFontSize": {
+      "type": "number",
+      "default": 14
+    },
+    "viewCartFontWeight": {
+      "type": "string",
+      "default": "400"
+    },
+    "viewCartPaddingTop": {
+      "type": "number",
+      "default": 10
+    },
+    "viewCartPaddingRight": {
+      "type": "number",
+      "default": 20
+    },
+    "viewCartPaddingBottom": {
+      "type": "number",
+      "default": 10
+    },
+    "viewCartPaddingLeft": {
+      "type": "number",
+      "default": 20
+    },
+    "viewCartSpacing": {
+      "type": "number",
+      "default": 10
+    },
+    "viewCartBorderRadius": {
+      "type": "number",
+      "default": 4
+    },
+    "viewCartBorderWidth": {
+      "type": "number",
+      "default": 0
+    },
+    "viewCartBorderColor": {
+      "type": "string",
+      "default": "transparent"
     }
   },
   "supports": {

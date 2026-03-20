@@ -1228,6 +1228,18 @@ class FilterHooks {
     public const ONPAGE_APPEARANCE_FRONTEND_CONFIG = 'notifal/onpage/appearance/frontend_config';
 
     /**
+     * Filters the CSS selector used to find the site header for "above header" top-bar placement.
+     *
+     * When top-bar placement is set to "above header", the notification bar is inserted
+     * before the first element matching this selector. Default: header, .site-header, #masthead, #header, [role="banner"]
+     *
+     * @param string $selector Comma-separated CSS selector(s)
+     * @return string Modified selector
+     * @since 2.0.0
+     */
+    public const ONPAGE_TOPBAR_HEADER_SELECTOR = 'notifal/onpage/topbar/header_selector';
+
+    /**
      * Filters the available animation types for OnPage notifications.
      *
      * Allows developers to modify, extend, or customize the available
