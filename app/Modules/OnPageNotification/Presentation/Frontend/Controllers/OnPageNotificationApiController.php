@@ -67,6 +67,11 @@ class OnPageNotificationApiController
      * Retrieves notifications that are eligible for display based on current
      * user context, display rules, and timing settings.
      *
+     * No nonce required: this is a read-only GET endpoint returning only content
+     * intended for public display. Omitting nonce allows the endpoint to work with
+     * full-page cache, static HTML, and when wp_rest nonce is unavailable or stale,
+     * avoiding 403 responses that can hurt load performance and user experience.
+     *
      * @param WP_REST_Request $request Request object containing context parameters
      * @return WP_REST_Response|WP_Error Response object with notification data or error
      * @since 2.0.0
@@ -74,16 +79,6 @@ class OnPageNotificationApiController
     public function getEligibleNotifications(WP_REST_Request $request)
     {
         try {
-            // Verify nonce for security
-            $nonce = $request->get_header('X-WP-Nonce') ?: $request->get_param('nonce');
-            if (!wp_verify_nonce($nonce, 'wp_rest')) {
-                return notifal_wp_error(
-                    'rest_forbidden',
-                    __('Invalid nonce. Please refresh the page and try again.', 'notifal'),
-                    ['status' => 403]
-                );
-            }
-
             // Check if we should serve notifications in the current context
             if (!$this->shouldServeNotifications($request)) {
                 return new WP_REST_Response([

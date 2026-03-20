@@ -9,8 +9,9 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
-use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
+use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
 use Notifal\Shared\Utils\Helper;
+use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
 
 defined('ABSPATH') || exit;
 
@@ -473,7 +474,6 @@ class FrontendAssetsRegistrar
      */
     private static function pageContainsOnPageNotificationElements(): bool
     {
-        
         /**
          * Filter to force loading OnPageNotification frontend assets.
          *
@@ -491,6 +491,8 @@ class FrontendAssetsRegistrar
      *
      * Provides REST API endpoints, nonces, and localized strings
      * to the frontend JavaScript for proper functionality.
+     * Immediate notifications are fetched asynchronously via the REST API
+     * to avoid blocking page generation with expensive template rendering.
      *
      * @return void
      * @since 2.0.0
@@ -499,9 +501,6 @@ class FrontendAssetsRegistrar
     {
         // Get current page context for display rules
         $currentPageContext = self::getCurrentPageContext();
-
-        // Get immediate notifications for instant display (skip in preview mode)
-        $immediateNotifications = self::getImmediateNotifications($currentPageContext);
 
         $config = [
             'apiEndpoint' => rest_url('notifal/v1/onpage/eligible'),
@@ -515,7 +514,7 @@ class FrontendAssetsRegistrar
             'rtl' => is_rtl(),
             'strings' => self::getFrontendStrings(),
             'context' => $currentPageContext,
-            'immediateNotifications' => $immediateNotifications,
+            'immediateNotifications' => [],
             'siteName' => get_bloginfo('name'),
         ];
 
@@ -527,6 +526,11 @@ class FrontendAssetsRegistrar
                 $config['previewEndpoint'] = self::getPreviewEndpointWithToken($previewId);
                 $config['immediateNotifications'] = [];
             }
+        }
+
+        if (PluginDetector::isWooCommerceActive()) {
+            $config['ajaxAddToCartUrl'] = admin_url('admin-ajax.php');
+            $config['ajaxAddToCartNonce'] = wp_create_nonce('notifal_ajax_add_to_cart');
         }
 
         wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', $config);
@@ -586,35 +590,6 @@ class FrontendAssetsRegistrar
             'error' => 'Error',
             'success' => 'Success',
         ];
-    }
-
-    /**
-     * Get immediate notifications that should be shown instantly on page load.
-     *
-     * @param array $context Current page context
-     * @return array Array of immediate notifications ready for frontend
-     * @since 2.0.0
-     */
-    private static function getImmediateNotifications(array $context): array
-    {
-        try {
-            // Mark context so template renderer can apply deferred featured image for Elementor (immediate show)
-            $context = array_merge($context, ['for_immediate_display' => true]);
-
-            // Use the eligibility service to get eligible notifications
-            $eligibilityService = notifal_app(EligibilityService::class);
-            $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
-
-            // Filter for immediate notifications only
-            $immediateNotifications = array_filter($eligibleNotifications, function($notification) {
-                $timing = $notification['timing'] ?? [];
-                return ($timing['show_timing'] ?? '') === 'immediate';
-            });
-
-            return array_values($immediateNotifications);
-        } catch (\Exception $e) {
-            return [];
-        }
     }
 
     /**
@@ -694,10 +669,10 @@ class FrontendAssetsRegistrar
             }
             // Handle category archive pages
             if ($postType === 'category') {
-                $categories = [$pageId]; // The category archive page itself
+                $categories = [$pageId];
             }
             if ($postType === 'product_category') {
-                $productCategories = [$pageId]; // The product category archive page itself
+                $productCategories = [$pageId];
             }
         }
 
@@ -732,9 +707,8 @@ class FrontendAssetsRegistrar
     /**
      * Check if Templates frontend assets should be loaded due to OnPage notifications.
      *
-     * This method ensures that when OnPage notifications use templates,
-     * the Templates module's frontend assets are also loaded to support
-     * custom Elementor widgets and blocks.
+     * Uses a lightweight meta query to check if any active notification references a template,
+     * without triggering the expensive eligibility pipeline or template rendering.
      *
      * @param bool $has_injection Current injection status
      * @return bool Whether Templates frontend assets should be loaded
@@ -743,33 +717,27 @@ class FrontendAssetsRegistrar
      */
     public static function maybeEnableTemplatesAssets(bool $has_injection): bool
     {
-        // If already enabled, keep it enabled
         if ($has_injection) {
             return true;
         }
 
-        // Check if OnPage notifications are going to be loaded
         if (!self::shouldLoadAssets()) {
             return false;
         }
 
         try {
-            // Get eligible notifications to check if any use templates
-            $eligibilityService = notifal_app(\Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService::class);
-            $context = self::getCurrentPageContext();
-            $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
+            // Lightweight check: query active notification meta for template_id
+            // without triggering expensive template rendering or eligibility pipeline
+            $activeNotifications = NotificationQuery::getAll();
 
-            // Check if any notification has a template
-            foreach ($eligibleNotifications as $notification) {
-                if (!empty($notification['template_id']) || !empty($notification['builder_type'])) {
-                    // Found a notification with template, enable Templates assets
+            foreach ($activeNotifications as $notification) {
+                $templateId = get_post_meta($notification->ID, '_notifal_template_id', true);
+
+                if (!empty($templateId)) {
                     return true;
                 }
             }
-
         } catch (\Exception $e) {
-            // If there's an error checking notifications, err on the side of loading assets
-            // to ensure functionality works if we have template-based notifications
             return true;
         }
 

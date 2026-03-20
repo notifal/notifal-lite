@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\CacheManager;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -87,6 +88,20 @@ class ToggleStatusController
             }
 
             do_action(ActionHooks::ONPAGE_NOTIFICATION_STATUS_TOGGLE_AFTER, $post, $newStatus, $isEnabled);
+
+            /**
+             * Initialize cache manager and clear caches after status change
+             * to ensure frontend reflects the latest activation state.
+             *
+             * @var CacheManager $cacheManager
+             */
+            $cacheManager = notifal_app(CacheManager::class);
+            $cacheManager->clearNotificationCaches(
+                $notificationId,
+                [
+                    'notif_enabled' => $isEnabled,
+                ]
+            );
 
             notifal_json_success([
                 'message' => sprintf(

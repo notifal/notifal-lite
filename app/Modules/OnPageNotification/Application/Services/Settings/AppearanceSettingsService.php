@@ -74,6 +74,11 @@ class AppearanceSettingsService
         'mobile_bar_position' => 'top',
         'mobile_bar_distance' => 0,
 
+        // Top-bar placement: fixed at viewport top vs above header (first element)
+        'topbar_placement' => 'fixed_top',
+        // When above header: whether bar is sticky on scroll
+        'topbar_sticky_on_scroll' => true,
+
         // Animation
         'show_animation_type' => 'fade',
         'hide_animation_type' => 'fade',
@@ -236,6 +241,12 @@ class AppearanceSettingsService
 
             case 'backdrop_blur':
                 return $this->sanitizeDistance($value, 0, 20);
+
+            case 'topbar_placement':
+                return $this->sanitizeSelect($value, ['fixed_top', 'above_header'], 'fixed_top');
+
+            case 'topbar_sticky_on_scroll':
+                return (bool) $value;
 
             default:
                 return $value;
@@ -819,6 +830,14 @@ class AppearanceSettingsService
         if ($this->isProFeatureAllowed() && !empty($settings['custom_css'])) {
             $config['custom_css'] = $settings['custom_css'];
         }
+
+        // Top-bar placement and sticky (for floating bar display type)
+        $config['topbar_placement'] = $settings['topbar_placement'] ?? 'fixed_top';
+        $config['topbar_sticky_on_scroll'] = (bool) ($settings['topbar_sticky_on_scroll'] ?? true);
+        $config['topbar_header_selector'] = apply_filters(
+            FilterHooks::ONPAGE_TOPBAR_HEADER_SELECTOR,
+            'header, .site-header, #masthead, #header, [role="banner"]'
+        );
 
         return apply_filters(FilterHooks::ONPAGE_APPEARANCE_FRONTEND_CONFIG, $config, $settings);
     }

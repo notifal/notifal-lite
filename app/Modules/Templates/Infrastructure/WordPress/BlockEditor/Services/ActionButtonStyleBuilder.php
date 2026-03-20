@@ -280,4 +280,55 @@ class ActionButtonStyleBuilder
 
         return $css;
     }
+
+    /**
+     * Build CSS for the "View cart" link that WooCommerce injects after add-to-cart.
+     * Scoped to the block instance so each button can have its own view cart styling.
+     *
+     * @param string $wrapper_class Unique wrapper class for this block (e.g. notifal-action-button-block-{id}).
+     * @param array $attributes Sanitized block attributes (must include viewCart* keys when linkType is ajax-add-to-cart).
+     * @return string CSS rules for .added_to_cart inside the wrapper.
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function buildViewCartCss(string $wrapper_class, array $attributes): string
+    {
+        $selector = '.' . $wrapper_class . ' .added_to_cart';
+        $t = isset($attributes['viewCartPaddingTop']) ? (int) $attributes['viewCartPaddingTop'] : 10;
+        $r = isset($attributes['viewCartPaddingRight']) ? (int) $attributes['viewCartPaddingRight'] : 20;
+        $b = isset($attributes['viewCartPaddingBottom']) ? (int) $attributes['viewCartPaddingBottom'] : 10;
+        $l = isset($attributes['viewCartPaddingLeft']) ? (int) $attributes['viewCartPaddingLeft'] : 20;
+        $radius = isset($attributes['viewCartBorderRadius']) ? (int) $attributes['viewCartBorderRadius'] : 4;
+        $border_width = isset($attributes['viewCartBorderWidth']) ? (int) $attributes['viewCartBorderWidth'] : 0;
+        $spacing = isset($attributes['viewCartSpacing']) ? (int) $attributes['viewCartSpacing'] : 10;
+        $color = isset($attributes['viewCartTextColor']) ? $attributes['viewCartTextColor'] : '#ffffff';
+        $bg = isset($attributes['viewCartBackgroundColor']) ? $attributes['viewCartBackgroundColor'] : '#007cba';
+        $font_size = isset($attributes['viewCartFontSize']) ? (int) $attributes['viewCartFontSize'] : 14;
+        $font_weight = isset($attributes['viewCartFontWeight']) ? $attributes['viewCartFontWeight'] : '400';
+        $border_color = isset($attributes['viewCartBorderColor']) ? $attributes['viewCartBorderColor'] : 'transparent';
+
+        $rules = [
+            'display' => 'inline-block',
+            'text-decoration' => 'none',
+            'color' => $color,
+            'background-color' => $bg,
+            'font-size' => $font_size . 'px',
+            'font-weight' => $font_weight,
+            'padding' => "{$t}px {$r}px {$b}px {$l}px",
+            'margin-left' => $spacing . 'px',
+            'border-radius' => $radius . 'px',
+            'border-width' => $border_width . 'px',
+            'border-style' => $border_width > 0 ? 'solid' : 'none',
+            'border-color' => $border_color,
+            'transition' => 'opacity 0.2s ease',
+        ];
+
+        $css = $selector . ' { ';
+        foreach ($rules as $prop => $value) {
+            $css .= str_replace('_', '-', $prop) . ': ' . $value . '; ';
+        }
+        $css .= '}';
+
+        return $css;
+    }
 }

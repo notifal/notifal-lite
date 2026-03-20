@@ -64,10 +64,11 @@ class EligibilityService
 
         // Get all active notifications
         $notifications = $this->getActiveNotifications();
+        $forceFreshNotificationId = $context['force_fresh_notification_id'] ?? null;
+        $forceFreshContent = $context['force_fresh_content'] ?? false;
 
         // Handle forced fresh content for specific notification (retrigger case)
-        $forceFreshNotificationId = $context['force_fresh_notification_id'] ?? null;
-        if ($forceFreshNotificationId && $context['force_fresh_content'] ?? false) {
+        if ($forceFreshNotificationId && $forceFreshContent) {
             // Find the specific notification to refresh
             $targetNotification = null;
             foreach ($notifications as $notification) {

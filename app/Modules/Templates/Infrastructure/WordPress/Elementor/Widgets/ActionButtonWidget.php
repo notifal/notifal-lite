@@ -8,6 +8,7 @@ use Elementor\Group_Control_Typography;
 use Elementor\Group_Control_Background;
 use Elementor\Group_Control_Border;
 use Elementor\Group_Control_Box_Shadow;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 
 defined('ABSPATH') || exit;
 
@@ -84,17 +85,21 @@ class ActionButtonWidget extends BaseWidget
             'dynamic' => ['active' => true],
         ]);
 
-        // Link type selector
+        // Link type selector (Ajax Add to Cart only when WooCommerce is active)
+        $link_type_options = [
+            'product' => esc_html__('Post Link', 'notifal'),
+            'copy'    => esc_html__('Copy Text', 'notifal'),
+            'custom'  => esc_html__('Custom Link', 'notifal'),
+            'close'   => esc_html__('Close Notification', 'notifal'),
+            'custom-trigger' => esc_html__('Custom Trigger', 'notifal'),
+        ];
+        if (PluginDetector::isWooCommerceActive()) {
+            $link_type_options['ajax-add-to-cart'] = esc_html__('Ajax Add to Cart', 'notifal');
+        }
         $this->add_control('link_type', [
             'label' => esc_html__('Link Type', 'notifal'),
             'type' => Controls_Manager::SELECT,
-            'options' => [
-                'product' => esc_html__('Post Link', 'notifal'),
-                'copy'    => esc_html__('Copy Text', 'notifal'),
-                'custom'  => esc_html__('Custom Link', 'notifal'),
-                'close'   => esc_html__('Close Notification', 'notifal'),
-                'custom-trigger' => esc_html__('Custom Trigger', 'notifal'),
-            ],
+            'options' => $link_type_options,
             'default' => 'product',
         ]);
 
@@ -117,6 +122,19 @@ class ActionButtonWidget extends BaseWidget
             'condition' => ['link_type' => 'custom'],
         ]);
 
+        // Loading text (for Post Link and Custom Link when button shows loading state before redirect)
+        $this->add_control('loading_text', [
+            'label' => esc_html__('Loading Text', 'notifal'),
+            'type' => Controls_Manager::TEXT,
+            'default' => esc_html__('Loading...', 'notifal'),
+            'placeholder' => esc_html__('Loading...', 'notifal'),
+            'description' => esc_html__('Text shown on the button while redirecting. Leave empty to show no loading text; the button will then redirect after a short delay without changing the label.', 'notifal'),
+            'dynamic' => ['active' => true],
+            'condition' => [
+                'link_type' => ['product', 'custom'],
+            ],
+        ]);
+
         // Custom trigger hide elements field (conditional)
         $this->add_control('hide_elements', [
             'label' => esc_html__('Hide Elements', 'notifal'),
@@ -135,6 +153,36 @@ class ActionButtonWidget extends BaseWidget
             'description' => esc_html__('Comma-separated CSS selectors to show when button is clicked (e.g. #test,.className)', 'notifal'),
             'dynamic' => ['active' => true],
             'condition' => ['link_type' => 'custom-trigger'],
+        ]);
+
+        // Ajax Add to Cart settings (conditional, WooCommerce)
+        $this->add_control('add_to_cart_quantity', [
+            'label' => esc_html__('Quantity', 'notifal'),
+            'type' => Controls_Manager::NUMBER,
+            'min' => 1,
+            'max' => 99,
+            'default' => 1,
+            'condition' => ['link_type' => 'ajax-add-to-cart'],
+        ]);
+        $this->add_control('add_to_cart_redirect', [
+            'label' => esc_html__('After Adding to Cart', 'notifal'),
+            'type' => Controls_Manager::SELECT,
+            'options' => [
+                'none' => esc_html__('Stay on Page', 'notifal'),
+                'cart' => esc_html__('Redirect to Cart', 'notifal'),
+                'checkout' => esc_html__('Redirect to Checkout', 'notifal'),
+            ],
+            'default' => 'none',
+            'condition' => ['link_type' => 'ajax-add-to-cart'],
+        ]);
+        $this->add_control('add_to_cart_success_text', [
+            'label' => esc_html__('Success Text', 'notifal'),
+            'type' => Controls_Manager::TEXT,
+            'default' => esc_html__('Added!', 'notifal'),
+            'placeholder' => esc_html__('Added!', 'notifal'),
+            'description' => esc_html__('Text shown on the button after the product is added to the cart.', 'notifal'),
+            'dynamic' => ['active' => true],
+            'condition' => ['link_type' => 'ajax-add-to-cart'],
         ]);
 
         // Button alignment
@@ -482,6 +530,92 @@ class ActionButtonWidget extends BaseWidget
         ]);
 
         $this->end_controls_section();
+
+        // =====================================================================
+        // VIEW CART LINK STYLE SECTION (when link type is Ajax Add to Cart)
+        // =====================================================================
+
+        /**
+         * View Cart Link Style Section
+         * Styles the "View cart" link that WooCommerce injects after the button on add-to-cart.
+         * Only shown when link type is "Ajax Add to Cart".
+         */
+        $this->start_controls_section('section_view_cart_style', [
+            'label' => esc_html__('View Cart Link', 'notifal'),
+            'tab' => Controls_Manager::TAB_STYLE,
+            'condition' => ['link_type' => 'ajax-add-to-cart'],
+        ]);
+
+        $this->add_control('view_cart_style_description', [
+            'type' => Controls_Manager::RAW_HTML,
+            'raw' => esc_html__('These options style the "View cart" link that WooCommerce shows next to the button after a product is added to cart.', 'notifal'),
+            'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
+        ]);
+
+        $this->add_group_control(Group_Control_Typography::get_type(), [
+            'name' => 'view_cart_typography',
+            'selector' => '{{WRAPPER}} .added_to_cart',
+        ]);
+
+        $this->add_control('view_cart_text_color', [
+            'label' => esc_html__('Text Color', 'notifal'),
+            'type' => Controls_Manager::COLOR,
+            'default' => '#ffffff',
+            'selectors' => [
+                '{{WRAPPER}} .added_to_cart' => 'color: {{VALUE}};',
+            ],
+        ]);
+
+        $this->add_control('view_cart_background_color', [
+            'label' => esc_html__('Background Color', 'notifal'),
+            'type' => Controls_Manager::COLOR,
+            'selectors' => [
+                '{{WRAPPER}} .added_to_cart' => 'background-color: {{VALUE}};',
+            ],
+        ]);
+
+        $this->add_group_control(Group_Control_Border::get_type(), [
+            'name' => 'view_cart_border',
+            'selector' => '{{WRAPPER}} .added_to_cart',
+        ]);
+
+        $this->add_responsive_control('view_cart_border_radius', [
+            'label' => esc_html__('Border Radius', 'notifal'),
+            'type' => Controls_Manager::DIMENSIONS,
+            'size_units' => ['px', '%'],
+            'selectors' => [
+                '{{WRAPPER}} .added_to_cart' => 'border-radius: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+            ],
+        ]);
+
+        $this->add_responsive_control('view_cart_padding', [
+            'label' => esc_html__('Padding', 'notifal'),
+            'type' => Controls_Manager::DIMENSIONS,
+            'size_units' => ['px', 'em', '%'],
+            'selectors' => [
+                '{{WRAPPER}} .added_to_cart' => 'padding: {{TOP}}{{UNIT}} {{RIGHT}}{{UNIT}} {{BOTTOM}}{{UNIT}} {{LEFT}}{{UNIT}};',
+            ],
+        ]);
+
+        $this->add_responsive_control('view_cart_spacing', [
+            'label' => esc_html__('Spacing from Button', 'notifal'),
+            'type' => Controls_Manager::SLIDER,
+            'range' => [
+                'px' => [
+                    'min' => 0,
+                    'max' => 60,
+                ],
+            ],
+            'default' => [
+                'size' => 10,
+                'unit' => 'px',
+            ],
+            'selectors' => [
+                '{{WRAPPER}} .added_to_cart' => 'margin-left: {{SIZE}}{{UNIT}};',
+            ],
+        ]);
+
+        $this->end_controls_section();
     }
 
 
@@ -550,6 +684,11 @@ class ActionButtonWidget extends BaseWidget
                 } else {
                     $button_attrs['href'] = '#';
                 }
+                // Loading text (empty = no text change, redirect after short delay; legacy = default)
+                $loading_text_raw = array_key_exists('loading_text', $settings) ? trim((string) $settings['loading_text']) : null;
+                $button_attrs['data-loading-text'] = $loading_text_raw === null
+                    ? esc_attr(__('Loading...', 'notifal'))
+                    : esc_attr(sanitize_text_field($loading_text_raw));
                 break;
 
             case 'copy':
@@ -581,11 +720,36 @@ class ActionButtonWidget extends BaseWidget
                 }
                 break;
 
+            case 'ajax-add-to-cart':
+                // WooCommerce AJAX add to cart (product from notification context)
+                $button_attrs['href'] = '#';
+                $button_attrs['data-action'] = 'ajax-add-to-cart';
+                $button_attrs['data-add-to-cart-quantity'] = max(1, min(99, (int) ($settings['add_to_cart_quantity'] ?? 1)));
+                $button_attrs['data-add-to-cart-redirect'] = in_array($settings['add_to_cart_redirect'] ?? 'none', ['cart', 'checkout'], true)
+                    ? sanitize_text_field($settings['add_to_cart_redirect'])
+                    : 'none';
+                $button_attrs['data-add-to-cart-success-text'] = esc_attr(sanitize_text_field($settings['add_to_cart_success_text'] ?? __('Added!', 'notifal')));
+
+                $data = $contextData['data'] ?? null;
+                if ($data && method_exists($data, 'getId')) {
+                    $button_attrs['data-product-id'] = $data->getId();
+                }
+                if (!empty($contextData['url'])) {
+                    $button_attrs['data-post-url'] = esc_url($contextData['url']);
+                }
+                break;
+
             case 'product':
             default:
                 // Post/product link (default)
                 $button_attrs['href'] = '#';
                 $button_attrs['data-action'] = 'post-link';
+
+                // Loading text (empty = no text change, redirect after short delay; legacy = default)
+                $loading_text_raw = array_key_exists('loading_text', $settings) ? trim((string) $settings['loading_text']) : null;
+                $button_attrs['data-loading-text'] = $loading_text_raw === null
+                    ? esc_attr(__('Loading...', 'notifal'))
+                    : esc_attr(sanitize_text_field($loading_text_raw));
 
                 // Add context data for JavaScript handling
                 if (!empty($contextData['url'])) {
@@ -595,8 +759,8 @@ class ActionButtonWidget extends BaseWidget
                 // Legacy product data for backward compatibility
                 $data = $contextData['data'] ?? null;
                 if ($data && method_exists($data, 'getId') && method_exists($data, 'getLink')) {
-                    $button_attrs['data-product-id'] = $data->getId();
-                    $button_attrs['data-product-url'] = $data->getLink();
+                    $button_attrs['data-product-id'] = esc_attr((string) $data->getId());
+                    $button_attrs['data-product-url'] = esc_url($data->getLink());
                 }
                 break;
         }

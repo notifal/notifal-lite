@@ -69,11 +69,17 @@ class ActionButtonRenderer
     {
         return [
             'buttonText' => self::sanitizeText($attributes['buttonText'] ?? __('Buy now', 'notifal')),
-            'linkType' => self::sanitizeFromAllowed($attributes['linkType'] ?? 'product', ['product', 'copy', 'custom', 'close', 'custom-trigger'], 'product'),
+            'linkType' => self::sanitizeFromAllowed($attributes['linkType'] ?? 'product', ['product', 'copy', 'custom', 'close', 'custom-trigger', 'ajax-add-to-cart'], 'product'),
             'copyText' => self::sanitizeText($attributes['copyText'] ?? ''),
             'customUrl' => self::sanitizeUrl($attributes['customUrl'] ?? ''),
             'customUrlTarget' => self::sanitizeBool($attributes['customUrlTarget'] ?? false),
             'customUrlNofollow' => self::sanitizeBool($attributes['customUrlNofollow'] ?? false),
+            'loadingText' => array_key_exists('loadingText', $attributes)
+                ? (trim((string) $attributes['loadingText']) === '' ? '' : self::sanitizeText($attributes['loadingText']))
+                : null,
+            'addToCartQuantity' => isset($attributes['addToCartQuantity']) ? max(1, min(99, self::sanitizeInt($attributes['addToCartQuantity'], 1))) : 1,
+            'addToCartRedirect' => self::sanitizeFromAllowed($attributes['addToCartRedirect'] ?? 'none', ['none', 'cart', 'checkout'], 'none'),
+            'addToCartSuccessText' => self::sanitizeText($attributes['addToCartSuccessText'] ?? ''),
             'alignment' => self::sanitizeFromAllowed($attributes['alignment'] ?? 'center', ['left', 'center', 'right'], 'center'),
             'fontSize' => self::sanitizeInt($attributes['fontSize'] ?? 16, 16, 8),
             'fontSizeTablet' => isset($attributes['fontSizeTablet']) ? self::sanitizeInt($attributes['fontSizeTablet']) : null,
@@ -136,6 +142,18 @@ class ActionButtonRenderer
             'iconColor' => self::sanitizeColor($attributes['iconColor'] ?? '#ffffff', '#ffffff'),
             'hideElements' => self::sanitizeText($attributes['hideElements'] ?? ''),
             'showElements' => self::sanitizeText($attributes['showElements'] ?? ''),
+            'viewCartTextColor' => self::sanitizeColor($attributes['viewCartTextColor'] ?? '#ffffff', '#ffffff'),
+            'viewCartBackgroundColor' => self::sanitizeColor($attributes['viewCartBackgroundColor'] ?? '#007cba', '#007cba'),
+            'viewCartFontSize' => self::sanitizeInt($attributes['viewCartFontSize'] ?? 14, 14, 8),
+            'viewCartFontWeight' => self::sanitizeFromAllowed($attributes['viewCartFontWeight'] ?? '400', ['300', '400', '500', '600', '700', '800'], '400'),
+            'viewCartPaddingTop' => self::sanitizeInt($attributes['viewCartPaddingTop'] ?? 10),
+            'viewCartPaddingRight' => self::sanitizeInt($attributes['viewCartPaddingRight'] ?? 20),
+            'viewCartPaddingBottom' => self::sanitizeInt($attributes['viewCartPaddingBottom'] ?? 10),
+            'viewCartPaddingLeft' => self::sanitizeInt($attributes['viewCartPaddingLeft'] ?? 20),
+            'viewCartSpacing' => self::sanitizeInt($attributes['viewCartSpacing'] ?? 10),
+            'viewCartBorderRadius' => self::sanitizeInt($attributes['viewCartBorderRadius'] ?? 4),
+            'viewCartBorderWidth' => self::sanitizeInt($attributes['viewCartBorderWidth'] ?? 0),
+            'viewCartBorderColor' => self::sanitizeColor($attributes['viewCartBorderColor'] ?? 'transparent', 'transparent'),
         ];
     }
 
@@ -183,18 +201,25 @@ class ActionButtonRenderer
         
         // Generate responsive CSS for frontend
         $responsive_css = ActionButtonStyleBuilder::buildResponsiveCss($button_id, $attributes);
-        
+
+        // When Ajax Add to Cart: add View Cart link CSS and unique wrapper class for scoping
+        $wrapper_extra_class = '';
+        if (($attributes['linkType'] ?? '') === 'ajax-add-to-cart') {
+            $wrapper_extra_class = ' notifal-action-button-block-' . esc_attr($button_id);
+            $view_cart_css = ActionButtonStyleBuilder::buildViewCartCss('notifal-action-button-block-' . $button_id, $attributes);
+            $responsive_css = $responsive_css . "\n" . $view_cart_css;
+        }
+
         // Build complete HTML
         ob_start();
         ?>
         <?php if (!empty($responsive_css)): ?>
-            <style><?php 
+            <style><?php
                 // Output CSS directly - it's already sanitized by ActionButtonStyleBuilder
-                // DO NOT use wp_strip_all_tags() as it removes the <style> tag itself!
-                echo $responsive_css; 
+                echo $responsive_css;
             ?></style>
         <?php endif; ?>
-        <div class="notifal-action-button-block" style="<?php echo esc_attr($wrapper_styles); ?>">
+        <div class="notifal-action-button-block<?php echo $wrapper_extra_class; ?>" style="<?php echo esc_attr($wrapper_styles); ?>">
             <a <?php echo $link_attributes; ?> style="<?php echo esc_attr($button_styles); ?>">
                 <?php if (!empty($attributes['iconUrl'])): ?>
                     <?php if (($attributes['iconType'] ?? 'image') === 'svg' && !empty($attributes['iconColor']) &&
@@ -262,6 +287,8 @@ class ActionButtonRenderer
                         $link_attrs[] = 'rel="nofollow"';
                     }
                 }
+                $loading_display = $attributes['loadingText'] === null ? esc_attr__('Loading...', 'notifal') : esc_attr($attributes['loadingText']);
+                $link_attrs[] = 'data-loading-text="' . $loading_display . '"';
                 break;
             case 'copy':
                 if ($attributes['copyText']) {
@@ -273,6 +300,19 @@ class ActionButtonRenderer
             case 'close':
                 $link_attrs[] = 'href="#"';
                 $link_attrs[] = 'data-action="close"';
+                break;
+            case 'ajax-add-to-cart':
+                $link_attrs[] = 'href="#"';
+                $link_attrs[] = 'data-action="ajax-add-to-cart"';
+                $link_attrs[] = 'data-add-to-cart-quantity="' . esc_attr((string) $attributes['addToCartQuantity']) . '"';
+                $link_attrs[] = 'data-add-to-cart-redirect="' . esc_attr($attributes['addToCartRedirect']) . '"';
+                $link_attrs[] = 'data-add-to-cart-success-text="' . esc_attr($attributes['addToCartSuccessText'] ?: __('Added!', 'notifal')) . '"';
+                if (class_exists(WidgetContextProvider::class) && WidgetContextProvider::isActive()) {
+                    $context = WidgetContextProvider::getContext();
+                    if (isset($context['product']) && $context['product'] && method_exists($context['product'], 'getId')) {
+                        $link_attrs[] = 'data-product-id="' . esc_attr((string) $context['product']->getId()) . '"';
+                    }
+                }
                 break;
             case 'custom-trigger':
                 $link_attrs[] = 'href="#"';
@@ -292,6 +332,9 @@ class ActionButtonRenderer
             default:
                 $link_attrs[] = 'href="#"';
                 $link_attrs[] = 'data-action="post-link"';
+
+                $loading_display = $attributes['loadingText'] === null ? esc_attr__('Loading...', 'notifal') : esc_attr($attributes['loadingText']);
+                $link_attrs[] = 'data-loading-text="' . $loading_display . '"';
 
                 // Get context if available during frontend rendering
                 $contextUrl = null;

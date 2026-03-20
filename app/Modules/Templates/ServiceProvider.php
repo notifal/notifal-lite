@@ -22,6 +22,7 @@ use Notifal\Modules\Templates\Presentation\Admin\Routes\AdminRouteController;
 use Notifal\Modules\Templates\Presentation\Admin\Menu\MenuController;
 use Notifal\Modules\Templates\Presentation\Frontend\Routes\PreviewRouteController;
 use Notifal\Modules\Templates\Presentation\Frontend\Assets\FrontendAssetsRegistrar;
+use Notifal\Modules\Templates\Presentation\Frontend\Controllers\AjaxAddToCartController;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Application\Services\PreviewDataResolver;
 use Notifal\Modules\Templates\Contracts\TemplateExporterInterface;
@@ -143,6 +144,11 @@ class ServiceProvider extends AbstractServiceProvider
 
         // Register AJAX handlers for import functionality
         ImportController::register();
+
+        // Register frontend AJAX add-to-cart when WooCommerce is active
+        if (PluginDetector::isWooCommerceActive()) {
+            AjaxAddToCartController::register();
+        }
     }
 
     /**
