@@ -6,6 +6,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\CampaignAttributionResolver;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\DatabaseRepository;
 use Notifal\Shared\Utils\Helper;
 
@@ -41,6 +42,14 @@ class ConversionTracker
     private $databaseRepository;
 
     /**
+     * Campaign attribution resolver.
+     *
+     * @var CampaignAttributionResolver
+     * @since 2.2.0
+     */
+    private $campaignAttributionResolver;
+
+    /**
      * Conversion attribution window in seconds.
      *
      * Default: 24 hours (86400 seconds)
@@ -73,6 +82,7 @@ class ConversionTracker
     {
         // Resolve database repository from container
         $this->databaseRepository = notifal_app(DatabaseRepository::class);
+        $this->campaignAttributionResolver = notifal_app(CampaignAttributionResolver::class);
         
         // Get attribution window from filter (default: 24 hours)
         $this->attributionWindow = apply_filters(FilterHooks::ONPAGE_CONVERSION_ATTRIBUTION_WINDOW, 24 * 60 * 60);
@@ -225,6 +235,7 @@ class ConversionTracker
                 'conversion_timestamp' => current_time('mysql'),
                 'attribution_type' => 'woocommerce',
                 'user_id' => $order->get_user_id() ?: 0,
+                'campaign_id' => isset($mostRecentClick['campaign_id']) ? (int) $mostRecentClick['campaign_id'] : 0,
             ]);
 
             // Mark all attributed clicks as converted to prevent double-counting
@@ -463,6 +474,9 @@ class ConversionTracker
                 'referrer' => esc_url_raw($clickData['referrer'] ?? ''),
                 'ip_address' => Helper::sanitizeInput($clickData['ip_address'] ?? '', 'text'),
                 'user_agent' => Helper::sanitizeInput($clickData['user_agent'] ?? '', 'text'),
+                'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification(
+                    (int) ($clickData['notification_id'] ?? 0)
+                ),
                 'status' => 'pending'
             ],
             [
@@ -476,6 +490,7 @@ class ConversionTracker
                 '%s', // referrer
                 '%s', // ip_address
                 '%s', // user_agent
+                '%d', // campaign_id
                 '%s'  // status
             ]
         );
@@ -610,7 +625,8 @@ class ConversionTracker
                 'click_timestamp' => $conversionData['click_timestamp'],
                 'conversion_timestamp' => $conversionData['conversion_timestamp'],
                 'attribution_type' => Helper::sanitizeInput($conversionData['attribution_type'] ?? 'woocommerce', 'text'),
-                'user_id' => (int)($conversionData['user_id'] ?? 0)
+                'user_id' => (int)($conversionData['user_id'] ?? 0),
+                'campaign_id' => (int)($conversionData['campaign_id'] ?? 0),
             ],
             [
                 '%d', // notification_id
@@ -623,7 +639,8 @@ class ConversionTracker
                 '%s', // click_timestamp
                 '%s', // conversion_timestamp
                 '%s', // attribution_type
-                '%d'  // user_id
+                '%d', // user_id
+                '%d'  // campaign_id
             ]
         );
 
@@ -843,6 +860,7 @@ class ConversionTracker
                 'conversion_timestamp' => current_time('mysql'),
                 'attribution_type' => 'fallback',
                 'user_id' => get_current_user_id() ?: 0,
+                'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification((int) $mostRecentNotification),
             ]);
         }
     }

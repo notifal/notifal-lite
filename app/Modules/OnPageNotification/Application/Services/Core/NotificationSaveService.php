@@ -294,6 +294,9 @@ class NotificationSaveService
 
         $sanitized = array_merge($sanitized, $generalSettings);
 
+        // Campaign assignment (used to override notification schedule).
+        $sanitized['notifal_campaign_id'] = absint( $data['notifal_campaign_id'] ?? 0 );
+
         // Appearance settings
         $appearanceData = $this->parseJsonField($data['appearance_settings'] ?? '{}');
         $sanitized['appearance_settings'] = $this->appearanceService->sanitizeSettings($appearanceData);
@@ -437,6 +440,14 @@ class NotificationSaveService
         // Save content source type
         update_post_meta($postId, '_notifal_content_source_type', $sanitizedData['content_source_type']);
 
+        // Save campaign assignment (overrides notification schedule).
+        $campaignId = isset( $sanitizedData['notifal_campaign_id'] ) ? absint( $sanitizedData['notifal_campaign_id'] ) : 0;
+        if ( $campaignId > 0 ) {
+            update_post_meta( $postId, '_notifal_campaign_id', $campaignId );
+        } else {
+            delete_post_meta( $postId, '_notifal_campaign_id' );
+        }
+
         // Save labels
         if (!empty($sanitizedData['notifal_labels'])) {
             $result = wp_set_object_terms($postId, $sanitizedData['notifal_labels'], 'notifal_label');
@@ -541,6 +552,7 @@ class NotificationSaveService
             'notif_enabled' => $notifEnabled,
             'notif_title' => $post->post_title,
             'content_source_type' => get_post_meta($post->ID, '_notifal_content_source_type', true) ?: 'dynamic',
+            'campaign_id' => absint( get_post_meta($post->ID, '_notifal_campaign_id', true ) ),
             'appearance_settings' => get_post_meta($post->ID, '_notifal_appearance_settings', true) ?: [],
             'behavior_settings' => get_post_meta($post->ID, '_notifal_behavior_settings', true) ?: [],
             'timing_settings' => get_post_meta($post->ID, '_notifal_timing_settings', true) ?: [],

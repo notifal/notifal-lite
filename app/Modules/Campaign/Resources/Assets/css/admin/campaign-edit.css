@@ -1,0 +1,248 @@
+/* Campaign edit screen styles */
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-ended-banner {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--notifal-border);
+    background: var(--notifal-bg-light);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-ended-banner-text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--notifal-text-dark);
+}
+
+/* Campaign active/paused toggle row (#campaign_status). @since 2.2.0 */
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper.notifal-direction-row:has(#campaign_status) {
+    margin-bottom: 20px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--notifal-border);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper.notifal-direction-column {
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper.notifal-direction-row {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-card {
+    border: 1px solid var(--notifal-border);
+    border-radius: 10px;
+    background: var(--notifal-white);
+    padding: 24px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-current-site-time {
+    margin-bottom: 0;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-current-site-time-text {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--notifal-text-muted);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper.notifal-direction-column label.notifal-form-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-weight: 600;
+    color: var(--notifal-text-dark);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-field-wrapper.notifal-direction-row > .notifal-form-label {
+    margin-bottom: 0;
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-label-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-label {
+    font-weight: 600;
+    color: var(--notifal-text-dark);
+    margin: 0;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-section-title {
+    margin-bottom: 14px;
+    color: var(--notifal-text-dark);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form input[type="text"],
+.wrap.notifal-admin-page .notifal-campaign-edit-form input[type="number"],
+.wrap.notifal-admin-page .notifal-campaign-edit-form input[type="datetime-local"],
+.wrap.notifal-admin-page .notifal-campaign-edit-form input[type="search"],
+.wrap.notifal-admin-page .notifal-campaign-edit-form textarea {
+    width: 100%;
+    border: 1px solid var(--notifal-border);
+    border-radius: 6px;
+    padding: 10px 12px;
+    min-height: 40px;
+    box-sizing: border-box;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form textarea {
+    min-height: 90px;
+    resize: vertical;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form input:focus,
+.wrap.notifal-admin-page .notifal-campaign-edit-form textarea:focus {
+    border-color: var(--notifal-primary);
+    box-shadow: 0 0 0 1px var(--notifal-primary);
+    outline: none;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-picker {
+    position: relative;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-wrap {
+    position: relative;
+    max-width: 100%;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-results {
+    position: absolute;
+    z-index: 30;
+    left: 0;
+    right: 0;
+    top: calc(100% + 4px);
+    max-height: 240px;
+    overflow-y: auto;
+    border: 1px solid var(--notifal-border);
+    border-radius: 8px;
+    background: var(--notifal-white);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-result-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    border: none;
+    border-bottom: 1px solid var(--notifal-border);
+    background: var(--notifal-white);
+    color: var(--notifal-text-dark);
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-result-item:hover,
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-result-item:focus {
+    background: var(--notifal-bg-light);
+    outline: none;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-hint,
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-loading,
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-empty,
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-error {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--notifal-text-muted);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-search-error {
+    color: var(--notifal-text-dark);
+    font-weight: 600;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-selected-heading {
+    margin: 16px 0 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--notifal-text-dark);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-selected-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 8px 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--notifal-border);
+    background: var(--notifal-bg-light);
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip-link {
+    color: var(--notifal-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip-link:hover {
+    text-decoration: underline;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--notifal-text-muted);
+    cursor: pointer;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip-remove:hover,
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-campaign-onpage-chip-remove:focus {
+    background: var(--notifal-white);
+    color: var(--notifal-text-dark);
+    outline: none;
+}
+
+.wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-form-actions {
+    margin-top: 24px;
+    padding-top: 14px;
+    border-top: 1px solid var(--notifal-border);
+}
+
+@media (max-width: 782px) {
+    .wrap.notifal-admin-page .notifal-campaign-edit-form .notifal-card {
+        padding: 16px;
+    }
+}

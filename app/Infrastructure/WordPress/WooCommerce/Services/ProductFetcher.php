@@ -33,27 +33,13 @@ class ProductFetcher implements ProductFetcherInterface
      */
     public function getRandom(array $filters = []): ?ProductDTO
     {
-        // Check if WooCommerce is active before proceeding
         if (!PluginDetector::isWooCommerceActive()) {
             return null;
         }
-        $args = [
-            'post_type'      => 'product',
-            'posts_per_page' => 1,
-            'orderby'        => 'rand',
-            'fields'         => 'ids',
-        ];
 
-        // Apply custom filters if provided
-        $args = $this->applyFilters($args, $filters);
+        $pool = $this->getRandomPool(1, $filters);
 
-        $query = new WP_Query($args);
-
-        if (empty($query->posts)) {
-            return null;
-        }
-
-        return $this->buildProductDTO($query->posts[0]);
+        return $pool[0] ?? null;
     }
 
     /**
@@ -72,10 +58,16 @@ class ProductFetcher implements ProductFetcherInterface
         }
         // Ensure we don't fetch too many products (performance limit)
         $count = max(1, min($count, 50));
-        
+
+        $mustMatchLiveSale = $this->mustValidateSaleAgainstWooCommerce($filters);
+        // Widen the SQL candidate set when we will drop rows that fail WC_Product::is_on_sale() (scheduled sale windows, etc.).
+        $postsPerPage = $mustMatchLiveSale
+            ? min(max($count * 8, 32), 200)
+            : $count;
+
         $args = [
             'post_type'      => 'product',
-            'posts_per_page' => $count,
+            'posts_per_page' => $postsPerPage,
             'orderby'        => 'rand',
             'fields'         => 'ids',
         ];
@@ -96,9 +88,18 @@ class ProductFetcher implements ProductFetcherInterface
             return [];
         }
 
+        $postIds = $query->posts;
+        if ($mustMatchLiveSale) {
+            $postIds = $this->filterPostIdsByLiveOnSale($postIds, $count);
+        }
+
+        if (empty($postIds)) {
+            return [];
+        }
+
         $products = [];
-        foreach ($query->posts as $productId) {
-            $productDto = $this->buildProductDTO($productId);
+        foreach ($postIds as $productId) {
+            $productDto = $this->buildProductDTO((int) $productId);
             if ($productDto) {
                 $products[] = $productDto;
             }
@@ -136,17 +137,17 @@ class ProductFetcher implements ProductFetcherInterface
     }
 
     /**
-     * Build a ProductDTO from WooCommerce product ID or variation ID.
+     * Resolve the WC_Product instance used for DTOs (variable parents map to a child variation).
      *
-     * @param int $id Product ID or variation ID.
-     * @return ProductDTO|null
+     * @param int $id Product or variation ID.
+     * @return WC_Product|null
      * @since 2.0.0
      */
-    private function buildProductDTO(int $id): ?ProductDTO
+    private function resolveWcProductForDto(int $id): ?WC_Product
     {
         $wcProduct = wc_get_product($id);
 
-        if (! $wcProduct instanceof WC_Product) {
+        if (!$wcProduct instanceof WC_Product) {
             return null;
         }
 
@@ -155,10 +156,116 @@ class ProductFetcher implements ProductFetcherInterface
         if ($wcProduct->is_type('variable')) {
             $children = $wcProduct->get_children();
             if (!empty($children)) {
-                $wcProduct = wc_get_product($children[0]);
+                $resolved = wc_get_product($children[0]);
+                $wcProduct = $resolved instanceof WC_Product ? $resolved : $wcProduct;
             }
         }
-        // For variations, wcProduct is already the specific variation - no change needed
+
+        return $wcProduct instanceof WC_Product ? $wcProduct : null;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function requiresLiveSaleValidation(array $filters): bool
+    {
+        return $this->mustValidateSaleAgainstWooCommerce($filters);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public function filterProductPoolToLiveSaleOnly(array $productDtos): array
+    {
+        if (!PluginDetector::isWooCommerceActive()) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($productDtos as $dto) {
+            if (!$dto instanceof ProductDTO) {
+                continue;
+            }
+            $wcProduct = $this->resolveWcProductForDto($dto->getId());
+            if ($wcProduct && $wcProduct->is_on_sale()) {
+                $out[] = $dto;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Whether every candidate from the SQL query must currently be on sale per WooCommerce.
+     *
+     * When false (e.g. OR groups where a branch is non-sale), post-query filtering would drop valid rows.
+     *
+     * @param array $filters Filter configuration passed to {@see applyFilters()}.
+     * @return bool
+     * @since 2.0.0
+     */
+    private function mustValidateSaleAgainstWooCommerce(array $filters): bool
+    {
+        if (!empty($filters['on_sale'])) {
+            return true;
+        }
+
+        $conditions = $filters['conditions'] ?? [];
+        if (empty($conditions) || !is_array($conditions)) {
+            return false;
+        }
+
+        if (strtoupper($filters['logic'] ?? 'AND') === 'OR') {
+            return false;
+        }
+
+        foreach ($conditions as $condition) {
+            if (($condition['type'] ?? '') === 'sale') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Keep post IDs whose resolved product passes {@see WC_Product::is_on_sale()} at request time.
+     *
+     * @param array $postIds Post IDs from {@see WP_Query}.
+     * @param int   $maxResults Maximum IDs to return.
+     * @return int[]
+     * @since 2.0.0
+     */
+    private function filterPostIdsByLiveOnSale(array $postIds, int $maxResults): array
+    {
+        $out = [];
+        foreach ($postIds as $productId) {
+            if (count($out) >= $maxResults) {
+                break;
+            }
+            $wcProduct = $this->resolveWcProductForDto((int) $productId);
+            if ($wcProduct && $wcProduct->is_on_sale()) {
+                $out[] = (int) $productId;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Build a ProductDTO from WooCommerce product ID or variation ID.
+     *
+     * @param int $id Product ID or variation ID.
+     * @return ProductDTO|null
+     * @since 2.0.0
+     */
+    private function buildProductDTO(int $id): ?ProductDTO
+    {
+        $wcProduct = $this->resolveWcProductForDto($id);
+
+        if (!$wcProduct instanceof WC_Product) {
+            return null;
+        }
 
         $dto = new ProductDTO(
             $wcProduct->get_id(),

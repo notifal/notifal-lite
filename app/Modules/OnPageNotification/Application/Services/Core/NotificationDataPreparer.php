@@ -2,12 +2,17 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
+use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\AppearanceSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Services\Tag\FrontendTagContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
+use Notifal\Modules\OnPageNotification\Application\Services\Template\TemplateContextBuilder;
+use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
 
@@ -62,6 +67,7 @@ class NotificationDataPreparer
      * @param array $context Current page context
      * @return array|null Prepared notification data or null if no matching data found
      * @since 2.0.0
+     * @since 2.2.0 Exposes `campaign_id`, `campaign_start_date`, and `campaign_end_date` for frontend schedule alignment.
      */
     public function prepareForFrontend(\WP_Post $notification, array $context): ?array
     {
@@ -74,10 +80,28 @@ class NotificationDataPreparer
             $context
         );
 
+        $templateIdForContext = (int) ($notificationData['template_id'] ?? 0);
+        $context = array_merge($context, [
+            'template_id' => $templateIdForContext,
+            'notification_id' => (int) $notification->ID,
+        ]);
+
         $renderedContent = $this->getRenderedTemplateContent($notificationData, $context);
 
         if ($renderedContent === null) {
             return null;
+        }
+
+        // Resolve linked campaign schedule so the frontend can mirror server eligibility when the notification schedule UI is disabled.
+        $campaignId = (int) get_post_meta( $notification->ID, '_notifal_campaign_id', true );
+        $campaignStartDate = '';
+        $campaignEndDate   = '';
+        if ( $campaignId > 0 ) {
+            $campaignSettings = get_post_meta( $campaignId, '_notifal_campaign_settings', true );
+            if ( is_array( $campaignSettings ) ) {
+                $campaignStartDate = (string) ( $campaignSettings['start_date'] ?? '' );
+                $campaignEndDate   = (string) ( $campaignSettings['end_date'] ?? '' );
+            }
         }
 
         $frontendData = [
@@ -95,8 +119,11 @@ class NotificationDataPreparer
             'is_dismissible' => $notificationData['behavior_settings']['is_dismissible'] ?? true,
             'frequency_cap_daily' => $notificationData['behavior_settings']['frequency_cap_daily'] ?? 0,
             'frequency_cap_total' => $notificationData['behavior_settings']['frequency_cap_total'] ?? 0,
-            'start_date' => $notificationData['behavior_settings']['start_date'] ?? null,
-            'end_date' => $notificationData['behavior_settings']['end_date'] ?? null,
+            'start_date' => $notificationData['timing_settings']['start_date'] ?? null,
+            'end_date' => $notificationData['timing_settings']['end_date'] ?? null,
+            'campaign_id' => $campaignId > 0 ? $campaignId : null,
+            'campaign_start_date' => $campaignStartDate !== '' ? $campaignStartDate : null,
+            'campaign_end_date' => $campaignEndDate !== '' ? $campaignEndDate : null,
 
             'appearance' => $this->prepareAppearanceSettings($notificationData),
             'behavior' => $this->prepareBehaviorSettings($notificationData),
@@ -113,7 +140,122 @@ class NotificationDataPreparer
         // Add calculated priority score for frontend conflict resolution
         $frontendData['priority'] = $this->getNotificationPriority($frontendData);
 
+        $retriggerVariants = $this->buildRetriggerProductPoolVariants($notification, $notificationData, $context);
+        if (!empty($retriggerVariants)) {
+            $frontendData['retrigger_variants'] = $retriggerVariants;
+        }
+
         return $frontendData;
+    }
+
+    /**
+     * Pre-render alternate product-pool members for client-side retrigger (no extra HTTP).
+     *
+     * @param \WP_Post $notification Notification post
+     * @param array $notificationData Resolved notification configuration
+     * @param array $context Request context merged with template_id and notification_id
+     * @return array<int, array<string, mixed>> List of variant payloads (template HTML, assets, optional deferred image)
+     * @since 2.2.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function buildRetriggerProductPoolVariants(\WP_Post $notification, array $notificationData, array $context): array
+    {
+        $timingSettings = $notificationData['timing_settings'] ?? [];
+        if (empty($timingSettings['allow_retrigger_after_hide'])) {
+            return [];
+        }
+
+        $templateId = (int) ($notificationData['template_id'] ?? 0);
+        if ($templateId <= 0) {
+            return [];
+        }
+
+        $template = Helper::getPostSafe($templateId, 'notifal_template');
+        if (!$template) {
+            return [];
+        }
+
+        $contentSourceSettings = $notificationData['content_source_settings'] ?? [];
+
+        $templateContextBuilder = notifal_app(TemplateContextBuilder::class);
+        $isElementor = ElementorHelper::hasBuilder($template);
+        $rawContent = $isElementor
+            ? $templateContextBuilder->extractRawContentForElementor($template)
+            : $templateContextBuilder->extractRawContentFromBlocks($template);
+
+        $tagContextBuilder = notifal_app(FrontendTagContextBuilder::class);
+        if ($tagContextBuilder->resolvePrimaryEntityType($rawContent, $contentSourceSettings) !== 'product') {
+            return [];
+        }
+
+        $contentSourceService = notifal_app(ContentSourceService::class);
+        $productPool = $contentSourceService->getProductPool($contentSourceSettings);
+        $poolCount = count($productPool);
+        if ($poolCount < 2) {
+            return [];
+        }
+
+        $maxVariants = (int) apply_filters(
+            FilterHooks::ONPAGE_RETRIGGER_CLIENT_VARIANTS_MAX,
+            12,
+            $notificationData,
+            $notification
+        );
+        $maxVariants = max(1, min($maxVariants, $poolCount));
+
+        $templateIdKey = (int) ($context['template_id'] ?? 0);
+        if (!$templateIdKey && isset($context['notification_id'])) {
+            $templateIdKey = (int) $context['notification_id'];
+        }
+        $requestId = $_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true);
+        $productCacheKeyParts = [
+            'template_id' => $templateIdKey,
+            'request_id' => floor((float) $requestId),
+            'content_source_settings' => $contentSourceSettings,
+        ];
+        $productCacheKeyFull = 'notifal_product_context_' . md5(serialize($productCacheKeyParts));
+        $crc = crc32($productCacheKeyFull);
+        $primaryIndex = ($crc % $poolCount + $poolCount) % $poolCount;
+
+        $variants = [];
+        $templateRenderer = notifal_app(FrontendTemplateRenderer::class);
+
+        for ($i = 0; $i < $maxVariants; $i++) {
+            if ($i === $primaryIndex) {
+                continue;
+            }
+
+            TemplateContextBuilder::clearContextCache();
+            FrontendTemplateRenderer::clearContextCache();
+
+            $variantContext = array_merge($context, [
+                'notifal_pool_variant_index' => $i,
+            ]);
+
+            $result = $templateRenderer->renderForFrontend($templateId, $variantContext, $contentSourceSettings);
+            if (isset($result['no_matching_data']) && $result['no_matching_data'] === true) {
+                continue;
+            }
+
+            $html = $result['html'] ?? '';
+            if ($html === '') {
+                continue;
+            }
+
+            $entry = [
+                'template_content' => $html,
+                'content' => $html,
+                'template_assets' => $result['assets'] ?? [],
+                'builder_type' => $result['builder_type'] ?? null,
+                'cache_bust' => time() . '_' . uniqid('', true),
+            ];
+            if (!empty($result['deferred_featured_image_html'])) {
+                $entry['deferred_featured_image_html'] = $result['deferred_featured_image_html'];
+            }
+            $variants[] = $entry;
+        }
+
+        return $variants;
     }
 
     /**

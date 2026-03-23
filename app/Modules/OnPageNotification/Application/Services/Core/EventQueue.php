@@ -41,6 +41,7 @@ class EventQueue
         $validator = notifal_app(TrackingDataValidator::class);
         $additionalFields = [
             'device_type' => 'desktop',
+            'campaign_id' => 0,
             'timezone' => '',
             'screen_resolution' => '',
             'viewport_size' => '',
@@ -215,6 +216,7 @@ class EventQueue
                 '%s', // page_url
                 '%s', // ip_address
                 '%s', // device_type
+                '%d', // campaign_id
                 '%s', // country_code
                 '%s', // city
                 '%s', // timezone

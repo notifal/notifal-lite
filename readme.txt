@@ -1,9 +1,9 @@
-=== Notifal – Popup Builder & Notification Tool to Grow Email List, Increase Sale & Boost Conversion  ===
+=== Notifal - Popup Builder & Notification Tool to Grow Email List, Increase Sale & Boost Conversion  ===
 Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.1.5
+Stable tag: 2.2.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -96,6 +96,8 @@ Guessing doesn't grow businesses, data does. Notifal's built-in advanced analyti
 
 * **🎯 Conversion Rate [PRO]**: Know precisely how many viewers are converting into subscribers, buyers, or leads.
 
+* **📅 Campaign-based analytics filters [PRO]**: Impressions, clicks, close rate, conversions, and other key performance data based on the campaign your notifications belong to, so you can measure full campaign performance with clarity.
+
 Data-driven decisions. Real results.
 
 ## Design Your Way. No Limits. ##
@@ -172,6 +174,12 @@ Trigger options:
 
 Stop showing popups randomly. Start showing them strategically.
 
+## 📅 Campaign Manager — Align Timing Across Notifications ##
+
+Running a seasonal sale, a product launch, or a limited-time offer? With Campaign Manager, you can group related notifications under one campaign, define the campaign schedule once, and manage the whole promotion more clearly from one place.
+
+Instead of treating every notification as an isolated item, campaigns help you organize multiple messages around a single goal. Assign several notifications to the same campaign, keep their timing aligned, simplify management for larger promotions, and review performance with campaign-based filtering in analytics. When a notification belongs to a campaign, the campaign schedule takes priority, so your messages stay coordinated without repeating the same date settings on every notification.
+
 ## Built for Every Website. Tailored for Your Goals. ##
 
 It doesn't matter what kind of website you run. If you have visitors, you have opportunities to convert them. Notifal adapts to your industry, your audience, and your unique goals, helping every type of website turn passive traffic into measurable results.
@@ -202,6 +210,7 @@ Whatever you build, Notifal helps you grow it.
 **Core Features**:
 
 * Number of Active Notifications (Just 1 in FREE Version - **Unilimited in PRO Version**)
+* Campaign Manager — create campaigns with schedule windows and assign on-page notifications
 * Import Notification
 * Export Notification
 * Build Templates with Elementor
@@ -378,6 +387,15 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.2.0 [2026-03-20]
+Added: Campaign Manager — create campaigns with start/end date windows, assign on-page notifications to a campaign, and use the campaign schedule to control when those notifications are active.
+Added: Campaign analytics filters (Pro) — campaign metrics (impressions, clicks, close rate, conversions, users) are available in Notifal Pro v2.1.0 using event-time attribution for campaigns that are currently active.
+Added: Notification scheduling — Start/End date and time fields on each notification to control when it is active (when not driven by a campaign).
+Added: Optional “close after action button” — in Behavior settings you can close the notification when someone clicks a template action button, and choose how long to wait before it closes.
+Improved: Pro analytics — “Close” is counted only when a visitor actually dismisses the notification (not when it hides on a timer, after a form, or automatically).
+Fixed: An issue with Ajax Add to Cart for WooCommerce notifications.
+Fixed: “Above header” top bar placement on sticky headers no longer leaves a white gap or overlaps the site header after scrolling back to the top.
+
 2.1.5 [2025-03-09]
 Added: Customizable loading text for Action Button — when link type is Post Link or Custom Link, you can set the text shown while redirecting (default "Loading..."); leave empty to show no loading text and redirect after a short delay. Available in both Elementor and Block Editor.
 Added: Ajax Add to Cart (WooCommerce) — new Action Button link type when WooCommerce is active. Adds the notification's product to the cart via AJAX with settings for quantity, redirect after add (stay on page, cart, or checkout), and success text.

@@ -64,6 +64,7 @@ class MigrationService
             ip_address varchar(45),
             session_id varchar(100),
             device_type varchar(20) DEFAULT 'desktop',
+            campaign_id bigint(20) unsigned DEFAULT 0,
             country_code varchar(2),
             city varchar(100),
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
@@ -73,7 +74,9 @@ class MigrationService
             KEY user_id (user_id),
             KEY timestamp (timestamp),
             KEY session_id (session_id),
-            KEY device_type (device_type)
+            KEY device_type (device_type),
+            KEY campaign_id (campaign_id),
+            KEY campaign_event_date (campaign_id, event_type, timestamp)
         ) $charset_collate;";
 
         dbDelta($sql);
@@ -178,6 +181,7 @@ class MigrationService
             page_url varchar(500),
             ip_address varchar(45),
             device_type varchar(20) DEFAULT 'desktop',
+            campaign_id bigint(20) unsigned DEFAULT 0,
             country_code varchar(2),
             city varchar(100),
             timezone varchar(50),
@@ -192,7 +196,8 @@ class MigrationService
             KEY session_id (session_id),
             KEY processed (processed),
             KEY timestamp (timestamp),
-            KEY created_at (created_at)
+            KEY created_at (created_at),
+            KEY campaign_id (campaign_id)
         ) $charset_collate;";
 
         dbDelta($sql);
@@ -205,6 +210,7 @@ class MigrationService
             product_id bigint(20) unsigned NOT NULL,
             user_id bigint(20) unsigned DEFAULT 0,
             session_id varchar(100),
+            campaign_id bigint(20) unsigned DEFAULT 0,
             click_timestamp datetime NOT NULL,
             attribution_window_hours int(11) unsigned DEFAULT 24,
             page_url varchar(500),
@@ -220,7 +226,8 @@ class MigrationService
             KEY session_id (session_id),
             KEY click_timestamp (click_timestamp),
             KEY status (status),
-            KEY attribution_lookup (product_id, click_timestamp, status)
+            KEY attribution_lookup (product_id, click_timestamp, status),
+            KEY campaign_id (campaign_id)
         ) $charset_collate;";
 
         dbDelta($sql);
@@ -240,6 +247,7 @@ class MigrationService
             conversion_timestamp datetime NOT NULL,
             attribution_type varchar(20) DEFAULT 'woocommerce',
             user_id bigint(20) unsigned DEFAULT 0,
+            campaign_id bigint(20) unsigned DEFAULT 0,
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             UNIQUE KEY unique_product_order (product_click_id, order_id, product_id),
@@ -248,7 +256,9 @@ class MigrationService
             KEY order_id (order_id),
             KEY product_id (product_id),
             KEY conversion_timestamp (conversion_timestamp),
-            KEY attribution_type (attribution_type)
+            KEY attribution_type (attribution_type),
+            KEY campaign_id (campaign_id),
+            KEY campaign_conversion_date (campaign_id, conversion_timestamp)
         ) $charset_collate;";
 
         dbDelta($sql);
@@ -328,6 +338,11 @@ class MigrationService
             ],
             [
                 'table' => $wpdb->prefix . 'notifal_onpage_tracking',
+                'name' => 'idx_tracking_campaign_event_date',
+                'columns' => 'campaign_id, event_type, timestamp'
+            ],
+            [
+                'table' => $wpdb->prefix . 'notifal_onpage_tracking',
                 'name' => 'idx_tracking_user_date',
                 'columns' => 'user_id, timestamp'
             ],
@@ -365,6 +380,11 @@ class MigrationService
                 'name' => 'idx_event_queue_notification_event',
                 'columns' => 'notification_id, event_type'
             ],
+            [
+                'table' => $wpdb->prefix . 'notifal_onpage_event_queue',
+                'name' => 'idx_event_queue_campaign',
+                'columns' => 'campaign_id'
+            ],
             // Product clicks table indexes (v2.0.2)
             [
                 'table' => $wpdb->prefix . 'notifal_onpage_product_clicks',
@@ -376,11 +396,21 @@ class MigrationService
                 'name' => 'idx_product_clicks_session',
                 'columns' => 'session_id, click_timestamp'
             ],
+            [
+                'table' => $wpdb->prefix . 'notifal_onpage_product_clicks',
+                'name' => 'idx_product_clicks_campaign',
+                'columns' => 'campaign_id, click_timestamp'
+            ],
             // Conversions table indexes (v2.0.2)
             [
                 'table' => $wpdb->prefix . 'notifal_onpage_conversions',
                 'name' => 'idx_conversions_revenue_calc',
                 'columns' => 'notification_id, conversion_timestamp, product_revenue'
+            ],
+            [
+                'table' => $wpdb->prefix . 'notifal_onpage_conversions',
+                'name' => 'idx_conversions_campaign_date',
+                'columns' => 'campaign_id, conversion_timestamp'
             ],
         ];
 

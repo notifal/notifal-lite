@@ -7,6 +7,7 @@ use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EventQueue;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\TrackingDataValidator;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\CampaignAttributionResolver;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\GeolocationService;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\DatabaseRepository;
 
@@ -41,6 +42,11 @@ class TrackingService
     private $geolocationService;
 
     /**
+     * @var CampaignAttributionResolver
+     */
+    private $campaignAttributionResolver;
+
+    /**
      * Constructor
      *
      * @since 2.0.0
@@ -50,6 +56,7 @@ class TrackingService
         $this->eventQueue = notifal_app(EventQueue::class);
         $this->validator = notifal_app(TrackingDataValidator::class);
         $this->geolocationService = notifal_app(GeolocationService::class);
+        $this->campaignAttributionResolver = notifal_app(CampaignAttributionResolver::class);
     }
 
     /**
@@ -80,6 +87,9 @@ class TrackingService
         }
 
         $validatedData = $validationResult['data'];
+        $validatedData['campaign_id'] = $this->campaignAttributionResolver->resolveCampaignIdForNotification(
+            (int) ($validatedData['notification_id'] ?? 0)
+        );
 
         // Apply tracking data filter
         $filteredData = apply_filters(

@@ -196,6 +196,7 @@ class EventProcessor
             'ip_address' => $event['ip_address'],
             'session_id' => $event['session_id'],
             'device_type' => $event['device_type'],
+            'campaign_id' => isset($event['campaign_id']) ? (int) $event['campaign_id'] : 0,
             'country_code' => $event['country_code'],
             'city' => $event['city'],
         ];

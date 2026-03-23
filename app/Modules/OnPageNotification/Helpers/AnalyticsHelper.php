@@ -2,6 +2,8 @@
 
 namespace Notifal\Modules\OnPageNotification\Helpers;
 
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+
 defined('ABSPATH') || exit;
 
 /**
@@ -118,27 +120,111 @@ class AnalyticsHelper
     /**
      * Get filtered notification IDs based on filters.
      *
-     * @param array $filters Analytics filters
-     * @return array Array of notification IDs
+     * Resolves which OnPage notifications are included in analytics. A specific
+     * `notification_id` limits to that post; when `campaign_id` is set, only
+     * notifications linked to that campaign (`_notifal_campaign_id`) are included,
+     * and counts/rates for the dashboard are aggregated across those IDs. If both
+     * are set, the notification must belong to the campaign or no IDs are returned.
+     *
+     * @param array $filters Analytics filters (`notification_id`, `campaign_id`, `status`, …).
+     * @return array<int> Notification post IDs.
      * @since 2.0.0
+     * @since 2.2.0 Added `campaign_id` filtering and validation against `notification_id`.
      */
     public static function getFilteredNotificationIds(array $filters): array
     {
-        if (isset($filters["notification_id"])) {
-            return [(int)$filters["notification_id"]];
+        $status = isset($filters['status']) && $filters['status'] !== '' ? $filters['status'] : '';
+
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+
+        $notificationId = isset($filters['notification_id']) ? (int) $filters['notification_id'] : 0;
+
+        if ($notificationId > 0) {
+            if ($campaignId > 0) {
+                global $wpdb;
+                $trackingTable = $wpdb->prefix . 'notifal_onpage_tracking';
+                $conversionsTable = $wpdb->prefix . 'notifal_onpage_conversions';
+
+                $hasCampaignTracking = (int) $wpdb->get_var(
+                    $wpdb->prepare(
+                        "SELECT COUNT(*) FROM {$trackingTable} WHERE notification_id = %d AND campaign_id = %d",
+                        $notificationId,
+                        $campaignId
+                    )
+                );
+
+                $hasCampaignConversions = 0;
+                $conversionsExists = $wpdb->get_var("SHOW TABLES LIKE '{$conversionsTable}'") === $conversionsTable;
+                if ($conversionsExists) {
+                    $hasCampaignConversions = (int) $wpdb->get_var(
+                        $wpdb->prepare(
+                            "SELECT COUNT(*) FROM {$conversionsTable} WHERE notification_id = %d AND campaign_id = %d",
+                            $notificationId,
+                            $campaignId
+                        )
+                    );
+                }
+
+                if ($hasCampaignTracking <= 0 && $hasCampaignConversions <= 0) {
+                    return apply_filters(FilterHooks::ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS, [], $filters);
+                }
+            }
+
+            $ids = [ $notificationId ];
+
+            return apply_filters(FilterHooks::ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS, $ids, $filters);
         }
 
         $args = [
-            "post_type" => "notifal_onpage_notif",
-            "post_status" => ["publish", "draft"],
-            "posts_per_page" => -1,
-            "fields" => "ids"
+            'post_type' => 'notifal_onpage_notif',
+            'post_status' => [ 'publish', 'draft' ],
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'orderby' => 'date',
+            'order' => 'DESC',
         ];
 
-        if (isset($filters["status"]) && !empty($filters["status"])) {
-            $args["post_status"] = $filters["status"];
+        if ($status !== '') {
+            $args['post_status'] = $status;
         }
 
-        return get_posts($args);
+        if ($campaignId > 0) {
+            global $wpdb;
+
+            $trackingTable = $wpdb->prefix . 'notifal_onpage_tracking';
+            $conversionsTable = $wpdb->prefix . 'notifal_onpage_conversions';
+
+            $trackingIds = $wpdb->get_col(
+                $wpdb->prepare(
+                    "SELECT DISTINCT notification_id FROM {$trackingTable} WHERE campaign_id = %d",
+                    $campaignId
+                )
+            );
+            $trackingIds = is_array($trackingIds) ? array_map('absint', $trackingIds) : [];
+
+            $conversionIds = [];
+            $conversionsExists = $wpdb->get_var("SHOW TABLES LIKE '{$conversionsTable}'") === $conversionsTable;
+            if ($conversionsExists) {
+                $conversionIds = $wpdb->get_col(
+                    $wpdb->prepare(
+                        "SELECT DISTINCT notification_id FROM {$conversionsTable} WHERE campaign_id = %d",
+                        $campaignId
+                    )
+                );
+                $conversionIds = is_array($conversionIds) ? array_map('absint', $conversionIds) : [];
+            }
+
+            $campaignNotificationIds = array_values(array_unique(array_merge($trackingIds, $conversionIds)));
+            if (empty($campaignNotificationIds)) {
+                return apply_filters(FilterHooks::ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS, [], $filters);
+            }
+
+            $args['post__in'] = $campaignNotificationIds;
+        }
+
+        $ids = get_posts($args);
+        $ids = is_array($ids) ? array_map('absint', $ids) : [];
+
+        return apply_filters(FilterHooks::ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS, $ids, $filters);
     }
 }

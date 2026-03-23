@@ -278,7 +278,8 @@ class AnalyticsService
         $notificationIds = AnalyticsHelper::getFilteredNotificationIds($filters);
 
         // Calculate only total revenue
-        $totalRevenue = $this->calculateTotalRevenue($notificationIds, $startDate, $endDate);
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $totalRevenue = $this->calculateTotalRevenue($notificationIds, $startDate, $endDate, $campaignId);
 
         return [
             "current_period" => [
@@ -334,7 +335,8 @@ class AnalyticsService
         $startDate = $dateRange["start"];
         $endDate = $dateRange["end"];
 
-        $revenue = $this->calculateProductRevenue($notificationId, $startDate, $endDate);
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenue = $this->calculateProductRevenue($notificationId, $startDate, $endDate, $campaignId);
 
         return [
             "notification_id" => $notificationId,
@@ -390,7 +392,8 @@ class AnalyticsService
         $endDate = $dateRange["end"];
         $notificationIds = AnalyticsHelper::getFilteredNotificationIds($filters);
 
-        $revenueData = $this->getRevenueTimeSeriesData($notificationIds, $startDate, $endDate);
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenueData = $this->getRevenueTimeSeriesData($notificationIds, $startDate, $endDate, $campaignId);
 
         return [
             "impressions_over_time" => [],
@@ -421,7 +424,8 @@ class AnalyticsService
 
         // Get revenue data for all notifications in one query if possible
         $notificationIds = array_column($notifications, 'ID');
-        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate);
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
 
         $analyticsData = [];
         foreach ($notifications as $notification) {
@@ -478,7 +482,8 @@ class AnalyticsService
 
         // Get revenue data for the paginated notifications
         $notificationIds = array_column($notifications['items'], 'ID');
-        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate);
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
 
         // Build analytics data for paginated items
         $analyticsData = [];
@@ -530,7 +535,7 @@ class AnalyticsService
      * @return float Total revenue
      * @since 2.0.0
      */
-    private function calculateTotalRevenue(array $notificationIds, string $startDate, string $endDate): float
+    private function calculateTotalRevenue(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
     {
         if (empty($notificationIds)) {
             return 0.0;
@@ -544,13 +549,18 @@ class AnalyticsService
         if (!empty($conversionsTable) && $wpdb->get_var("SHOW TABLES LIKE \"$conversionsTable\"") === $conversionsTable) {
             // Get total revenue from conversions table for all notifications
             $placeholders = implode(",", array_fill(0, count($notificationIds), "%d"));
+            $campaignSql = $campaignId > 0 ? " AND campaign_id = %d" : '';
+            $params = array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"]);
+            if ($campaignId > 0) {
+                $params[] = $campaignId;
+            }
             $sql = $wpdb->prepare(
                 "SELECT SUM(product_revenue) as total_revenue
                 FROM $conversionsTable
                 WHERE notification_id IN ($placeholders)
                 AND conversion_timestamp >= %s
-                AND conversion_timestamp <= %s",
-                array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"])
+                AND conversion_timestamp <= %s{$campaignSql}",
+                $params
             );
 
             $result = $wpdb->get_var($sql);
@@ -562,6 +572,9 @@ class AnalyticsService
         // Fallback: calculate from daily stats
         $totalRevenue = 0.0;
         foreach ($notificationIds as $notificationId) {
+            if ($campaignId > 0) {
+                continue;
+            }
             $dailyStats = $this->getDailyStats($notificationId, $startDate, $endDate);
             $aggregated = $this->aggregateDaily($dailyStats);
             $totalRevenue += (float)($aggregated["total_revenue"] ?? 0);
@@ -580,7 +593,7 @@ class AnalyticsService
      * @since 2.0.2
      * @author Hossein <hossein@notifal.com>
      */
-    public function calculateProductRevenue(int $notificationId, string $startDate, string $endDate): float
+    public function calculateProductRevenue(int $notificationId, string $startDate, string $endDate, int $campaignId = 0): float
     {
         global $wpdb;
         $tables = $this->getTableNames();
@@ -588,15 +601,18 @@ class AnalyticsService
 
         // Check if conversions table exists and has data
         if (!empty($conversionsTable) && $wpdb->get_var("SHOW TABLES LIKE \"$conversionsTable\"") === $conversionsTable) {
+            $campaignSql = $campaignId > 0 ? " AND campaign_id = %d" : '';
+            $params = [$notificationId, $startDate . " 00:00:00", $endDate . " 23:59:59"];
+            if ($campaignId > 0) {
+                $params[] = $campaignId;
+            }
             $sql = $wpdb->prepare(
                 "SELECT SUM(product_revenue) as total_revenue
                 FROM $conversionsTable
                 WHERE notification_id = %d
                 AND conversion_timestamp >= %s
-                AND conversion_timestamp <= %s",
-                $notificationId,
-                $startDate . " 00:00:00",
-                $endDate . " 23:59:59"
+                AND conversion_timestamp <= %s{$campaignSql}",
+                $params
             );
 
             $result = $wpdb->get_var($sql);
@@ -606,6 +622,9 @@ class AnalyticsService
         }
 
         // Fallback to daily stats revenue column
+        if ($campaignId > 0) {
+            return 0.0;
+        }
         $dailyStats = $this->getDailyStats($notificationId, $startDate, $endDate);
         $aggregated = $this->aggregateDaily($dailyStats);
         return (float)($aggregated["total_revenue"] ?? 0);
@@ -620,7 +639,7 @@ class AnalyticsService
      * @return array Revenue time series data
      * @since 2.0.2
      */
-    public function getRevenueTimeSeriesData(array $notificationIds, string $startDate, string $endDate): array
+    public function getRevenueTimeSeriesData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
         if (empty($notificationIds)) {
             return [];
@@ -638,15 +657,20 @@ class AnalyticsService
             // Use new product-specific conversion tracking
             $placeholders = implode(",", array_fill(0, count($notificationIds), "%d"));
 
+            $campaignSql = $campaignId > 0 ? " AND campaign_id = %d" : '';
+            $params = array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"]);
+            if ($campaignId > 0) {
+                $params[] = $campaignId;
+            }
             $sql = $wpdb->prepare(
                 "SELECT DATE(conversion_timestamp) as date, SUM(product_revenue) as value
                 FROM $conversionsTable
                 WHERE notification_id IN ($placeholders)
                 AND conversion_timestamp >= %s
-                AND conversion_timestamp <= %s
+                AND conversion_timestamp <= %s{$campaignSql}
                 GROUP BY DATE(conversion_timestamp)
                 ORDER BY date ASC",
-                array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"])
+                $params
             );
 
             $results = $wpdb->get_results($sql, ARRAY_A);
@@ -658,6 +682,9 @@ class AnalyticsService
         // Fallback to daily stats revenue column
         $allRevenueData = [];
         foreach ($notificationIds as $notificationId) {
+            if ($campaignId > 0) {
+                continue;
+            }
             $dailyStats = $this->getDailyStats($notificationId, $startDate, $endDate);
 
             foreach ($dailyStats as $day) {
@@ -691,6 +718,7 @@ class AnalyticsService
      * @param array $overrides Additional query overrides
      * @return array Query arguments for get_posts
      * @since 2.0.0
+     * @since 2.2.0 Supports `campaign_id` via `_notifal_campaign_id` meta.
      */
     private function buildNotificationQueryArgs(array $filters = [], array $overrides = []): array
     {
@@ -703,6 +731,17 @@ class AnalyticsService
 
         if (isset($filters["status"]) && !empty($filters["status"])) {
             $queryArgs["post_status"] = $filters["status"];
+        }
+
+        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        if ($campaignId > 0) {
+            $queryArgs['meta_query'] = [
+                [
+                    'key' => '_notifal_campaign_id',
+                    'value' => $campaignId,
+                    'compare' => '=',
+                ],
+            ];
         }
 
         return array_merge($queryArgs, $overrides);
@@ -773,7 +812,7 @@ class AnalyticsService
      * @return array Revenue data keyed by notification ID
      * @since 2.0.0
      */
-    private function getBulkRevenueData(array $notificationIds, string $startDate, string $endDate): array
+    private function getBulkRevenueData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
         if (empty($notificationIds)) {
             return [];
@@ -786,14 +825,19 @@ class AnalyticsService
         // Check if conversions table exists and has data
         if (!empty($conversionsTable) && $wpdb->get_var("SHOW TABLES LIKE \"$conversionsTable\"") === $conversionsTable) {
             $placeholders = implode(",", array_fill(0, count($notificationIds), "%d"));
+            $campaignSql = $campaignId > 0 ? " AND campaign_id = %d" : '';
+            $params = array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"]);
+            if ($campaignId > 0) {
+                $params[] = $campaignId;
+            }
             $sql = $wpdb->prepare(
                 "SELECT notification_id, SUM(product_revenue) as total_revenue
                 FROM $conversionsTable
                 WHERE notification_id IN ($placeholders)
                 AND conversion_timestamp >= %s
-                AND conversion_timestamp <= %s
+                AND conversion_timestamp <= %s{$campaignSql}
                 GROUP BY notification_id",
-                array_merge($notificationIds, [$startDate . " 00:00:00", $endDate . " 23:59:59"])
+                $params
             );
 
             $results = $wpdb->get_results($sql, ARRAY_A);
@@ -809,6 +853,10 @@ class AnalyticsService
         // Fallback: get revenue from daily stats
         $revenueData = [];
         foreach ($notificationIds as $notificationId) {
+            if ($campaignId > 0) {
+                $revenueData[$notificationId] = 0.0;
+                continue;
+            }
             $dailyStats = $this->getDailyStats($notificationId, $startDate, $endDate);
             $aggregated = $this->aggregateDaily($dailyStats);
             $revenueData[$notificationId] = (float)($aggregated["total_revenue"] ?? 0);

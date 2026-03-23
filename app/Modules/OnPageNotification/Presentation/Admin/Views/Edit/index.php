@@ -3,6 +3,7 @@
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
+use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Shared\Services\NotifalIconService;
 use Notifal\Shared\Utils\Helper;
 
@@ -62,6 +63,13 @@ if ( $get_action === 'edit' && $get_id > 0 ) {
     }
 }
 
+$notifal_timing_settings_hidden_json = '{}';
+if ( $is_edit && isset( $notification_data['timing_settings'] ) && is_array( $notification_data['timing_settings'] ) ) {
+    $notifal_timing_settings_hidden_json = wp_json_encode(
+        ScheduleDateTimeHelper::withScheduleBoundariesForAdminDatetimeInputs( $notification_data['timing_settings'] )
+    );
+}
+
 ?>
 
 <div class="wrap notifal-admin-page">
@@ -96,7 +104,7 @@ if ( $get_action === 'edit' && $get_id > 0 ) {
         <!-- Hidden fields for settings data -->
         <input type="hidden" name="appearance_settings" value="<?php echo esc_attr( $is_edit && isset( $notification_data['appearance_settings'] ) ? wp_json_encode( $notification_data['appearance_settings'] ) : '{}' ); ?>">
         <input type="hidden" name="behavior_settings" value="<?php echo esc_attr( $is_edit && isset( $notification_data['behavior_settings'] ) ? wp_json_encode( $notification_data['behavior_settings'] ) : '{}' ); ?>">
-        <input type="hidden" name="timing_settings" value="<?php echo esc_attr( $is_edit && isset( $notification_data['timing_settings'] ) ? wp_json_encode( $notification_data['timing_settings'] ) : '{}' ); ?>">
+        <input type="hidden" name="timing_settings" value="<?php echo esc_attr( $notifal_timing_settings_hidden_json ); ?>">
         <input type="hidden" name="content_source_settings" value="<?php echo esc_attr( $is_edit && isset( $notification_data['content_source_settings'] ) ? wp_json_encode( $notification_data['content_source_settings'] ) : '{}' ); ?>">
         <input type="hidden" name="display_rules_data" value="<?php echo esc_attr( $is_edit && isset( $notification_data['display_rules_data'] ) ? wp_json_encode( $notification_data['display_rules_data'] ) : '{}' ); ?>">
         <input type="hidden" name="rule_combination_logic" value="<?php echo esc_attr( $is_edit && isset( $notification_data['rule_combination_logic'] ) ? $notification_data['rule_combination_logic'] : 'OR' ); ?>">

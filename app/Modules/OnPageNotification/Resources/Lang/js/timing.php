@@ -23,6 +23,18 @@ return [
     'preview_frequency_always'            => __( 'Frequency: Show every time', 'notifal' ),
     'preview_frequency_once_session'      => __( 'Frequency: Per user session (shared across tabs)', 'notifal' ),
     // Removed deprecated frequency previews (per day/week/month and custom interval)
+
+    // Schedule Preview Messages
+    'preview_schedule_active' => __( 'Schedule: Active from {start_date} to {end_date}', 'notifal' ),
+    'preview_schedule_start_only' => __( 'Schedule: Starts on {start_date}', 'notifal' ),
+    'preview_schedule_end_only' => __( 'Schedule: Ends on {end_date}', 'notifal' ),
+    'preview_schedule_none' => __( 'Schedule: Always active (no schedule set)', 'notifal' ),
+    'preview_schedule_pending_dates' => __( 'Schedule: Active — set a start and/or end date and time', 'notifal' ),
+    'preview_schedule_campaign' => __( 'Schedule: Managed by campaign "{campaign_name}"', 'notifal' ),
+
+    // Schedule Validation
+    'validation_start_before_end' => __( 'Start date must be before end date', 'notifal' ),
+    'validation_start_must_be_future' => __( 'Start date and time must be in the future when you first set the schedule.', 'notifal' ),
     
     // Field Dependencies
     'field_depends_on_timing'             => __( 'This setting depends on the "Show Timing" selection', 'notifal' ),
@@ -30,6 +42,8 @@ return [
     'field_depends_on_frequency'          => __( 'This setting depends on the "Show Frequency" selection', 'notifal' ),
     
     // Validation Messages
+    // translators: {count} is replaced in JavaScript with the number of issues (integer).
+    'validation_errors_found'             => __( 'We found {count} issue(s) with your timing settings', 'notifal' ),
     'validation_delay_required'           => __( 'Delay is required when "After Delay" is selected', 'notifal' ),
     'validation_scroll_required'          => __( 'Scroll percentage is required when "On Scroll" is selected', 'notifal' ),
     'validation_idle_required'            => __( 'Idle time is required when "After User Idle" is selected', 'notifal' ),
@@ -73,6 +87,15 @@ return [
     'help_priority_level'                 => __( 'Set notification priority (1-10, where 10 is highest). When multiple notifications compete for display, the highest priority notification will be shown. Equal priorities use automatic smart logic.', 'notifal' ),
 
     'help_clear_session_on_logout'        => __( 'Clear notification session data when the user logs out for privacy.', 'notifal' ),
+
+    // Schedule Help Text
+    'help_schedule_enabled' => __( 'Turn on to set start and end dates for this notification only. If a campaign is linked (General tab), it controls the schedule instead and this option stays off.', 'notifal' ),
+    'help_start_date' => __( 'The notification will not be shown before this date and time.', 'notifal' ),
+    'help_end_date' => __( 'The notification will stop showing after this date and time. Leave empty for no end date.', 'notifal' ),
+
+    'campaign_schedule_intro' => __( 'A campaign controls when this notification may run. Enable schedule stays off here on purpose.', 'notifal' ),
+    'campaign_schedule_loading_detail' => __( 'Loading campaign dates…', 'notifal' ),
+    'campaign_schedule_toggle_title' => __( 'Unavailable while a campaign controls the schedule. Change or remove the campaign under General.', 'notifal' ),
     
     // Custom Trigger Help Text
     'help_custom_trigger_type'            => __( 'Choose the type of custom trigger you want to configure. Each type provides different ways to trigger notifications.', 'notifal' ),

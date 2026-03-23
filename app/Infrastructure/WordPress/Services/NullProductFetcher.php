@@ -47,6 +47,30 @@ class NullProductFetcher implements ProductFetcherInterface
     }
 
     /**
+     * WooCommerce is inactive; no live sale validation applies.
+     *
+     * @param array $filters Filter configuration (ignored).
+     * @return bool Always false.
+     * @since 2.0.0
+     */
+    public function requiresLiveSaleValidation(array $filters): bool
+    {
+        return false;
+    }
+
+    /**
+     * Returns the input unchanged when WooCommerce is unavailable.
+     *
+     * @param array $productDtos Pool entries (ignored shape when empty).
+     * @return ProductDTO[]
+     * @since 2.0.0
+     */
+    public function filterProductPoolToLiveSaleOnly(array $productDtos): array
+    {
+        return $productDtos;
+    }
+
+    /**
      * Always returns null as no WooCommerce products are available.
      *
      * @param int $id Product ID (ignored)

@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Domain\Orders\OrderFetcherInterface;
+use Notifal\Domain\Products\DTO\ProductDTO;
 use Notifal\Domain\Products\ProductFetcherInterface;
 use Notifal\Domain\Users\UserFetcherInterface;
 use Notifal\Infrastructure\WordPress\Services\PostFetcher;
@@ -26,6 +27,15 @@ defined('ABSPATH') || exit;
 class ContentSourceService
 {
     use SettingsServiceTrait;
+
+    /**
+     * Default interval (seconds) between live sale re-validations of cached product pools.
+     *
+     * @var int
+     * @since 2.0.0
+     */
+    private const SALE_REVALIDATION_INTERVAL_DEFAULT = 5 * MINUTE_IN_SECONDS;
+
     /**
      * @var OrderFetcherInterface
      */
@@ -159,12 +169,13 @@ class ContentSourceService
      */
     public function getRandomProduct(array $contentSourceSettings = [])
     {
-        $cacheKey = $this->buildProductPoolCacheKey($contentSourceSettings);
+        $pool = $this->getOrRefreshProductPool($contentSourceSettings, 20);
 
-        return $this->getRandomFromPool($cacheKey, 'notifal_product_pools', function() use ($contentSourceSettings) {
-            $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
-            return $this->productFetcher->getRandomPool(20, $filters);
-        });
+        if (empty($pool)) {
+            return null;
+        }
+
+        return $pool[array_rand($pool)];
     }
 
     /**
@@ -190,24 +201,183 @@ class ContentSourceService
      */
     public function getProductPool(array $contentSourceSettings): array
     {
+        $poolSize = (int) apply_filters(FilterHooks::ONPAGE_PRODUCT_POOL_SIZE, 18, $contentSourceSettings);
+
+        return $this->getOrRefreshProductPool($contentSourceSettings, $poolSize);
+    }
+
+    /**
+     * Load the product pool from object cache or build it.
+     *
+     * For "sale-only" pools the cached entries are periodically re-checked against
+     * {@see \WC_Product::is_on_sale()} (default every 5 minutes) so products whose
+     * sale ended are dropped without re-running the full DB query.
+     *
+     * @param array $contentSourceSettings Notification content source settings.
+     * @param int   $poolSizeForFetch Number of products to request from {@see ProductFetcherInterface::getRandomPool()}.
+     * @return ProductDTO[] Cached or freshly built pool (may be empty).
+     * @since 2.0.0
+     */
+    private function getOrRefreshProductPool(array $contentSourceSettings, int $poolSizeForFetch): array
+    {
         $cacheKey = $this->buildProductPoolCacheKey($contentSourceSettings);
+        $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
+        $ttl = $this->getProductPoolCacheTtl($contentSourceSettings);
 
-        // Check if we have a cached pool
-        $cachedPool = wp_cache_get($cacheKey, 'notifal_product_pools');
+        $cached = wp_cache_get($cacheKey, 'notifal_product_pools');
 
-        if ($cachedPool !== false) {
-            return $cachedPool;
+        if (is_array($cached)) {
+            $pool = $cached['pool'] ?? $cached;
+            $validatedAt = $cached['validated_at'] ?? 0;
+
+            return $this->refreshSaleProductPoolIfDue(
+                $pool,
+                $validatedAt,
+                $filters,
+                $contentSourceSettings,
+                $cacheKey,
+                $ttl,
+                $poolSizeForFetch
+            );
         }
 
-        // Fetch new pool
-        $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
-        $poolSize = apply_filters(FilterHooks::ONPAGE_PRODUCT_POOL_SIZE, 18, $contentSourceSettings);
-        $pool = $this->productFetcher->getRandomPool($poolSize, $filters);
+        $pool = $this->productFetcher->getRandomPool($poolSizeForFetch, $filters);
 
-        // Cache the pool (even if empty)
-        wp_cache_set($cacheKey, $pool, 'notifal_product_pools', HOUR_IN_SECONDS);
+        $this->storeProductPool($cacheKey, $pool, $ttl);
 
         return $pool;
+    }
+
+    /**
+     * Store a product pool in object cache with a validation timestamp.
+     *
+     * @param string       $cacheKey Object cache key.
+     * @param ProductDTO[] $pool Product DTOs.
+     * @param int          $ttl Cache TTL in seconds.
+     * @return void
+     * @since 2.0.0
+     */
+    private function storeProductPool(string $cacheKey, array $pool, int $ttl): void
+    {
+        wp_cache_set(
+            $cacheKey,
+            ['pool' => $pool, 'validated_at' => time()],
+            'notifal_product_pools',
+            $ttl
+        );
+    }
+
+    /**
+     * Re-validate a "sale-only" product pool if enough time has passed since the last check.
+     *
+     * Throttled to once per {@see SALE_REVALIDATION_INTERVAL_DEFAULT} (filterable) so that
+     * concurrent visitors do not each run the full {@see \WC_Product::is_on_sale()} pass.
+     *
+     * @param ProductDTO[] $pool Cached pool entries.
+     * @param int          $validatedAt Unix timestamp of last validation (0 = never).
+     * @param array        $filters Product filters for this pool.
+     * @param array        $contentSourceSettings Settings used for pool size and TTL.
+     * @param string       $cacheKey Object cache key.
+     * @param int          $ttl Expiration in seconds.
+     * @param int          $poolSizeForFetch Pool size when rebuilding.
+     * @return ProductDTO[]
+     * @since 2.0.0
+     */
+    private function refreshSaleProductPoolIfDue(
+        array $pool,
+        int $validatedAt,
+        array $filters,
+        array $contentSourceSettings,
+        string $cacheKey,
+        int $ttl,
+        int $poolSizeForFetch
+    ): array {
+        if (!$this->productFetcher->requiresLiveSaleValidation($filters)) {
+            return $pool;
+        }
+
+        $interval = $this->getSaleRevalidationInterval($contentSourceSettings);
+
+        if ((time() - $validatedAt) < $interval) {
+            return $pool;
+        }
+
+        $filtered = $this->productFetcher->filterProductPoolToLiveSaleOnly($pool);
+
+        if ($this->productPoolIdsSignature($filtered) === $this->productPoolIdsSignature($pool)) {
+            $this->storeProductPool($cacheKey, $pool, $ttl);
+
+            return $pool;
+        }
+
+        if (!empty($filtered)) {
+            $this->storeProductPool($cacheKey, $filtered, $ttl);
+
+            return $filtered;
+        }
+
+        wp_cache_delete($cacheKey, 'notifal_product_pools');
+
+        $rebuilt = $this->productFetcher->getRandomPool($poolSizeForFetch, $filters);
+        $this->storeProductPool($cacheKey, $rebuilt, $ttl);
+
+        return $rebuilt;
+    }
+
+    /**
+     * Stable signature of pool product IDs for comparing filtered vs cached pools.
+     *
+     * @param ProductDTO[]|array $pool Product pool.
+     * @return string Sorted, comma-separated IDs or empty string.
+     * @since 2.0.0
+     */
+    private function productPoolIdsSignature(array $pool): string
+    {
+        $ids = [];
+        foreach ($pool as $dto) {
+            if ($dto instanceof ProductDTO) {
+                $ids[] = $dto->getId();
+            }
+        }
+        sort($ids);
+
+        return implode(',', $ids);
+    }
+
+    /**
+     * How often (seconds) sale-only pools should be re-validated against WooCommerce.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Seconds (minimum 60).
+     * @since 2.0.0
+     */
+    private function getSaleRevalidationInterval(array $contentSourceSettings): int
+    {
+        $interval = (int) apply_filters(
+            FilterHooks::ONPAGE_PRODUCT_POOL_SALE_REVALIDATION_INTERVAL,
+            self::SALE_REVALIDATION_INTERVAL_DEFAULT,
+            $contentSourceSettings
+        );
+
+        return max(60, $interval);
+    }
+
+    /**
+     * TTL for product pool object-cache entries (filterable).
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Seconds (minimum 1).
+     * @since 2.0.0
+     */
+    private function getProductPoolCacheTtl(array $contentSourceSettings): int
+    {
+        $ttl = (int) apply_filters(
+            FilterHooks::ONPAGE_PRODUCT_POOL_TIMEOUT,
+            HOUR_IN_SECONDS,
+            $contentSourceSettings
+        );
+
+        return max(1, $ttl);
     }
 
     /**

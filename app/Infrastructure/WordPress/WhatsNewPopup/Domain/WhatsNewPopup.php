@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.1.5';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.0';
     }
 
     /**
@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.2.0' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.0'),
+                'content' => $this->getVersion220Content(),
+                'action_buttons' => [],
+            ],
             '2.1.5' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -523,6 +530,76 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('Automatic cache clearing for on-page notifications', 'notifal'); ?></h4>
                             <p><?php esc_html_e('On-page notification caches are now cleared automatically when you save a notification, change its status from the list, or activate/update the plugin, so your latest changes appear on the frontend without extra manual refresh steps.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.2.0
+     *
+     * @return string HTML content for version 2.2.0
+     * @since 2.2.0
+     */
+    private function getVersion220Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.0", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📅</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Campaign Manager', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Create campaigns with their own start and end dates, assign on-page notifications to a campaign, and let one schedule keep every related message aligned — no need to duplicate dates on each notification.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📊</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Campaign Analytics Filters (Pro)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Available in Notifal Pro v2.1.0: see analytics (impressions, clicks, close rate, conversions, users) per campaign using event attribution for campaigns.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⏱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Notification scheduling (start/end time)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Control when a notification becomes active and when it stops showing by using Start and End date/time fields. When a notification is not assigned to a campaign, these settings drive visibility.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🖱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Close after an action button', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('In Behavior settings you can close the notification when someone clicks a template action button, and set how many seconds to wait before it closes.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📊</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Clearer close numbers (Pro)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Analytics now counts a close only when a visitor actually dismisses the notification — not when it hides on its own, after a form, or from an automatic close.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WooCommerce', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Fixed an issue with Ajax Add to Cart in notifications.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧩</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Sticky header compatibility', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Improved “Above header” floating bar placement on sticky header themes so it no longer leaves gaps or overlaps after scrolling back to the top.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

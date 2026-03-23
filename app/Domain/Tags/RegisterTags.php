@@ -2,6 +2,7 @@
 
 namespace Notifal\Domain\Tags;
 
+use Notifal\Domain\Products\ProductFetcherInterface;
 use Notifal\Domain\Tags\Enums\TagCategory;
 use Notifal\Domain\Tags\Services\DateFormatterService;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
@@ -880,32 +881,19 @@ class RegisterTags
      */
     private static function getRandomSaleProductName(): string
     {
-        $query = new \WP_Query([
-            'post_type'      => 'product',
-            'posts_per_page' => 1,
-            'orderby'        => 'rand',
-            'fields'         => 'ids',
-            'meta_query'     => [
-                'relation' => 'AND',
-                [
-                    'key'     => '_sale_price',
-                    'value'   => '',
-                    'compare' => '!='
-                ],
-                [
-                    'key'     => '_sale_price',
-                    'value'   => 0,
-                    'compare' => '>'
-                ]
-            ]
-        ]);
-
-        if (! empty($query->posts)) {
-            $product = wc_get_product($query->posts[0]);
-            return $product ? $product->get_name() : '';
+        if (!function_exists('notifal_app')) {
+            return '';
         }
 
-        return '';
+        try {
+            /** @var ProductFetcherInterface $fetcher */
+            $fetcher = notifal_app(ProductFetcherInterface::class);
+            $dto = $fetcher->getRandom(['on_sale' => true]);
+
+            return $dto ? $dto->getName() : '';
+        } catch (\Throwable $e) {
+            return '';
+        }
     }
 
     /**

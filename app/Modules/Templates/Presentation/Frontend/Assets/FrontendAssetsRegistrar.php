@@ -2,11 +2,12 @@
 
 namespace Notifal\Modules\Templates\Presentation\Frontend\Assets;
 
-use Notifal\Shared\Config\Paths;
-use Notifal\Modules\Templates\Config\Paths as ModulePaths;
-use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Infrastructure\WordPress\WooCommerce\Support\WooCommerceVariationScriptSupport;
+use Notifal\Modules\Templates\Config\Paths as ModulePaths;
+use Notifal\Shared\Config\Paths;
 
 defined('ABSPATH') || exit;
 
@@ -68,7 +69,7 @@ class FrontendAssetsRegistrar
         wp_register_script(
             'notifal-templates-frontend-bundle',
             Paths::jsFrontendBuildUrl() . 'TemplatesFrontendBundle.js',
-            [],
+            WooCommerceVariationScriptSupport::getFrontendBundleDependencies(),
             NOTIFAL_VERSION,
             true
         );
@@ -103,6 +104,8 @@ class FrontendAssetsRegistrar
             do_action(ActionHooks::FRONTEND_ASSETS_BEFORE_ENQUEUE);
 
             wp_enqueue_script('notifal-templates-frontend-bundle');
+
+            WooCommerceVariationScriptSupport::ensureWpUtilOnSingularProduct();
 
             // Localize the script with configuration data
             self::localizeScript();
@@ -143,6 +146,8 @@ class FrontendAssetsRegistrar
         // Check if page contains any Template elements
         if (self::pageContainsTemplateElements()) {
             wp_enqueue_script('notifal-templates-frontend-bundle');
+
+            WooCommerceVariationScriptSupport::ensureWpUtilOnSingularProduct();
 
             // Localize the script with configuration data
             self::localizeScript();

@@ -67,6 +67,7 @@ class DatabaseRepository
                 'ip_address' => $trackingData['ip_address'],
                 'session_id' => $trackingData['session_id'],
                 'device_type' => $trackingData['device_type'] ?? 'desktop',
+                'campaign_id' => isset($trackingData['campaign_id']) ? (int) $trackingData['campaign_id'] : 0,
                 'country_code' => $trackingData['country_code'] ?? null,
                 'city' => $trackingData['city'] ?? null,
             ],
@@ -81,6 +82,7 @@ class DatabaseRepository
                 '%s', // ip_address
                 '%s', // session_id
                 '%s', // device_type
+                '%d', // campaign_id
                 '%s', // country_code
                 '%s', // city
             ]

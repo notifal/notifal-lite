@@ -265,32 +265,12 @@ class PreviewDataResolver
      */
     private function getProductOnSale(): ?ProductDTO
     {
-        // Query for products on sale
-        $query = new \WP_Query([
-            'post_type'      => 'product',
-            'posts_per_page' => 5,
-            'orderby'        => 'rand',
-            'fields'         => 'ids',
-            'meta_query'     => [
-                'relation' => 'AND',
-                [
-                    'key'     => '_sale_price',
-                    'value'   => '',
-                    'compare' => '!='
-                ],
-                [
-                    'key'     => '_sale_price',
-                    'value'   => 0,
-                    'compare' => '>'
-                ]
-            ]
-        ]);
+        $onSale = $this->productFetcher->getRandom(['on_sale' => true]);
 
-        if (! empty($query->posts)) {
-            return $this->productFetcher->findById($query->posts[0]);
+        if ($onSale) {
+            return $onSale;
         }
 
-        // Fallback to any random product if no sale products found
         return $this->productFetcher->getRandom();
     }
 

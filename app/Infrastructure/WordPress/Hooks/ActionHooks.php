@@ -174,6 +174,24 @@ class ActionHooks {
     public const FIELD_DATE_AFTER = 'notifal/field/date/after/';
 
     /**
+     * Fires before rendering a datetime field.
+     * Dynamic part: field ID
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const FIELD_DATETIME_BEFORE = 'notifal/field/datetime/before/';
+
+    /**
+     * Fires after rendering a datetime field.
+     * Dynamic part: field ID
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const FIELD_DATETIME_AFTER = 'notifal/field/datetime/after/';
+
+    /**
      * Fires before rendering a toggle field.
      * Dynamic part: field ID
      *
@@ -233,6 +251,14 @@ class ActionHooks {
      * @author Hossein <hossein@notifal.com>
      */
     public const ONPAGE_NOTIFICATION_META_SAVED = 'notifal/onpage_notification/meta_saved';
+
+    /**
+     * Fires when a schedule start/end string could not be parsed during timing sanitization.
+     *
+     * @since 2.2.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_TIMING_SCHEDULE_INCOMING_PARSE_FAILED = 'notifal/onpage/timing/schedule_incoming_parse_failed';
 
     /**
      * Fires after notification caches have been cleared.
@@ -334,6 +360,82 @@ class ActionHooks {
      * @since 2.0.0
      */
     public const ADMIN_ONPAGE_TAB_SECTION_AFTER = 'notifal/admin/onpage/%s/%s/after';
+
+    /**
+     * Fires when a campaign is saved successfully.
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_SAVED = 'notifal/campaign/saved';
+
+    /**
+     * Fires when a campaign is deleted (trashed).
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_DELETED = 'notifal/campaign/deleted';
+
+    /**
+     * Fires when campaign status has changed.
+     *
+     * @param int   $campaign_id   Campaign post ID.
+     * @param array $previous_meta Previous `_notifal_campaign_settings` snapshot.
+     * @param array $new_meta      Updated `_notifal_campaign_settings` snapshot.
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_STATUS_CHANGED = 'notifal/campaign/status_changed';
+
+    /**
+     * Fires after the hourly task that marks ended campaigns inactive completes.
+     *
+     * @param int $updated_count Campaigns updated in this run.
+     * @since 2.2.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_END_DATE_EXPIRY_CRON_COMPLETED = 'notifal/campaign/cron/end_date_expiry_completed';
+
+    /**
+     * Fires before rendering a specific admin Campaign tab.
+     *
+     * Dynamic part: tab identifier
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ADMIN_CAMPAIGN_TAB_BEFORE = 'notifal/admin/campaign/tab/%s/before';
+
+    /**
+     * Fires after rendering a specific admin Campaign tab.
+     *
+     * Dynamic part: tab identifier
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ADMIN_CAMPAIGN_TAB_AFTER = 'notifal/admin/campaign/tab/%s/after';
+
+    /**
+     * Fires before rendering a specific admin Campaign tab section.
+     *
+     * Dynamic parts: tab identifier, section identifier
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ADMIN_CAMPAIGN_TAB_SECTION_BEFORE = 'notifal/admin/campaign/tab/%s/section/%s/before';
+
+    /**
+     * Fires after rendering a specific admin Campaign tab section.
+     *
+     * Dynamic parts: tab identifier, section identifier
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ADMIN_CAMPAIGN_TAB_SECTION_AFTER = 'notifal/admin/campaign/tab/%s/section/%s/after';
 
 
     /**
