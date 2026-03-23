@@ -79,6 +79,17 @@ class EligibilityService
             }
 
             if ($targetNotification) {
+                if ( ! $this->eligibilityChecker->isEligible( $targetNotification, $context ) ) {
+                    $eligibleNotifications = [];
+                    $eligibleNotifications = apply_filters(
+                        FilterHooks::ONPAGE_ELIGIBILITY_DATA,
+                        $eligibleNotifications,
+                        $context
+                    );
+                    do_action( ActionHooks::ONPAGE_ELIGIBILITY_AFTER_PROCESS, $eligibleNotifications, $context );
+                    return $eligibleNotifications;
+                }
+
                 // Prepare the specific notification with fresh content
                 $preparedNotification = $this->dataPreparer->prepareForFrontend($targetNotification, $context);
                 if ($preparedNotification !== null) {

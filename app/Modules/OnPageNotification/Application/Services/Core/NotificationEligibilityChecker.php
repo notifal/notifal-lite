@@ -3,8 +3,10 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
-use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
+use Notifal\Modules\Campaign\Application\Services\CampaignSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
+use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
+use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -29,6 +31,11 @@ class NotificationEligibilityChecker
     private $displayRulesService;
 
     /**
+     * @var CampaignSettingsService
+     */
+    private $campaignSettingsService;
+
+    /**
      * Constructor
      *
      * @since 2.0.0
@@ -36,6 +43,7 @@ class NotificationEligibilityChecker
     public function __construct()
     {
         $this->displayRulesService = notifal_app(DisplayRulesService::class);
+        $this->campaignSettingsService = notifal_app(CampaignSettingsService::class);
     }
 
     /**
@@ -190,27 +198,43 @@ class NotificationEligibilityChecker
      */
     private function checkSchedule(\WP_Post $notification): bool
     {
-        $timingSettings = get_post_meta($notification->ID, '_notifal_timing_settings', true) ?: [];
+        $campaignId = get_post_meta($notification->ID, '_notifal_campaign_id', true);
+        $startDate = '';
+        $endDate = '';
 
-        $now = current_time('timestamp');
+        if (!empty($campaignId)) {
+            $within = $this->campaignSettingsService->isWithinSchedule( (int) $campaignId );
 
-        // Check start date
-        if (!empty($timingSettings['start_date'])) {
-            $startDate = strtotime($timingSettings['start_date']);
-            if ($startDate && $now < $startDate) {
-                return false;
+            /**
+             * Filters whether the campaign schedule allows the notification to run.
+             *
+             * @since 2.0.0
+             * @param bool     $within          Whether the current instant is within start/end.
+             * @param int      $campaignId      Campaign post ID.
+             * @param \WP_Post $notification    On-page notification post.
+             */
+            return (bool) apply_filters(
+                FilterHooks::CAMPAIGN_SCHEDULE_CHECK,
+                $within,
+                (int) $campaignId,
+                $notification
+            );
+        } else {
+            $timingSettings = get_post_meta($notification->ID, '_notifal_timing_settings', true) ?: [];
+            $scheduleEnabled = (bool) ( $timingSettings['schedule_enabled'] ?? false );
+
+            // When schedule is disabled, skip schedule constraints for notifications.
+            if (!$scheduleEnabled) {
+                return true;
             }
+
+            $startDate = (string) ( $timingSettings['start_date'] ?? '' );
+            $endDate = (string) ( $timingSettings['end_date'] ?? '' );
         }
 
-        // Check end date
-        if (!empty($timingSettings['end_date'])) {
-            $endDate = strtotime($timingSettings['end_date']);
-            if ($endDate && $now > $endDate) {
-                return false;
-            }
-        }
+        $within = ScheduleDateTimeHelper::isNowWithinBoundaries( $startDate, $endDate );
 
-        return true;
+        return $within;
     }
 
     /**

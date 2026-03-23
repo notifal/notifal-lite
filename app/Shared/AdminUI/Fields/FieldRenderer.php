@@ -306,6 +306,46 @@ class FieldRenderer {
     }
 
     /**
+     * Render a datetime-local input field.
+     *
+     * @param string $id Input ID and name.
+     * @param string $value Default value (YYYY-MM-DDTHH:MM format).
+     * @param string $label Label text.
+     * @param string $tooltip Tooltip text.
+     * @param array $attributes HTML attributes ['input' => [], 'wrapper' => []]
+     *
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function datetimeInput(
+        string $id,
+        string $value = '',
+        string $label = '',
+        string $tooltip = '',
+        array $attributes = []
+    ): void {
+        do_action(ActionHooks::FIELD_DATETIME_BEFORE);
+        do_action(ActionHooks::FIELD_DATETIME_BEFORE . $id);
+
+        $wrapper_attrs = self::buildAttributes($attributes['wrapper'] ?? []);
+        $input_attrs   = self::buildAttributes($attributes['input'] ?? []);
+
+        echo '<div class="notifal-field-wrapper notifal-direction-column"' . $wrapper_attrs . '>';
+        if ($label) {
+            echo '<div class="notifal-field-header notifal-flex notifal-flex-row">';
+            echo '<label class="notifal-form-label" for="' . esc_attr($id) . '">' . esc_html($label) . '</label>';
+            self::tooltip($tooltip);
+            echo '</div>';
+        }
+
+        echo '<input type="datetime-local" class="notifal-input notifal-datetime-input" id="' . esc_attr($id) . '" name="' . esc_attr($id) . '" value="' . esc_attr($value) . '"' . $input_attrs . ' />';
+        echo '</div>';
+
+        do_action(ActionHooks::FIELD_DATETIME_AFTER);
+        do_action(ActionHooks::FIELD_DATETIME_AFTER . $id);
+    }
+
+    /**
      * Convert associative array of attributes to string.
      *
      * @param array $attributes

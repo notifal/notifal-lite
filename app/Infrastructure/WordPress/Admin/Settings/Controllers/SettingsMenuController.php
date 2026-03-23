@@ -74,7 +74,7 @@ class SettingsMenuController
      */
     public function register(): void
     {
-        add_action('admin_menu', [$this, 'registerAdminMenu']);
+        add_action('admin_menu', [$this, 'registerAdminMenu'], 22);
         add_action('admin_post_notifal_save_settings', [$this, 'handleSettingsSave']);
     }
 

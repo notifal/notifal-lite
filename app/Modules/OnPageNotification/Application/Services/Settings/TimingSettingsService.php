@@ -2,8 +2,8 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
-use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -70,6 +70,11 @@ class TimingSettingsService
         'enable_priority' => false,
         'priority_level' => 5,
 
+        // Schedule Control
+        'schedule_enabled' => false,
+        'start_date' => '',
+        'end_date' => '',
+
         // Session Control
         'clear_session_on_logout' => true,
         'respect_user_preferences' => false,
@@ -103,7 +108,43 @@ class TimingSettingsService
             $sanitized[$key] = $this->sanitizeSetting($key, $value, $default_value);
         }
 
+        $sanitized = $this->normalizeScheduleAfterSanitize( $sanitized );
+
         return apply_filters(FilterHooks::ONPAGE_TIMING_SANITIZED_SETTINGS, $sanitized, $settings);
+    }
+
+    /**
+     * Turn off schedule and drop stored dates when the end datetime is already over.
+     *
+     * Past start datetimes are kept so a notification that is already live can be saved again.
+     * Only an end date in the past triggers a full schedule reset.
+     *
+     * @since 2.2.0
+     * @param array $settings Sanitized timing settings.
+     * @return array Normalized settings.
+     */
+    private function normalizeScheduleAfterSanitize( array $settings ): array {
+        if ( empty( $settings['schedule_enabled'] ) ) {
+            return $settings;
+        }
+
+        $end = isset( $settings['end_date'] ) ? (string) $settings['end_date'] : '';
+        if ( $end === '' ) {
+            return $settings;
+        }
+
+        $end_timestamp = ScheduleDateTimeHelper::boundaryToUnixTimestamp( $end );
+        if ( $end_timestamp === null ) {
+            return $settings;
+        }
+
+        if ( time() > $end_timestamp ) {
+            $settings['schedule_enabled'] = false;
+            $settings['start_date']       = '';
+            $settings['end_date']         = '';
+        }
+
+        return $settings;
     }
 
     /**
@@ -227,7 +268,17 @@ class TimingSettingsService
             case 'clear_session_on_logout':
                 return (bool) $value;
             
+            // Schedule Control
+            case 'schedule_enabled':
+                return (bool) $value;
 
+            case 'start_date':
+            case 'end_date':
+                if ( empty( $value ) ) {
+                    return '';
+                }
+
+                return ScheduleDateTimeHelper::sanitizeIncomingToStoredUtc( sanitize_text_field( (string) $value ) );
 
             default:
                 return $value;

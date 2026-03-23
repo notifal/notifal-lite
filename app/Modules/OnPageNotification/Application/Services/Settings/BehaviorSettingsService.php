@@ -44,6 +44,8 @@ class BehaviorSettingsService
         'prevent_page_scroll' => false,
         'close_on_form_submit' => true,
         'close_on_form_submit_delay_seconds' => 5,
+        'close_on_action_button_click' => false,
+        'close_on_action_button_click_delay_seconds' => 5,
         'maintain_state_on_refresh' => true,
         
         // Mobile Behavior
@@ -114,9 +116,11 @@ class BehaviorSettingsService
             case 'announce_to_screen_reader':
             case 'prevent_page_scroll':
             case 'close_on_form_submit':
+            case 'close_on_action_button_click':
                 return (bool) $value;
 
             case 'close_on_form_submit_delay_seconds':
+            case 'close_on_action_button_click_delay_seconds':
                 $int = (int) $value;
                 return max(0, min(60, $int));
 
@@ -247,6 +251,8 @@ class BehaviorSettingsService
             'prevent_page_scroll' => (bool) ($settings['prevent_page_scroll'] ?? false),
             'close_on_form_submit' => (bool) ($settings['close_on_form_submit'] ?? true),
             'close_on_form_submit_delay_seconds' => (int) ($settings['close_on_form_submit_delay_seconds'] ?? 5),
+            'close_on_action_button_click' => (bool) ($settings['close_on_action_button_click'] ?? false),
+            'close_on_action_button_click_delay_seconds' => (int) ($settings['close_on_action_button_click_delay_seconds'] ?? 5),
             'maintain_state_on_refresh' => (bool) ($settings['maintain_state_on_refresh'] ?? true),
         ];
 

@@ -371,6 +371,28 @@ class FilterHooks {
     public const ONPAGE_PRODUCT_POOL_TIMEOUT = 'notifal/onpage/product_pool/timeout';
 
     /**
+     * Filter the interval (in seconds) between live sale re-validations of cached product pools.
+     *
+     * When a product pool targets "sale only" products, the system periodically re-checks
+     * each pool member against {@see \WC_Product::is_on_sale()} and drops entries that are
+     * no longer on sale. This filter controls how often that check runs.
+     *
+     * @param int   $interval Seconds between validations (default: 300 = 5 minutes).
+     * @param array $content_source_settings Content source settings for the notification.
+     * @return int Modified interval in seconds (minimum 60).
+     * @since 2.0.0
+     */
+    public const ONPAGE_PRODUCT_POOL_SALE_REVALIDATION_INTERVAL = 'notifal/onpage/product_pool/sale_revalidation_interval';
+
+    /**
+     * Filter max number of pre-rendered product-pool variants shipped for client-side retrigger (no extra HTTP).
+     *
+     * @since 2.2.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_RETRIGGER_CLIENT_VARIANTS_MAX = 'notifal/onpage/retrigger_variants/max';
+
+    /**
      * Filter the size of the order pool for pool-based caching.
      *
      * Allows developers to modify the number of orders fetched
@@ -1240,6 +1262,29 @@ class FilterHooks {
     public const ONPAGE_TOPBAR_HEADER_SELECTOR = 'notifal/onpage/topbar/header_selector';
 
     /**
+     * Filters extra CSS appended as inline style when OnPage assets load, for theme compatibility
+     * with floating bar placement "above header" (e.g. sticky header shells that use padding-top
+     * to reserve space). Default empty; use for non-WoodMart themes or fine-tuning.
+     *
+     * @param string $css Additional CSS (no script tags; keep selectors scoped when possible).
+     * @return string Modified CSS string
+     * @since 2.0.0
+     *
+     * Example (child theme `functions.php` or a small plugin; use the constant or the literal hook string):
+     *
+     *     use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+     *
+     *     add_filter( FilterHooks::ONPAGE_TOPBAR_ABOVE_HEADER_COMPAT_CSS, function ( $css ) {
+     *         return $css . 'body.notifal-has-topbar-above-header .your-theme-sticky-shell { padding-top: 0 !important; }';
+     *     } );
+     *
+     *     add_filter( 'notifal/onpage/topbar/above_header_compat_css', function ( $css ) {
+     *         return $css . 'body.notifal-has-topbar-above-header .your-theme-sticky-shell { padding-top: 0 !important; }';
+     *     } );
+     */
+    public const ONPAGE_TOPBAR_ABOVE_HEADER_COMPAT_CSS = 'notifal/onpage/topbar/above_header_compat_css';
+
+    /**
      * Filters the available animation types for OnPage notifications.
      *
      * Allows developers to modify, extend, or customize the available
@@ -1446,6 +1491,56 @@ class FilterHooks {
      */
     public const ONPAGE_TAG_CONTEXT = 'notifal/onpage/tag/context';
 
+    /**
+     * Filters the service class list registered for the Campaign module.
+     *
+     * @param string[] $services List of class names with ::register()
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_SERVICES = 'notifal/campaign/services';
+
+    /**
+     * Filters the campaign settings before they are used/stored.
+     *
+     * @param array $settings Campaign settings
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_SETTINGS = 'notifal/campaign/settings';
+
+    /**
+     * Filters campaign schedule check results.
+     *
+     * @param bool     $should_show Whether the campaign schedule allows execution
+     * @param int      $campaign_id Campaign ID
+     * @param \WP_Post $notification On-page notification post
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_SCHEDULE_CHECK = 'notifal/campaign/schedule_check';
+
+    /**
+     * Filters how campaign schedule overrides a notification schedule.
+     *
+     * @param array $schedule Resolved schedule values
+     * @param int $campaign_id Campaign ID
+     * @param int $notification_id Notification ID
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_NOTIFICATION_SCHEDULE = 'notifal/notification/campaign_schedule';
+
+    /**
+     * Filters on-page notification rows returned by the campaign assignment picker search.
+     *
+     * @param array<int, array<string, int|string>> $items  Each row: id, title.
+     * @param string                                $search Sanitized search string.
+     * @since 2.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const CAMPAIGN_ONPAGE_PICKER_SEARCH_RESULTS = 'notifal/campaign/onpage_picker/search_results';
+
     // =========================================================================
     // 🗄️ DATABASE FILTER HOOKS
     // =========================================================================
@@ -1484,6 +1579,18 @@ class FilterHooks {
      * @since 2.0.0
      */
     public const ONPAGE_ANALYTICS_DATA = 'notifal/onpage/analytics/data';
+
+    /**
+     * Filters the list of OnPage notification post IDs used for analytics queries
+     * (dashboard totals, charts, tables, revenue scope) after campaign, status, and
+     * single-notification filters are applied.
+     *
+     * @param array<int> $notification_ids Resolved notification IDs.
+     * @param array      $filters        Analytics filters (date_range, notification_id, campaign_id, status).
+     * @return array<int>
+     * @since 2.2.0
+     */
+    public const ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS = 'notifal/onpage/analytics/filtered_notification_ids';
 
     /**
      * Filter for detecting if Notifal Pro is active and providing analytics.

@@ -79,13 +79,17 @@ class TemplateContextBuilder
         }
 
         // Create consistent cache key that ensures same product for same notification rendering
-        $cacheKey = 'notifal_context_' . md5(serialize([
+        $contextKeyParts = [
             'template_id' => $templateId,
-            'request_id' => floor($requestId), // Use floor to ensure same second gets same cache
+            'request_id' => floor($requestId),
             'content_source_settings' => $contentSourceSettings,
             'content_hash' => md5($rawContent),
-            'retrigger_timestamp' => $retriggerTimestamp // Include retrigger timestamp to force fresh content
-        ]));
+            'retrigger_timestamp' => $retriggerTimestamp,
+        ];
+        if (isset($context['notifal_pool_variant_index']) && is_numeric($context['notifal_pool_variant_index'])) {
+            $contextKeyParts['pool_variant_index'] = (int) $context['notifal_pool_variant_index'];
+        }
+        $cacheKey = 'notifal_context_' . md5(serialize($contextKeyParts));
 
         // Check if we already built context for this exact combination (request-scoped)
         if (isset(self::$contextCache[$cacheKey])) {

@@ -4,6 +4,7 @@ use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -36,6 +37,34 @@ if ($is_edit && isset($notification_data['timing_settings']) && is_array($notifi
     $timing_settings = array_merge($timing_settings, $notification_data['timing_settings']);
 }
 
+// Stored schedule boundaries are UTC (`Z`); datetime-local expects wall time in the site timezone.
+if ( ! empty( $timing_settings['start_date'] ) ) {
+    $timing_settings['start_date'] = ScheduleDateTimeHelper::storedToDatetimeLocalForAdmin( (string) $timing_settings['start_date'] );
+}
+if ( ! empty( $timing_settings['end_date'] ) ) {
+    $timing_settings['end_date'] = ScheduleDateTimeHelper::storedToDatetimeLocalForAdmin( (string) $timing_settings['end_date'] );
+}
+
+/**
+ * Current moment in the WordPress site timezone, using General → date/time formats.
+ *
+ * Notification schedule boundaries use the same timezone as {@see ScheduleDateTimeHelper} (`wp_timezone()`).
+ *
+ * @var string
+ */
+$timing_site_now_display = wp_date(
+	sprintf( '%s %s', get_option( 'date_format' ), get_option( 'time_format' ) ),
+	null,
+	wp_timezone()
+);
+
+/**
+ * Site timezone identifier or offset string (Settings → General), shown next to the current time for context.
+ *
+ * @var string
+ */
+$timing_site_timezone_label = wp_timezone_string();
+
 // Define current tab identifier for hooks and styling
 $tab = 'timing';
 
@@ -50,6 +79,69 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
     <h1><?php esc_html_e( 'Timing Settings', 'notifal' ); ?></h1>
 
     <div class="notifal-tab-panel-fields notifal-mt-20">
+
+        <!-- Schedule Settings -->
+        <div class="notifal-field-group">
+            <h3><?php esc_html_e( 'Schedule', 'notifal' ); ?></h3>
+            <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_BEFORE, $tab, 'schedule')); ?>
+
+            <?php
+            FieldRenderer::toggle(
+                'schedule_enabled',
+                ! empty($timing_settings['schedule_enabled']),
+                __( 'Enable Schedule', 'notifal' ),
+                __( 'Turn on to set start and end dates for this notification only. If a campaign is linked (General tab), it controls the schedule instead and this option stays off.', 'notifal' )
+            );
+
+            echo '<div class="notifal-campaign-current-site-time" role="status">';
+            echo '<p class="notifal-campaign-current-site-time-text">';
+            echo esc_html(
+                sprintf(
+                    /* translators: 1: Current date and time (site timezone). 2: Timezone name or offset from Settings → General. */
+                    __( 'Current site time: %1$s (%2$s)', 'notifal' ),
+                    $timing_site_now_display,
+                    $timing_site_timezone_label
+                )
+            );
+            echo '</p>';
+            echo '</div>';
+
+            FieldRenderer::datetimeInput(
+                'start_date',
+                $timing_settings['start_date'],
+                __( 'Start Date', 'notifal' ),
+                __( 'The notification will not be shown before this date and time.', 'notifal' ),
+                [
+                    'input' => [
+                        'data-depends-on' => 'schedule_enabled',
+                        'data-depends-value' => '1'
+                    ]
+                ]
+            );
+
+            FieldRenderer::datetimeInput(
+                'end_date',
+                $timing_settings['end_date'],
+                __( 'End Date (Optional)', 'notifal' ),
+                __( 'The notification will stop showing after this date and time. Leave empty for no end date.', 'notifal' ),
+                [
+                    'input' => [
+                        'data-depends-on' => 'schedule_enabled',
+                        'data-depends-value' => '1'
+                    ]
+                ]
+            );
+            ?>
+
+            <div class="notifal-field-wrapper notifal-direction-column notifal-hidden" id="notifal-campaign-schedule-info">
+                <div class="notifal-help-text notifal-campaign-schedule-banner">
+                    <p class="notifal-campaign-schedule-info-lead"></p>
+                    <p class="notifal-campaign-schedule-info-detail"></p>
+                </div>
+            </div>
+
+            <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'schedule')); ?>
+        </div>
 
         <!-- Display Timing Settings -->
         <div class="notifal-field-group">
@@ -397,9 +489,10 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                         <?php esc_html_e( 'Based on your current settings, this notification will:', 'notifal' ); ?>
                     </p>
                     <ul class="notifal-preview-list">
-                        <li id="notifal-timing-preview-trigger"><?php esc_html_e( 'Trigger: Loading...', 'notifal' ); ?></li>
-                        <li id="notifal-timing-preview-duration"><?php esc_html_e( 'Duration: Loading...', 'notifal' ); ?></li>
-                        <li id="notifal-timing-preview-frequency"><?php esc_html_e( 'Frequency: Loading...', 'notifal' ); ?></li>
+                        <li id="notifal-timing-preview-trigger"><?php esc_html_e( 'Trigger: —', 'notifal' ); ?></li>
+                        <li id="notifal-timing-preview-schedule"><?php esc_html_e( 'Schedule: —', 'notifal' ); ?></li>
+                        <li id="notifal-timing-preview-duration"><?php esc_html_e( 'Duration: —', 'notifal' ); ?></li>
+                        <li id="notifal-timing-preview-frequency"><?php esc_html_e( 'Frequency: —', 'notifal' ); ?></li>
                     </ul>
                 </div>
             </div>

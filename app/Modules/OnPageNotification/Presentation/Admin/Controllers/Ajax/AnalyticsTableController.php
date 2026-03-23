@@ -53,6 +53,7 @@ class AnalyticsTableController
         $filters = [
             'date_range' => Helper::sanitizeInput($_POST['date_range'] ?? 'last_30_days', 'text'),
             'notification_id' => isset($_POST['notification_id']) ? (int)$_POST['notification_id'] : null,
+            'campaign_id' => isset($_POST['campaign_id']) && $_POST['campaign_id'] !== '' ? absint(wp_unslash($_POST['campaign_id'])) : null,
             'status' => Helper::sanitizeInput($_POST['status'] ?? '', 'text'),
             'sort_by' => $sort_by,
             'limit' => $limit,
@@ -109,6 +110,7 @@ class AnalyticsTableController
         $filters = [
             'date_range' => Helper::sanitizeInput($_POST['date_range'] ?? 'last_30_days', 'text'),
             'notification_id' => isset($_POST['notification_id']) ? (int)$_POST['notification_id'] : null,
+            'campaign_id' => isset($_POST['campaign_id']) && $_POST['campaign_id'] !== '' ? absint(wp_unslash($_POST['campaign_id'])) : null,
             'status' => Helper::sanitizeInput($_POST['status'] ?? '', 'text'),
             'sort_by' => $sort_by,
             'limit' => $limit,
@@ -210,7 +212,18 @@ class AnalyticsTableController
             // Actions column
             $html .= '<td>';
             $html .= '<div class="notifal-table-actions">';
-            $html .= '<a href="?page=notifal-onpage-analytics&notification_id=' . esc_attr($notification['notification_id']) . '" ';
+            $view_args = [
+                'page' => 'notifal-onpage-analytics',
+                'notification_id' => (int) $notification['notification_id'],
+            ];
+            if (isset($_POST['campaign_id']) && $_POST['campaign_id'] !== '') {
+                $view_args['campaign_id'] = absint(wp_unslash($_POST['campaign_id']));
+            }
+            if (isset($_POST['date_range']) && $_POST['date_range'] !== '') {
+                $view_args['date_range'] = Helper::sanitizeInput(wp_unslash($_POST['date_range']), 'text');
+            }
+            $view_url = add_query_arg($view_args, admin_url('admin.php'));
+            $html .= '<a href="' . esc_url($view_url) . '" ';
             $html .= 'class="notifal-button-icon" title="' . esc_attr__('View Details', 'notifal') . '">';
             $html .= '<span class="notifal-icon notifal-icon-eye"></span>';
             $html .= '</a>';
@@ -252,6 +265,7 @@ class AnalyticsTableController
         $filters = [
             'date_range' => Helper::sanitizeInput($_POST['date_range'] ?? 'last_30_days', 'text'),
             'notification_id' => $notificationId,
+            'campaign_id' => isset($_POST['campaign_id']) && $_POST['campaign_id'] !== '' ? absint(wp_unslash($_POST['campaign_id'])) : null,
             'status' => Helper::sanitizeInput($_POST['status'] ?? '', 'text'),
         ];
 

@@ -150,6 +150,35 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             </div>
             <?php
 
+            // Close on Action Button Click (template action buttons: Block / Elementor)
+            FieldRenderer::toggle(
+                'close_on_action_button_click',
+                $behavior_settings['close_on_action_button_click'],
+                __( 'Close on Action Button Click', 'notifal' ),
+                __( 'Automatically close the notification after a template action button is clicked (Post Link, Copy, Custom Link, Ajax Add to Cart, etc.). The Close Notification button type uses the delay below when delay is greater than zero.', 'notifal' )
+            );
+
+            // Close delay after action button click (conditional: only when Close on Action Button Click is on)
+            ?>
+            <div class="notifal-close-on-action-button-click-delay-container<?php echo ! empty( $behavior_settings['close_on_action_button_click'] ) ? '' : ' notifal-hidden'; ?>" data-depends-on="close_on_action_button_click">
+                <?php
+                FieldRenderer::numberInput(
+                    'close_on_action_button_click_delay_seconds',
+                    isset( $behavior_settings['close_on_action_button_click_delay_seconds'] ) ? (int) $behavior_settings['close_on_action_button_click_delay_seconds'] : 5,
+                    __( 'Close Delay After Action Button (seconds)', 'notifal' ),
+                    __( 'Time to wait before closing after an action button click. Use zero for an immediate close when the setting is enabled.', 'notifal' ),
+                    [
+                        'input' => [
+                            'min'  => 0,
+                            'max'  => 60,
+                            'step' => 1,
+                        ],
+                    ]
+                );
+                ?>
+            </div>
+            <?php
+
             // Maintain State on Refresh
             FieldRenderer::toggle(
                 'maintain_state_on_refresh',

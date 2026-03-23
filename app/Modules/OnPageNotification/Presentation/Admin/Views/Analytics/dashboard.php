@@ -6,6 +6,7 @@
  * with filtering, charts, and detailed metrics.
  *
  * @since 2.0.0
+ * @since 2.2.0 Campaign filter for analytics scope.
  * @author Hossein <hossein@notifal.com>
  */
 
@@ -23,20 +24,56 @@ $urlService = notifal_app(UrlService::class);
 
 // Get current filters from request (sanitized per WordPress guidelines; behavior preserved)
 $notification_id_raw = isset( $_GET['notification_id'] ) ? wp_unslash( $_GET['notification_id'] ) : '';
-$filters = [
+$campaign_id_raw     = isset( $_GET['campaign_id'] ) ? wp_unslash( $_GET['campaign_id'] ) : '';
+$filters             = [
     'date_range'      => Helper::sanitizeInput( isset( $_GET['date_range'] ) ? wp_unslash( $_GET['date_range'] ) : 'last_30_days', 'text' ),
     'notification_id' => ( $notification_id_raw !== '' && $notification_id_raw !== '0' ) ? absint( $notification_id_raw ) : null,
+    'campaign_id'     => ( $campaign_id_raw !== '' && $campaign_id_raw !== '0' ) ? absint( $campaign_id_raw ) : null,
     'status'          => Helper::sanitizeInput( isset( $_GET['status'] ) ? wp_unslash( $_GET['status'] ) : '', 'text' ),
 ];
 
-// Check if Pro is activated
-$is_pro_active = function_exists('is_notifal_pro_active') && is_notifal_pro_active();
+// Campaign list for filter dropdown (Campaign module uses `notifal_campaign` post type).
+$campaigns_for_filter = [];
+if ( post_type_exists( 'notifal_campaign' ) ) {
+    $campaigns_for_filter = get_posts(
+        [
+            'post_type'      => 'notifal_campaign',
+            'post_status'    => [ 'publish', 'draft' ],
+            'posts_per_page' => -1,
+            'orderby'        => 'title',
+            'order'          => 'ASC',
+        ]
+    );
+}
+
+// OnPage notifications shown in the notification dropdown: when a campaign is selected, only assignees of that campaign.
+$notification_list_args = [
+    'post_type'      => 'notifal_onpage_notif',
+    'post_status'    => [ 'publish', 'draft' ],
+    'posts_per_page' => -1,
+    'orderby'        => 'title',
+    'order'          => 'ASC',
+];
+if ( ! empty( $filters['campaign_id'] ) ) {
+    $notification_list_args['meta_query'] = [
+        [
+            'key'     => '_notifal_campaign_id',
+            'value'   => (int) $filters['campaign_id'],
+            'compare' => '=',
+        ],
+    ];
+}
+$notifications = get_posts( $notification_list_args );
+
+// Determine whether enhanced analytics access is available.
+// This unified gate keeps Lite and Pro-unlicensed states visually identical.
+$has_enhanced_analytics_access = (bool) apply_filters('notifal_pro_enhanced_analytics_allowed', false);
 
 // Get analytics data (will be filtered for Pro upsell if Pro not active)
 $dashboardData = $analyticsService->getDashboardOverview($filters);
 
-// Check if this is Pro upsell data (only if Pro is not active)
-$isProUpsell = !$is_pro_active && isset($dashboardData['is_pro_upsell']) && $dashboardData['is_pro_upsell'];
+// PRO locked view should be shown whenever enhanced analytics access is unavailable.
+$isProUpsell = ! $has_enhanced_analytics_access;
 $canAccessDetailedAnalytics = $analyticsService->canAccessDetailedAnalytics();
 
 // Get paginated notifications (initially show 10)
@@ -110,23 +147,32 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                             </select>
                         </div>
 
+                        <!-- Campaign Filter -->
+                        <div class="notifal-filter-group">
+                            <label for="campaign_id"><?php esc_html_e('Campaign', 'notifal'); ?></label>
+                            <select name="campaign_id" id="campaign_id" class="notifal-select">
+                                <option value=""><?php esc_html_e('All Campaigns', 'notifal'); ?></option>
+                                <?php
+                                foreach ( $campaigns_for_filter as $campaign_post ) {
+                                    $selected = selected( $filters['campaign_id'], $campaign_post->ID, false );
+                                    echo '<option value="' . esc_attr( (string) $campaign_post->ID ) . '" ' . $selected . '>';
+                                    echo esc_html( $campaign_post->post_title );
+                                    echo '</option>';
+                                }
+                                ?>
+                            </select>
+                        </div>
+
                         <!-- Notification Filter -->
                         <div class="notifal-filter-group">
                             <label for="notification_id"><?php esc_html_e('Notification', 'notifal'); ?></label>
                             <select name="notification_id" id="notification_id" class="notifal-select">
                                 <option value=""><?php esc_html_e('All Notifications', 'notifal'); ?></option>
                                 <?php
-                                $notifications = get_posts([
-                                    'post_type' => 'notifal_onpage_notif',
-                                    'post_status' => ['publish', 'draft'],
-                                    'posts_per_page' => -1,
-                                    'orderby' => 'title',
-                                    'order' => 'ASC'
-                                ]);
-                                foreach ($notifications as $notification) {
-                                    $selected = selected($filters['notification_id'], $notification->ID, false);
-                                    echo '<option value="' . esc_attr($notification->ID) . '" ' . $selected . '>';
-                                    echo esc_html($notification->post_title);
+                                foreach ( $notifications as $notification ) {
+                                    $selected = selected( $filters['notification_id'], $notification->ID, false );
+                                    echo '<option value="' . esc_attr( (string) $notification->ID ) . '" ' . $selected . '>';
+                                    echo esc_html( $notification->post_title );
                                     echo '</option>';
                                 }
                                 ?>
@@ -822,7 +868,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                                 <?php echo esc_html(number_format($notification['stats']['total_conversions'])); ?>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="<?php echo !$is_pro_active ? 'notifal-revenue-always-visible' : 'notifal-revenue-highlight'; ?>">
+                                        <td class="<?php echo $isProUpsell ? 'notifal-revenue-always-visible' : 'notifal-revenue-highlight'; ?>">
                                             $<?php echo esc_html(number_format($notification['revenue'], 2)); ?>
                                         </td>
                                         <td class="<?php echo $isProUpsell ? 'notifal-blurred-data' : ''; ?>">
@@ -839,7 +885,20 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                         </td>
                                         <td>
                                             <div class="notifal-table-actions">
-                                                <a href="?page=notifal-onpage-analytics&notification_id=<?php echo esc_attr($notification['notification_id']); ?>" 
+                                                <?php
+                                                $notifal_analytics_view_args = [
+                                                    'page'              => 'notifal-onpage-analytics',
+                                                    'notification_id'   => (int) $notification['notification_id'],
+                                                ];
+                                                if ( ! empty( $filters['campaign_id'] ) ) {
+                                                    $notifal_analytics_view_args['campaign_id'] = (int) $filters['campaign_id'];
+                                                }
+                                                if ( ! empty( $filters['date_range'] ) ) {
+                                                    $notifal_analytics_view_args['date_range'] = $filters['date_range'];
+                                                }
+                                                $notifal_analytics_view_url = add_query_arg( $notifal_analytics_view_args, admin_url( 'admin.php' ) );
+                                                ?>
+                                                <a href="<?php echo esc_url( $notifal_analytics_view_url ); ?>"
                                                    class="notifal-button-icon" title="<?php esc_attr_e('View Details', 'notifal'); ?>"
                                                    target="_blank" rel="noopener noreferrer">
                                                     <span class="notifal-icon notifal-icon-eye"></span>
@@ -871,7 +930,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                 </div>
 
                 <!-- Load More Button -->
-                <?php if ($pagination['has_more'] && (function_exists('is_notifal_pro_active') && is_notifal_pro_active())): ?>
+                <?php if ($pagination['has_more'] && ! $isProUpsell): ?>
                     <div class="notifal-load-more-container">
                         <button type="button" class="notifal-button secondary" id="notifal-load-more-analytics">
                             <span class="notifal-icon notifal-icon-arrow-down"></span>

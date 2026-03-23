@@ -24,7 +24,7 @@ class MenuController
      */
     public static function register(): void
     {
-        add_action('admin_menu', [self::class, 'overrideTemplateMenu'], 20);
+        add_action('admin_menu', [self::class, 'overrideTemplateMenu'], 21);
         add_action('admin_init', [self::class, 'maybeRedirectFromDefaultList']);
     }
 

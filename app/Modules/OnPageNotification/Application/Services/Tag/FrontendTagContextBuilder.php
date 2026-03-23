@@ -1065,18 +1065,22 @@ class FrontendTagContextBuilder
 
         $requestId = $pageContext['request_id'] ?? ($_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true));
 
-        $cacheKey = 'notifal_product_context_' . md5(serialize([
+        $cacheKeyParts = [
             'template_id' => $templateId,
             'request_id' => floor($requestId),
-            'content_source_settings' => $contentSourceSettings
-        ]));
+            'content_source_settings' => $contentSourceSettings,
+        ];
+        if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
+            $cacheKeyParts['pool_variant_index'] = (int) $pageContext['notifal_pool_variant_index'];
+        }
+        $cacheKey = 'notifal_product_context_' . md5(serialize($cacheKeyParts));
 
         static $requestCache = [];
         if (isset($requestCache[$cacheKey])) {
             return $requestCache[$cacheKey];
         }
 
-        $product = $this->getDeterministicProductFromPool($contentSourceSettings, $cacheKey);
+        $product = $this->getDeterministicProductFromPool($contentSourceSettings, $cacheKey, $pageContext);
 
         $requestCache[$cacheKey] = $product;
 
@@ -1093,11 +1097,12 @@ class FrontendTagContextBuilder
      *
      * @param array $contentSourceSettings Content source settings
      * @param string $cacheKey Cache key to use as seed
+     * @param array $pageContext Page context; may include `notifal_pool_variant_index` to force a pool member
      * @return mixed Product object or null
      * @since 2.0.0
      * @author Hossein <hossein@notifal.com>
      */
-    private function getDeterministicProductFromPool(array $contentSourceSettings, string $cacheKey)
+    private function getDeterministicProductFromPool(array $contentSourceSettings, string $cacheKey, array $pageContext = [])
     {
         $productPool = $this->contentSourceService->getProductPool($contentSourceSettings);
 
@@ -1105,8 +1110,29 @@ class FrontendTagContextBuilder
             return null;
         }
 
-        $deterministicIndex = crc32($cacheKey) % count($productPool);
+        $poolCount = count($productPool);
+        if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
+            $idx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
+            return $productPool[$idx];
+        }
+
+        $deterministicIndex = crc32($cacheKey) % $poolCount;
+
         return $productPool[$deterministicIndex];
+    }
+
+    /**
+     * Resolve primary entity type for a template (used when preparing client-side retrigger variants).
+     *
+     * @param string $templateContent Raw template content
+     * @param array $contentSourceSettings Content source settings
+     * @return string Primary entity type slug
+     * @since 2.2.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function resolvePrimaryEntityType(string $templateContent, array $contentSourceSettings): string
+    {
+        return $this->determinePrimaryEntityType($templateContent, $contentSourceSettings);
     }
 
 

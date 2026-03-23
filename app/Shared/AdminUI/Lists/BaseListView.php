@@ -756,6 +756,55 @@ class BaseListView
     }
 
     /**
+     * Allowlist for {@see wp_kses()} when list cells include interactive markup (e.g. status toggle buttons).
+     *
+     * {@see wp_kses_post()} strips `class` and `data-*` from `<button>` and `class` from `<span>` because default
+     * post HTML rules only allow a small attribute set, which breaks admin list scripts and badges.
+     *
+     * @since 2.2.0
+     * @return array<string, array<string, bool>> KSES allowlist.
+     */
+    protected function getKsesAllowedForListInteractiveHtml(): array
+    {
+        $allowed = wp_kses_allowed_html('post');
+
+        if (!isset($allowed['button']) || !is_array($allowed['button'])) {
+            $allowed['button'] = [];
+        }
+
+        $allowed['button'] = array_merge(
+            $allowed['button'],
+            [
+                'class' => true,
+                'type' => true,
+                'title' => true,
+                'aria-label' => true,
+                'disabled' => true,
+                'data-campaign-id' => true,
+                'data-current-active' => true,
+                'data-toggle-bound' => true,
+                'data-*' => true,
+            ]
+        );
+
+        if (!isset($allowed['span']) || !is_array($allowed['span'])) {
+            $allowed['span'] = [];
+        }
+
+        $allowed['span'] = array_merge(
+            $allowed['span'],
+            [
+                'class' => true,
+                'role' => true,
+                'aria-label' => true,
+                'data-*' => true,
+            ]
+        );
+
+        return $allowed;
+    }
+
+    /**
      * Render content for a specific column.
      *
      * @since 2.0.0
@@ -799,6 +848,19 @@ class BaseListView
                 break;
 
             case 'status':
+                $customStatus = apply_filters(
+                    FilterHooks::ADMIN_LIST_CUSTOM_COLUMN,
+                    '',
+                    'status',
+                    $post,
+                    $this->postType
+                );
+
+                if (!empty($customStatus)) {
+                    echo wp_kses($customStatus, $this->getKsesAllowedForListInteractiveHtml());
+                    break;
+                }
+
                 $status = get_post_status($post);
                 $statusObj = get_post_status_object($status);
                 echo esc_html($statusObj ? $statusObj->label : $status);

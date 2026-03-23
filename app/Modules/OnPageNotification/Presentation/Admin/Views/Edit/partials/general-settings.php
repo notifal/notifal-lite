@@ -4,6 +4,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Contracts\LabelProviderInterface;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\GeneralSettingsService;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
+use Notifal\Modules\Campaign\Infrastructure\WordPress\Repositories\CampaignQuery;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -76,6 +77,31 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 __( 'Notification Labels', 'notifal' ),
                 __( 'Choose relevant tags to describe this notification. Click labels to assign them.', 'notifal' ),
                 true
+            );
+
+            // Campaign selector (overrides notification schedule when assigned).
+            $selectedCampaignId = $is_edit && isset( $notification_data['campaign_id'] ) ? absint( $notification_data['campaign_id'] ) : 0;
+            $campaignOptions = CampaignQuery::getCampaignOptions();
+            $options = [
+                [
+                    'value' => '0',
+                    'label' => __( 'No Campaign', 'notifal' ),
+                ],
+            ];
+
+            foreach ( $campaignOptions as $id => $title ) {
+                $options[] = [
+                    'value' => (string) (int) $id,
+                    'label' => (string) $title,
+                ];
+            }
+
+            FieldRenderer::select(
+                'notifal_campaign_id',
+                $options,
+                (string) $selectedCampaignId,
+                __( 'Campaign', 'notifal' ),
+                __( 'Assign this notification to a campaign to override its schedule.', 'notifal' )
             );
 
             // Content Source Type

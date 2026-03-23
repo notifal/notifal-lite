@@ -38,6 +38,24 @@ interface ProductFetcherInterface
     public function getRandomPool(int $count = 20, array $filters = []): array;
 
     /**
+     * Whether the filter set requires every pool member to pass WooCommerce live "on sale" checks.
+     *
+     * @param array $filters Filters from {@see ProductFilterBuilder} / legacy keys.
+     * @return bool
+     * @since 2.0.0
+     */
+    public function requiresLiveSaleValidation(array $filters): bool;
+
+    /**
+     * Keep only DTOs whose product still passes {@see \WC_Product::is_on_sale()} at read time.
+     *
+     * @param ProductDTO[] $productDtos Pool entries to filter.
+     * @return ProductDTO[]
+     * @since 2.0.0
+     */
+    public function filterProductPoolToLiveSaleOnly(array $productDtos): array;
+
+    /**
      * Find a product by its ID.
      *
      * @param int $id Product ID.

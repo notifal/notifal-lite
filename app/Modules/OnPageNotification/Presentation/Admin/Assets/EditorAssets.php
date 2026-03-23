@@ -112,6 +112,7 @@ class EditorAssets
                 'get_filtered_templates' => NonceManager::create('notifal_get_filtered_templates'),
                 'save_notification' => NonceManager::create('notifal_save_notification'),
                 'get_notification_data' => NonceManager::create('notifal_get_notification_data'),
+                'get_campaign_data' => NonceManager::create('notifal_campaign_save'),
             ],
             'ajax_url' => UrlHelper::baseAjax(),
         ];
@@ -122,6 +123,7 @@ class EditorAssets
      *
      * @return array Notifal configuration data
      * @since 2.0.0
+     * @since 2.2.0 Added `scheduleDisplayTimezone` and `scheduleGmtOffsetHours` for admin schedule fields.
      */
     private static function getNotifalConfig(): array
     {
@@ -151,6 +153,16 @@ class EditorAssets
             'is_pro_active' => apply_filters('notifal_pro_enhanced_analytics_allowed', false),
             'upgrade_url' => Urls::withPluginUtm(Urls::PRICING, 'wordpress_plugin', 'notifal_pro_upgrade'),
             'plugin_url' => plugin_dir_url(NOTIFAL_FILE),
+            /**
+             * IANA timezone from Settings → General. Used to format stored UTC schedule
+             * values for datetime-local without using the browser's local zone.
+             */
+            'scheduleDisplayTimezone' => (string) get_option( 'timezone_string', '' ),
+            /**
+             * Floating offset in hours when no `timezone_string` is set (Settings → General).
+             * Used as fallback for schedule display formatting only.
+             */
+            'scheduleGmtOffsetHours' => (float) get_option( 'gmt_offset', 0.0 ),
         ];
     }
 

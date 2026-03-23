@@ -3,15 +3,16 @@
 namespace Notifal\Modules\OnPageNotification\Presentation\Frontend\Assets;
 
 use Notifal\Core\Support\Helpers\UrlHelper;
-use Notifal\Shared\Config\Paths;
-use Notifal\Modules\OnPageNotification\Config\Paths as ModulePaths;
+use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
-use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
-use Notifal\Shared\Utils\Helper;
+use Notifal\Infrastructure\WordPress\WooCommerce\Support\WooCommerceVariationScriptSupport;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
+use Notifal\Modules\OnPageNotification\Config\Paths as ModulePaths;
+use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
+use Notifal\Shared\Config\Paths;
+use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
 
@@ -109,7 +110,7 @@ class FrontendAssetsRegistrar
         wp_register_script(
             'notifal-onpage-frontend-bundle',
             Paths::jsFrontendBuildUrl() . 'OnPageFrontendBundle.js',
-            [],
+            WooCommerceVariationScriptSupport::getFrontendBundleDependencies(),
             NOTIFAL_VERSION,
             true
         );
@@ -167,6 +168,10 @@ class FrontendAssetsRegistrar
             wp_enqueue_script('notifal-onpage-frontend-bundle');
             wp_enqueue_style('notifal-onpage-frontend-style');
 
+            self::addTopbarAboveHeaderCompatInlineStyle();
+
+            WooCommerceVariationScriptSupport::ensureWpUtilOnSingularProduct();
+
             // Localize the script with configuration data
             self::localizeScript();
 
@@ -202,9 +207,39 @@ class FrontendAssetsRegistrar
             wp_enqueue_script('notifal-onpage-frontend-bundle');
             wp_enqueue_style('notifal-onpage-frontend-style');
 
+            self::addTopbarAboveHeaderCompatInlineStyle();
+
+            WooCommerceVariationScriptSupport::ensureWpUtilOnSingularProduct();
+
             // Localize the script with configuration data
             self::localizeScript();
         }
+    }
+
+    /**
+     * Appends filterable CSS for sticky header / above-header bar compatibility (theme-specific padding reserves).
+     *
+     * @return void
+     * @since 2.0.0
+     * @see FilterHooks::ONPAGE_TOPBAR_ABOVE_HEADER_COMPAT_CSS Hook constant and add_filter() example in docblock.
+     */
+    private static function addTopbarAboveHeaderCompatInlineStyle(): void
+    {
+        if (!wp_style_is('notifal-onpage-frontend-style', 'enqueued')) {
+            return;
+        }
+
+        $css = apply_filters(FilterHooks::ONPAGE_TOPBAR_ABOVE_HEADER_COMPAT_CSS, '');
+        if (!is_string($css)) {
+            return;
+        }
+
+        $css = trim($css);
+        if ($css === '') {
+            return;
+        }
+
+        wp_add_inline_style('notifal-onpage-frontend-style', wp_strip_all_tags($css));
     }
 
     /**
