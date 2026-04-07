@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.0';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.1';
     }
 
     /**
@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.2.1' => [
+                'show_popup' => false,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.1'),
+                'content' => $this->getVersion221Content(),
+                'action_buttons' => [],
+            ],
             '2.2.0' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -600,6 +607,34 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('Sticky header compatibility', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Improved “Above header” floating bar placement on sticky header themes so it no longer leaves gaps or overlaps after scrolling back to the top.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.2.1
+     *
+     * @return string HTML content for version 2.2.1
+     * @since 2.2.1
+     */
+    private function getVersion221Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.1", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">💬</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Online chat system update', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Improved online chat system in plugin backend.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>
