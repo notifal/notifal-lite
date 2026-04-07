@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.0
+Stable tag: 2.2.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -353,6 +353,8 @@ This plugin connects to notifal.com in two ways:
 
 * **Template library (pre-created on-page notifications)** — When you browse or import notification templates in the plugin, the plugin requests template listings, filters, and single template data from notifal.com. When you import a template, it requests a download URL and then downloads the template file and any template images from the provided URLs. The plugin sends only pagination, search, and filter choices (e.g. use case, layout); no personal data is sent. This is used only when you open the template library or click to import a template.
 
+* **Support chat (Chatwoot)** — In the plugin backend, the support chat widget is loaded from Chatwoot (`app.chatwoot.com`) to let you start a conversation with the support team. Chatwoot may process technical usage data such as your IP address, browser/device details, and chat message content when you use the chat.
+
 Service provider: Notifal.com
 Terms of Service: https://notifal.com/terms-conditions/
 Privacy Policy: https://notifal.com/privacy-policy/
@@ -387,6 +389,9 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.2.1 [2026-04-07]
+Improved: Online chat system in plugin backend.
+
 2.2.0 [2026-03-20]
 Added: Campaign Manager — create campaigns with start/end date windows, assign on-page notifications to a campaign, and use the campaign schedule to control when those notifications are active.
 Added: Campaign analytics filters (Pro) — campaign metrics (impressions, clicks, close rate, conversions, users) are available in Notifal Pro v2.1.0 using event-time attribution for campaigns that are currently active.
