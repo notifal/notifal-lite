@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.1';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.3';
     }
 
     /**
@@ -194,6 +194,20 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.2.3' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.3'),
+                'content' => $this->getVersion223Content(),
+                'action_buttons' => [],
+            ],
+            '2.2.2' => [
+                'show_popup' => false,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.2'),
+                'content' => $this->getVersion222Content(),
+                'action_buttons' => [],
+            ],
             '2.2.1' => [
                 'show_popup' => false,
                 'is_important' => false,
@@ -635,6 +649,62 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('Online chat system update', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Improved online chat system in plugin backend.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.2.2
+     *
+     * @return string HTML content for version 2.2.2
+     * @since 2.2.2
+     */
+    private function getVersion222Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.2", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛠️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Reported issues improvements', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Some reported issues were fixed to improve overall stability and performance.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.2.3
+     *
+     * @return string HTML content for version 2.2.3
+     * @since 2.2.3
+     */
+    private function getVersion223Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.3", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛠️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Frontend template rendering fix', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Elementor template widgets now render correctly on frontend on-page notifications.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

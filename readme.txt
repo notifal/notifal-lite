@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 6.9
-Stable tag: 2.2.1
+Stable tag: 2.2.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -389,6 +389,12 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.2.3 [2026-04-15]
+Fixed: Elementor template widgets now render correctly on frontend on-page notifications.
+
+2.2.2 [2026-04-14]
+Fixed: Some reported bugs fixed.
+
 2.2.1 [2026-04-07]
 Improved: Online chat system in plugin backend.
 

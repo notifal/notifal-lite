@@ -73,6 +73,11 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
             throw new \Exception('Elementor plugin is not active or available');
         }
 
+        // Enqueue document-specific Elementor assets AFTER the base renderer
+        // snapshot has been taken, so all new handles are captured and sent
+        // to the notification frontend payload.
+        $this->enqueueElementorDocumentAssets($template);
+
         return \Elementor\Plugin::instance()->frontend->get_builder_content_for_display($template->ID);
     }
 
@@ -96,6 +101,7 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
 
         // Ensure base Elementor JS is always included
         $assets['js'] = $this->ensureBaseElementorJs($assets['js'] ?? []);
+        $assets['js'] = $this->appendCriticalElementorInlineData($assets['js']);
 
         return $assets;
     }
@@ -179,11 +185,19 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
 
         // Elementor Pro frontend modules
         if (defined('ELEMENTOR_PRO_VERSION') && defined('ELEMENTOR_PRO_PATH') && defined('ELEMENTOR_PRO__FILE__')) {
-            $proFile = 'assets/js/frontend-modules.min.js';
-            if (file_exists(ELEMENTOR_PRO_PATH . $proFile)) {
-                $url = plugins_url($proFile, ELEMENTOR_PRO__FILE__);
-                if (!in_array($url, $jsAssets, true)) {
-                    $jsAssets[] = $url;
+            $proRequiredFiles = [
+                'assets/js/webpack-pro.runtime.min.js',
+                'assets/js/frontend.min.js',
+                'assets/js/elements-handlers.min.js',
+                'assets/js/frontend-modules.min.js',
+            ];
+
+            foreach ($proRequiredFiles as $proFile) {
+                if (file_exists(ELEMENTOR_PRO_PATH . $proFile)) {
+                    $url = plugins_url($proFile, ELEMENTOR_PRO__FILE__);
+                    if (!in_array($url, $jsAssets, true)) {
+                        $jsAssets[] = $url;
+                    }
                 }
             }
         }
@@ -233,13 +247,11 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
     /**
      * Initialise the Elementor frontend subsystem for rendering.
      *
-     * Registers base styles/scripts, then calls enqueue_styles() and
-     * enqueue_scripts() with the template post context.  This makes
-     * Elementor read the template's _elementor_data meta, determine
-     * which widgets are used, and enqueue their individual CSS/JS
-     * handles (e.g. widget-countdown.min.css).  Without this, only
-     * the Post-CSS (user customisations) would load and widget base
-     * styles would be missing.
+     * Registers Elementor style/script handles (without enqueueing).
+     *
+     * Enqueueing is intentionally deferred to renderContent() so it runs
+     * after AbstractTemplateRenderer::snapshotAssetQueues(). This guarantees
+     * enqueue diffs include Elementor + third-party widget handles.
      *
      * @param \WP_Post $template Template post being rendered.
      * @return void
@@ -258,26 +270,159 @@ class ElementorTemplateRenderer extends AbstractTemplateRenderer
                 $frontend->register_scripts();
             }
 
-            // Enqueue widget-specific CSS/JS for this template.
-            // Must run with post context so Elementor reads the template's
-            // _elementor_data meta and enqueues each widget's stylesheet.
-            Helper::withPostContext($template, function () use ($frontend) {
-                if (method_exists($frontend, 'enqueue_styles')) {
-                    $frontend->enqueue_styles();
-                }
-                if (method_exists($frontend, 'enqueue_scripts')) {
-                    $frontend->enqueue_scripts();
-                }
-            }, false);
-
-            // Also enqueue widget-level styles via the widgets manager
-            $widgets_manager = \Elementor\Plugin::instance()->widgets_manager;
-            if (method_exists($widgets_manager, 'enqueue_widgets_styles')) {
-                $widgets_manager->enqueue_widgets_styles();
-            }
-
         } catch (\Exception $e) {
             Helper::log('Elementor frontend init failed for template ' . $template->ID . ': ' . $e->getMessage());
         }
     }
+
+    /**
+     * Enqueue Elementor assets for the current template document.
+     *
+     * This method mirrors Elementor's normal singular-page flow by:
+     *  1. Enqueueing Elementor frontend styles/scripts in template context.
+     *  2. Loading `_elementor_page_assets` handles (if available), which is
+     *     where Elementor stores per-document widget dependencies.
+     *  3. Falling back to runtime asset discovery when page-assets meta is
+     *     missing, then trying again to enable discovered handles.
+     *
+     * Running this after snapshotAssetQueues() allows generic capture logic
+     * to include ALL newly enqueued third-party widget assets.
+     *
+     * @param \WP_Post $template Template post being rendered.
+     * @return void
+     * @since 2.0.0
+     */
+    private function enqueueElementorDocumentAssets(\WP_Post $template): void
+    {
+        try {
+            $frontend = \Elementor\Plugin::instance()->frontend;
+
+            // Run enqueue calls inside template post context so Elementor reads
+            // the correct document and not the host page post.
+            Helper::withPostContext($template, function () use ($frontend, $template) {
+                if (method_exists($frontend, 'enqueue_styles')) {
+                    $frontend->enqueue_styles();
+                }
+
+                if (method_exists($frontend, 'enqueue_scripts')) {
+                    $frontend->enqueue_scripts();
+                }
+
+                $this->enableElementorPageAssets($template->ID);
+
+                // Also enqueue widget-level styles via widgets manager for
+                // compatibility with older Elementor versions.
+                $widgets_manager = \Elementor\Plugin::instance()->widgets_manager;
+                if (method_exists($widgets_manager, 'enqueue_widgets_styles')) {
+                    $widgets_manager->enqueue_widgets_styles();
+                }
+            }, false);
+        } catch (\Exception $e) {
+            Helper::log('Elementor document asset enqueue failed for template ' . $template->ID . ': ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Enable Elementor per-document page assets for a template ID.
+     *
+     * Uses Elementor's `_elementor_page_assets` post meta first (fast path),
+     * then falls back to `update_runtime_elements()` when meta is not ready.
+     * This keeps third-party widget handles generic (no hardcoded mapping).
+     *
+     * @param int $templateId Template post ID.
+     * @return void
+     * @since 2.0.0
+     */
+    private function enableElementorPageAssets(int $templateId): void
+    {
+        $elementor = \Elementor\Plugin::instance();
+
+        if (!isset($elementor->assets_loader) || !is_object($elementor->assets_loader)) {
+            return;
+        }
+
+        $metaKey = '_elementor_page_assets';
+        if (class_exists('\Elementor\Core\Base\Elements_Iteration_Actions\Assets')) {
+            $metaKey = \Elementor\Core\Base\Elements_Iteration_Actions\Assets::ASSETS_META_KEY;
+        }
+
+        $pageAssets = get_post_meta($templateId, $metaKey, true);
+        if (is_array($pageAssets) && !empty($pageAssets)) {
+            $elementor->assets_loader->enable_assets($pageAssets);
+            return;
+        }
+
+        // If the cached assets map is missing, ask Elementor to discover
+        // runtime elements and then retry reading the page-assets meta.
+        $document = $elementor->documents->get($templateId);
+        if ($document && method_exists($document, 'update_runtime_elements')) {
+            $document->update_runtime_elements();
+
+            $pageAssets = get_post_meta($templateId, $metaKey, true);
+            if (is_array($pageAssets) && !empty($pageAssets)) {
+                $elementor->assets_loader->enable_assets($pageAssets);
+                return;
+            }
+        }
+    }
+
+    /**
+     * Append critical Elementor inline JS config blocks to payload.
+     *
+     * Some runtime handlers rely on wp_add_inline_script()/localized data
+     * attached to core handles. In API rendering these handles can be
+     * pre-enqueued before snapshot, so this ensures config data still reaches
+     * the notification payload.
+     *
+     * @param string[] $jsAssets Current JS assets.
+     * @return string[] JS assets with critical inline data appended.
+     * @since 2.0.0
+     */
+    private function appendCriticalElementorInlineData(array $jsAssets): array
+    {
+        $criticalHandles = [
+            'elementor-frontend',
+            'elementor-pro-frontend',
+            'pro-elements-handlers',
+        ];
+
+        $scripts = wp_scripts();
+        if (!$scripts || !isset($scripts->registered) || !is_array($scripts->registered)) {
+            return $jsAssets;
+        }
+
+        foreach ($criticalHandles as $handle) {
+            if (!isset($scripts->registered[$handle])) {
+                continue;
+            }
+
+            $script = $scripts->registered[$handle];
+            if (!is_object($script) || !isset($script->extra) || !is_array($script->extra)) {
+                continue;
+            }
+
+            if (!empty($script->extra['data']) && is_string($script->extra['data'])) {
+                $jsAssets[] = $script->extra['data'];
+            }
+
+            if (!empty($script->extra['before']) && is_array($script->extra['before'])) {
+                foreach ($script->extra['before'] as $inlineBefore) {
+                    if (is_string($inlineBefore) && trim($inlineBefore) !== '') {
+                        $jsAssets[] = $inlineBefore;
+                    }
+                }
+            }
+
+            if (!empty($script->extra['after']) && is_array($script->extra['after'])) {
+                foreach ($script->extra['after'] as $inlineAfter) {
+                    if (is_string($inlineAfter) && trim($inlineAfter) !== '') {
+                        $jsAssets[] = $inlineAfter;
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique($jsAssets));
+    }
+
 }
