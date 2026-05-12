@@ -7,6 +7,7 @@
  *
  * @since 2.0.0
  * @since 2.2.0 Campaign filter for analytics scope.
+ * @since 2.2.4 Revenue metrics use store currency via AnalyticsMoneyFormatter (WooCommerce / EDD).
  * @author Hossein <hossein@notifal.com>
  */
 
@@ -14,6 +15,7 @@ defined('ABSPATH') || exit;
 
 use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Shared\Utils\Helper;
@@ -21,6 +23,8 @@ use Notifal\Shared\Utils\Helper;
 // Initialize services
 $analyticsService = notifal_app(AnalyticsService::class);
 $urlService = notifal_app(UrlService::class);
+// Formatter aligns dashboard revenue with WooCommerce or EDD currency settings (for example Toman).
+$analyticsMoneyFormatter = notifal_app(AnalyticsMoneyFormatter::class);
 
 // Get current filters from request (sanitized per WordPress guidelines; behavior preserved)
 $notification_id_raw = isset( $_GET['notification_id'] ) ? wp_unslash( $_GET['notification_id'] ) : '';
@@ -71,6 +75,8 @@ $has_enhanced_analytics_access = (bool) apply_filters('notifal_pro_enhanced_anal
 
 // Get analytics data (will be filtered for Pro upsell if Pro not active)
 $dashboardData = $analyticsService->getDashboardOverview($filters);
+// Pre-compute dashboard total revenue label once for cards, upsell copy, and consistent escaping.
+$notifal_analytics_total_revenue_display = $analyticsMoneyFormatter->formatPlain((float) ($dashboardData['current_period']['total_revenue'] ?? 0));
 
 // PRO locked view should be shown whenever enhanced analytics access is unavailable.
 $isProUpsell = ! $has_enhanced_analytics_access;
@@ -421,7 +427,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                     <div class="notifal-metric-content">
                         <h3 class="notifal-metric-title"><?php esc_html_e('Total Revenue', 'notifal'); ?></h3>
                         <div class="notifal-metric-value">
-                            $<?php echo esc_html(number_format($dashboardData['current_period']['total_revenue'] ?? 0, 2)); ?>
+                            <?php echo esc_html($notifal_analytics_total_revenue_display); ?>
                         </div>
                         <div class="notifal-metric-growth <?php 
                             $revenueGrowth = $dashboardData['growth_rates']['total_revenue'] ?? 0;
@@ -577,7 +583,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                         <h3><?php esc_html_e('Unlock Powerful Analytics with Notifal Pro', 'notifal'); ?></h3>
                         <p><?php echo sprintf(
                             esc_html__("You've generated %s in revenue! Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further.", 'notifal'),
-                            '<strong>$' . number_format($dashboardData['current_period']['total_revenue'] ?? 0, 2) . '</strong>'
+                            '<strong>' . esc_html($notifal_analytics_total_revenue_display) . '</strong>'
                         ); ?></p>
                         <ul class="notifal-upgrade-features">
                             <li><span class="notifal-icon notifal-icon-check"></span><?php esc_html_e('Detailed impressions & click tracking', 'notifal'); ?></li>
@@ -822,6 +828,9 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                 if (!is_array($notification) || empty($notification['notification_id'])) {
                                     continue;
                                 }
+                                // Raw value powers sorting and CSV export in JavaScript; display follows store currency.
+                                $notifal_row_revenue_raw = isset($notification['revenue']) ? (float) $notification['revenue'] : 0.0;
+                                $notifal_row_revenue_display = $analyticsMoneyFormatter->formatPlain($notifal_row_revenue_raw);
                             ?>
                                     <tr>
                                         <td>
@@ -868,8 +877,9 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                                 <?php echo esc_html(number_format($notification['stats']['total_conversions'])); ?>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="<?php echo $isProUpsell ? 'notifal-revenue-always-visible' : 'notifal-revenue-highlight'; ?>">
-                                            $<?php echo esc_html(number_format($notification['revenue'], 2)); ?>
+                                        <td class="<?php echo $isProUpsell ? 'notifal-revenue-always-visible' : 'notifal-revenue-highlight'; ?>"
+                                            data-notifal-raw-revenue="<?php echo esc_attr((string) $notifal_row_revenue_raw); ?>">
+                                            <?php echo esc_html($notifal_row_revenue_display); ?>
                                         </td>
                                         <td class="<?php echo $isProUpsell ? 'notifal-blurred-data' : ''; ?>">
                                             <?php if ($isProUpsell): ?>

@@ -1724,6 +1724,28 @@ class FilterHooks {
      */
     public const ANALYTICS_CALCULATE_METRIC_GROWTH = 'notifal/onpage/analytics/calculate_metric_growth';
 
+    /**
+     * Filter formatted money string for OnPage analytics (admin dashboard, exports, AJAX HTML).
+     *
+     * @param string $formatted Current plain-text representation.
+     * @param float  $amount      Raw numeric amount in store currency units.
+     * @return string
+     * @since 2.2.4
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ANALYTICS_FORMAT_MONEY = 'notifal/onpage/analytics/format_money';
+
+    /**
+     * Filter JavaScript money configuration for analytics charts (symbol, decimals, separators).
+     *
+     * @param array<string, mixed> $config   Money settings passed to NotifalAnalyticsConfig.money.
+     * @param mixed                $formatter Formatter instance (AnalyticsMoneyFormatter) for advanced extensions.
+     * @return array<string, mixed>
+     * @since 2.2.4
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ANALYTICS_MONEY_JS_CONFIG = 'notifal/onpage/analytics/money_js_config';
+
     // =========================================================================
     // 📅 DATE TAG FILTER HOOKS
     // =========================================================================
