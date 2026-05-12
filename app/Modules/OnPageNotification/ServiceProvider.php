@@ -36,6 +36,7 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSet
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationSaveService;
 use Notifal\Infrastructure\WordPress\Admin\Helpers\AdminStatsService;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\ConversionTracker;
 use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
@@ -122,6 +123,7 @@ class ServiceProvider extends AbstractServiceProvider
         TimingSettingsService::class,
         NotificationSaveService::class,
         AdminStatsService::class,
+        AnalyticsMoneyFormatter::class,
         AnalyticsService::class,
         AnalyticsHelper::class,
         NotificationHelper::class,

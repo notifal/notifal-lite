@@ -2,6 +2,7 @@
 
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax;
 
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Shared\Utils\Helper;
 
@@ -153,12 +154,16 @@ class AnalyticsTableController
      * @param array $notifications Array of notification data
      * @return string Generated HTML
      * @since 2.0.0
+     * @since 2.2.4 Revenue cells use AnalyticsMoneyFormatter and data-notifal-raw-revenue for store currency.
      */
     private static function generateTableRowsHTML(array $notifications): string
     {
         if (empty($notifications)) {
             return '';
         }
+
+        // Shared formatter keeps AJAX-generated rows aligned with WooCommerce or EDD currency output.
+        $moneyFormatter = notifal_app(AnalyticsMoneyFormatter::class);
 
         $html = '';
         
@@ -196,10 +201,13 @@ class AnalyticsTableController
             // Conversions column
             $html .= '<td>' . esc_html(number_format($notification['stats']['total_conversions'])) . '</td>';
             
-            // Revenue column
-            // Use secure hook that only the legitimate pro plugin can provide
+            // Revenue column: show store-formatted amount and expose raw float for client-side sorting and CSV.
             $revenueClass = apply_filters('notifal_pro_enhanced_analytics_allowed', false) ? 'notifal-revenue-highlight' : 'notifal-revenue-always-visible';
-            $html .= '<td class="' . $revenueClass . '">$' . esc_html(number_format($notification['revenue'], 2)) . '</td>';
+            $revenueRaw = isset($notification['revenue']) ? (float) $notification['revenue'] : 0.0;
+            $revenueDisplay = $moneyFormatter->formatPlain($revenueRaw);
+            $html .= '<td class="' . $revenueClass . '" data-notifal-raw-revenue="' . esc_attr((string) $revenueRaw) . '">';
+            $html .= esc_html($revenueDisplay);
+            $html .= '</td>';
             
             // Close Rate column
             $html .= '<td>';
