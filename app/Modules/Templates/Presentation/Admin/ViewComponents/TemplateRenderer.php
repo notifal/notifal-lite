@@ -5,6 +5,7 @@ namespace Notifal\Modules\Templates\Presentation\Admin\ViewComponents;
 defined('ABSPATH') || exit;
 
 use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TemplateContentTrait;
 use WP_Post;
 
@@ -36,13 +37,9 @@ class TemplateRenderer
         // Only check if this template matches the selected ID
         $checked = ($selectedId === $id) ? 'checked' : '';
 
-        // Add cache-busting version parameter using post_modified_gmt timestamp
-        $version = strtotime($template->post_modified_gmt);
-        $previewUrl = esc_url(add_query_arg([
-            'notifal_template_preview' => $id,
-            'nonce' => wp_create_nonce('notifal_template_preview'),
-            'v' => $version,
-        ], home_url()));
+        $previewUrl = esc_url(
+            notifal_app(TemplateUrlService::class)->getPreviewUrl($id, $template)
+        );
         $editUrl = ElementorHelper::hasBuilder($template)
             ? add_query_arg(['action' => 'elementor', 'post' => $id], admin_url('post.php'))
             : get_edit_post_link($id);
