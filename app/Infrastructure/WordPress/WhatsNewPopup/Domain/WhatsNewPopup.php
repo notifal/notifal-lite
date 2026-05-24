@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.4';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.5';
     }
 
     /**
@@ -194,8 +194,15 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.2.5' => [
+                'show_popup' => false,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.5'),
+                'content' => $this->getVersion225Content(),
+                'action_buttons' => [],
+            ],
             '2.2.4' => [
-                'show_popup' => true,
+                'show_popup' => false,
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.4'),
                 'content' => $this->getVersion224Content(),
@@ -684,6 +691,41 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('Reported issues improvements', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Some reported issues were fixed to improve overall stability and performance.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.2.5
+     *
+     * @return string HTML content for version 2.2.5
+     * @since 2.2.5
+     */
+    private function getVersion225Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.5", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Better SEO for templates', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Notifal templates are no longer included in search engine sitemaps.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✅</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

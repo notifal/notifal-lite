@@ -2,8 +2,8 @@
 Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
-Tested up to: 6.9
-Stable tag: 2.2.4
+Tested up to: 7.0
+Stable tag: 2.2.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -389,8 +389,12 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.2.5 [2026-05-23]
+Improved: Notifal templates are excluded from sitemaps.
+Improved: Tested with WordPress 7.0.
+
 2.2.4 [2026-05-12]
-Fixed: OnPage analytics revenue now respects WooCommerce and Easy Digital Downloads store currency and formatting (including custom symbols such as Toman) in the dashboard, AJAX table rows, and revenue chart axis labels.
+Fixed: OnPage analytics revenue now respects WooCommerce and Easy Digital Downloads store currency and formatting in the dashboard, AJAX table rows, and revenue chart axis labels.
 
 2.2.3 [2026-04-15]
 Fixed: Elementor template widgets now render correctly on frontend on-page notifications.

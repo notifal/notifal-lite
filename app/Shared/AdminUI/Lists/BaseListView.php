@@ -7,6 +7,7 @@ use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Shared\AdminUI\Toast\ToastManager;
+use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Shared\Services\NotifalIconService;
 use Notifal\Shared\Utils\Helper;
 use WP_Post;
@@ -938,7 +939,13 @@ class BaseListView
 
         // View action (only for published posts)
         if (!$isTrash && $post->post_status === 'publish') {
-            $permalink = get_permalink($post);
+            // Internal template CPT uses query-arg preview, not public permalinks.
+            if ($post->post_type === 'notifal_template') {
+                $permalink = notifal_app(TemplateUrlService::class)->getPreviewUrl((int) $post->ID, $post);
+            } else {
+                $permalink = get_permalink($post);
+            }
+
             if ($permalink) {
                 $actions['view'] = sprintf(
                     '<a href="%s" class="notifal-button secondary" title="%s" target="_blank" rel="noopener" aria-label="%s">

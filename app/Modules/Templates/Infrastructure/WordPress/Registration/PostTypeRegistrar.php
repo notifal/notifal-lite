@@ -29,6 +29,9 @@ class PostTypeRegistrar {
     public static function register(): void {
         add_action( 'init', [ self::class, 'registerTemplatePostType' ] );
         add_action( 'init', [ TaxonomyRegistrar::class, 'register' ] );
+        add_filter( 'wp_sitemaps_post_types', [ self::class, 'excludeFromCoreSitemaps' ] );
+        add_filter( 'rank_math/sitemap/exclude_post_type', [ self::class, 'excludeFromRankMathSitemaps' ], 10, 2 );
+        add_filter( 'wpseo_sitemap_exclude_post_type', [ self::class, 'excludeFromYoastSitemaps' ], 10, 2 );
 
         // Enforce Gutenberg editor for notifal_template with highest priority to override any other plugins
         add_filter( 'use_block_editor_for_post_type', [ self::class, 'forceBlockEditor' ], PHP_INT_MAX, 2 );
@@ -77,16 +80,18 @@ class PostTypeRegistrar {
 
         $args = [
             'labels'             => $labels,
-            'public'             => true,
-            'publicly_queryable' => true,
+            'public'             => false,
+            'publicly_queryable' => false,
+            'exclude_from_search'=> true,
             'show_ui'            => true,
             'show_in_menu'       => 'notifal',
             'query_var'          => false,
-            'rewrite'            => [ 'slug' => 'notifal-template' ],
+            'rewrite'            => false,
             'capability_type'    => 'post',
             'has_archive'        => false,
             'hierarchical'       => false,
             'menu_position'      => 3,
+            'show_in_nav_menus'  => false,
             'supports'           => [ 'title', 'editor', 'custom-fields','elementor' ],
             'show_in_rest'       => true,
             'template'           => [
@@ -99,6 +104,54 @@ class PostTypeRegistrar {
 
         register_post_type( 'notifal_template', $args );
         add_post_type_support('notifal_template', 'elementor');
+    }
+
+    /**
+     * Exclude internal template post type from WordPress core XML sitemaps.
+     *
+     * @since 2.2.5
+     * @param array $post_types Registered post types included in core sitemap output.
+     * @return array
+     */
+    public static function excludeFromCoreSitemaps( array $post_types ): array {
+        // Remove internal template post type from core sitemap providers.
+        unset( $post_types['notifal_template'] );
+
+        return $post_types;
+    }
+
+    /**
+     * Exclude internal template post type from Rank Math sitemaps.
+     *
+     * @since 2.2.5
+     * @param bool   $exclude   Current exclusion state.
+     * @param string $post_type Post type key currently evaluated by Rank Math.
+     * @return bool
+     */
+    public static function excludeFromRankMathSitemaps( $exclude, $post_type ) {
+        // Force exclusion for internal template post type only.
+        if ( $post_type === 'notifal_template' ) {
+            return true;
+        }
+
+        return (bool) $exclude;
+    }
+
+    /**
+     * Exclude internal template post type from Yoast SEO sitemaps.
+     *
+     * @since 2.2.5
+     * @param bool   $exclude   Current exclusion state.
+     * @param string $post_type Post type key currently evaluated by Yoast SEO.
+     * @return bool
+     */
+    public static function excludeFromYoastSitemaps( $exclude, $post_type ) {
+        // Force exclusion for internal template post type only.
+        if ( $post_type === 'notifal_template' ) {
+            return true;
+        }
+
+        return (bool) $exclude;
     }
 
     /**
