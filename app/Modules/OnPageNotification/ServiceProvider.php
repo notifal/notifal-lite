@@ -39,6 +39,7 @@ use Notifal\Infrastructure\WordPress\Admin\Helpers\AdminStatsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\ConversionTracker;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\OrderAttributionService;
 use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Modules\OnPageNotification\Helpers\NotificationHelper;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
@@ -128,6 +129,7 @@ class ServiceProvider extends AbstractServiceProvider
         AnalyticsHelper::class,
         NotificationHelper::class,
         ConversionTracker::class,
+        OrderAttributionService::class,
         UrlService::class,
         EligibilityService::class,
         NotificationDataPreparer::class,
@@ -201,6 +203,9 @@ class ServiceProvider extends AbstractServiceProvider
 
         // Initialize conversion tracking
         ConversionTracker::register();
+
+        // Register order attribution display (WooCommerce/EDD admin pages, since 2.3.0)
+        OrderAttributionService::register();
 
         // Register AJAX controllers
         AnalyticsTableController::register();

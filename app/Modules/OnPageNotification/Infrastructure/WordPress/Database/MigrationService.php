@@ -93,6 +93,8 @@ class MigrationService
             dismisses int(11) unsigned DEFAULT 0,
             conversions int(11) unsigned DEFAULT 0,
             revenue decimal(10,2) DEFAULT 0.00,
+            influenced_revenue decimal(10,2) DEFAULT 0.00,
+            influenced_orders int(11) unsigned DEFAULT 0,
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             updated_at timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
@@ -263,6 +265,42 @@ class MigrationService
 
         dbDelta($sql);
 
+    }
+
+    /**
+     * Add new columns to existing tables for sites upgrading from older versions.
+     *
+     * Uses ADD COLUMN IF NOT EXISTS pattern via SHOW COLUMNS for broad MySQL/MariaDB compatibility.
+     * Safe to run on every migration — skips columns that already exist.
+     *
+     * @return void
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private static function addColumnsIfMissing(): void
+    {
+        global $wpdb;
+
+        // Table: notifal_onpage_daily_stats — new influenced revenue/orders columns (since 2.3.0)
+        $dailyStatsTable = $wpdb->prefix . 'notifal_onpage_daily_stats';
+
+        // Check if table exists before attempting to alter it
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$dailyStatsTable}'" ) !== $dailyStatsTable ) {
+            return;
+        }
+
+        // Build map of existing column names for this table
+        $existingColumns = $wpdb->get_col( "SHOW COLUMNS FROM `{$dailyStatsTable}`" );
+
+        // Add influenced_revenue column: total order value for orders influenced by notifal
+        if ( ! in_array( 'influenced_revenue', $existingColumns, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$dailyStatsTable}` ADD COLUMN `influenced_revenue` decimal(10,2) NOT NULL DEFAULT 0.00 AFTER `revenue`" );
+        }
+
+        // Add influenced_orders column: count of orders influenced by notifal
+        if ( ! in_array( 'influenced_orders', $existingColumns, true ) ) {
+            $wpdb->query( "ALTER TABLE `{$dailyStatsTable}` ADD COLUMN `influenced_orders` int(11) unsigned NOT NULL DEFAULT 0 AFTER `influenced_revenue`" );
+        }
     }
 
     /**
@@ -474,6 +512,8 @@ class MigrationService
         // Create tables and indexes when migrations run
         self::createTables();
         self::createIndexes();
+        // Add new columns to existing tables for upgrading sites (since 2.3.0)
+        self::addColumnsIfMissing();
     }
 
     /**

@@ -17,6 +17,8 @@ return [
     'table_sorted_success' => __( 'Table sorted successfully', 'notifal' ),
     'error_sorting_table' => __( 'Error sorting table', 'notifal' ),
     'dashboard_refreshed' => __( 'Dashboard refreshed successfully!', 'notifal' ),
+    'analytics_refreshed_with_count' => __( 'Analytics updated. {count} events processed.', 'notifal' ),
+    'error_refreshing_analytics' => __( 'Error refreshing analytics', 'notifal' ),
     'events_processed' => __( 'Events processed: {count} events', 'notifal' ),
     'error_processing_events' => __( 'Error processing events', 'notifal' ),
     'data_exported_success' => __( 'Analytics data exported successfully!', 'notifal' ),

@@ -3,8 +3,9 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
-use Notifal\Shared\Utils\Helper;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\EventProcessor;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
+use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
 
@@ -117,6 +118,11 @@ class CronService
 
             // Process events
             $result = $this->eventProcessor->processQueuedEvents($batchSize);
+
+            // Keep dashboard "Updated at" metadata aligned with scheduled processing runs.
+            if (! empty($result['processed_count'])) {
+                AnalyticsHelper::recordLastProcessingTime();
+            }
 
             /**
              * Fires after cron event processing.

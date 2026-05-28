@@ -1394,6 +1394,44 @@ class ActionHooks {
     public const ONPAGE_TAB_BADGE_FAVICON_RESTORE = 'notifal/onpage/tab_badge/favicon_restore';
 
     // =========================================================================
+    // 📊 DASHBOARD WIDGET ACTION HOOKS
+    // =========================================================================
+
+    /**
+     * Fires before rendering the Notifal WordPress dashboard widget content.
+     *
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const DASHBOARD_WIDGET_BEFORE_RENDER = 'notifal/dashboard_widget/before_render';
+
+    /**
+     * Fires after rendering the Notifal WordPress dashboard widget content.
+     *
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const DASHBOARD_WIDGET_AFTER_RENDER = 'notifal/dashboard_widget/after_render';
+
+    /**
+     * Fires before rendering order attribution data on a WooCommerce/EDD order admin page.
+     *
+     * @param int $orderId The order/payment ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_BEFORE_RENDER = 'notifal/order_attribution/before_render';
+
+    /**
+     * Fires after rendering order attribution data on a WooCommerce/EDD order admin page.
+     *
+     * @param int $orderId The order/payment ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_AFTER_RENDER = 'notifal/order_attribution/after_render';
+
+    // =========================================================================
     // 💰 Analytics & Conversion Tracking Actions
     // =========================================================================
 
@@ -1403,6 +1441,14 @@ class ActionHooks {
      * @since 2.0.0
      */
     public const ONPAGE_ANALYTICS_ENQUEUE_ASSETS = 'notifal/onpage/analytics/enqueue_assets';
+
+    /**
+     * Fires after the analytics dashboard refresh completes event processing.
+     *
+     * @param array $result Processing result payload.
+     * @since 2.3.0
+     */
+    public const ONPAGE_ANALYTICS_REFRESH_COMPLETED = 'notifal/onpage/analytics/refresh/completed';
 
     /**
      * Fires after recording a conversion.

@@ -31,7 +31,12 @@ class PostTypeRegistrar {
         add_action( 'init', [ TaxonomyRegistrar::class, 'register' ] );
         add_filter( 'wp_sitemaps_post_types', [ self::class, 'excludeFromCoreSitemaps' ] );
         add_filter( 'rank_math/sitemap/exclude_post_type', [ self::class, 'excludeFromRankMathSitemaps' ], 10, 2 );
+        add_filter( 'rank_math/sitemap/html_sitemap_post_types', [ self::class, 'excludeFromRankMathHtmlSitemaps' ] );
         add_filter( 'wpseo_sitemap_exclude_post_type', [ self::class, 'excludeFromYoastSitemaps' ], 10, 2 );
+        add_filter( 'wp_robots', [ self::class, 'setCoreNoindexForTemplate' ] );
+        add_filter( 'rank_math/frontend/robots', [ self::class, 'setRankMathNoindexForTemplate' ] );
+        add_filter( 'wpseo_robots', [ self::class, 'setYoastNoindexForTemplate' ] );
+        add_action( 'send_headers', [ self::class, 'sendNoindexHeaderForTemplate' ] );
 
         // Enforce Gutenberg editor for notifal_template with highest priority to override any other plugins
         add_filter( 'use_block_editor_for_post_type', [ self::class, 'forceBlockEditor' ], PHP_INT_MAX, 2 );
@@ -81,11 +86,11 @@ class PostTypeRegistrar {
         $args = [
             'labels'             => $labels,
             'public'             => false,
-            'publicly_queryable' => false,
+            'publicly_queryable' => true,
             'exclude_from_search'=> true,
             'show_ui'            => true,
             'show_in_menu'       => 'notifal',
-            'query_var'          => false,
+            'query_var'          => true,
             'rewrite'            => false,
             'capability_type'    => 'post',
             'has_archive'        => false,
@@ -109,7 +114,7 @@ class PostTypeRegistrar {
     /**
      * Exclude internal template post type from WordPress core XML sitemaps.
      *
-     * @since 2.2.5
+     * @since 2.3.0
      * @param array $post_types Registered post types included in core sitemap output.
      * @return array
      */
@@ -138,6 +143,25 @@ class PostTypeRegistrar {
     }
 
     /**
+     * Exclude internal template post type from Rank Math HTML sitemap output.
+     *
+     * @since 2.2.5
+     * @param array $post_types Post types included in Rank Math HTML sitemap.
+     * @return array
+     */
+    public static function excludeFromRankMathHtmlSitemaps( array $post_types ): array {
+        // Remove internal template post type from HTML sitemap providers.
+        $filtered = array_filter(
+            $post_types,
+            static function ( $post_type ) {
+                return $post_type !== 'notifal_template';
+            }
+        );
+
+        return array_values( $filtered );
+    }
+
+    /**
      * Exclude internal template post type from Yoast SEO sitemaps.
      *
      * @since 2.2.5
@@ -152,6 +176,96 @@ class PostTypeRegistrar {
         }
 
         return (bool) $exclude;
+    }
+
+    /**
+     * Enforce noindex robots directives for template singular pages using core robots API.
+     *
+     * @since 2.2.5
+     * @param array $robots Core robots directives.
+     * @return array
+     */
+    public static function setCoreNoindexForTemplate( array $robots ): array {
+        // Apply noindex directives only on template singular requests.
+        if ( ! self::isTemplateSingularRequest() ) {
+            return $robots;
+        }
+
+        // Remove conflicting directive and force noindex directives.
+        unset( $robots['index'] );
+        $robots['noindex']   = true;
+        $robots['nofollow']  = false;
+        $robots['noarchive'] = true;
+
+        return $robots;
+    }
+
+    /**
+     * Enforce noindex robots directives for template singular pages in Rank Math output.
+     *
+     * @since 2.2.5
+     * @param array $robots Rank Math robots directives.
+     * @return array
+     */
+    public static function setRankMathNoindexForTemplate( array $robots ): array {
+        // Apply noindex directives only on template singular requests.
+        if ( ! self::isTemplateSingularRequest() ) {
+            return $robots;
+        }
+
+        // Remove conflicting directive and force noindex directives.
+        unset( $robots['index'] );
+        $robots['noindex']   = 'noindex';
+        $robots['follow']    = 'follow';
+        $robots['noarchive'] = 'noarchive';
+
+        return $robots;
+    }
+
+    /**
+     * Enforce noindex robots directives for template singular pages in Yoast output.
+     *
+     * @since 2.2.5
+     * @param string $robots Yoast robots string.
+     * @return string
+     */
+    public static function setYoastNoindexForTemplate( $robots ): string {
+        // Apply noindex directives only on template singular requests.
+        if ( ! self::isTemplateSingularRequest() ) {
+            return (string) $robots;
+        }
+
+        return 'noindex,follow,noarchive';
+    }
+
+    /**
+     * Send a robots response header as an extra noindex safety layer.
+     *
+     * @since 2.2.5
+     * @return void
+     */
+    public static function sendNoindexHeaderForTemplate(): void {
+        // Apply noindex header only on template singular requests.
+        if ( ! self::isTemplateSingularRequest() ) {
+            return;
+        }
+
+        header( 'X-Robots-Tag: noindex, follow, noarchive', true );
+    }
+
+    /**
+     * Check whether the current frontend request is a template singular page.
+     *
+     * @since 2.2.5
+     * @return bool
+     */
+    private static function isTemplateSingularRequest(): bool {
+        // Skip if query functions are unavailable in current execution context.
+        if ( ! function_exists( 'is_singular' ) ) {
+            return false;
+        }
+
+        return is_singular( 'notifal_template' );
     }
 
     /**

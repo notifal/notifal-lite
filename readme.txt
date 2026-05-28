@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.2.5
+Stable tag: 2.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -389,6 +389,20 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.3.0 [2026-05-27]
+Added: All Time date range in OnPage analytics to view data from earliest available records through today.
+Added: Influenced revenue and order attribution on WooCommerce and Easy Digital Downloads order admin screens (order list column and order meta box).
+Added: Pending influence display for unpaid orders (on-hold, pending payment) with tooltip explaining they are not counted in analytics revenue until paid.
+Improved: Influenced orders metric now shows total influenced orders and how many are paid and counted in revenue.
+Improved: Guest checkout revenue attribution using a persistent session cookie stored on the order at checkout.
+Added: WordPress dashboard widget now shows clicked revenue, influenced revenue, influenced orders, and active notifications.
+Added: WooCommerce order attribution on single order edit page and Notifal column on orders list (legacy + HPOS support).
+Improved: Analytics dashboard Refresh now processes pending analytics events immediately and reloads the page so cards, table, and chart show the latest data in one action.
+Fixed: Per-notification influenced revenue calculation now falls back to WooCommerce order totals when conversion rows have empty total values.
+Fixed: Notifal templates remain compatible with Elementor editor loading while being excluded from search engine sitemaps.
+Improved: Dynamic tag detection in template analysis now ignores CSS/JS curly-brace blocks and JavaScript template literals, so only valid Notifal tags are detected.
+Improved: Frontend rendering of Elementor HTML widget content now executes inline template scripts after DOM insertion and applies inline template styles consistently.
+
 2.2.5 [2026-05-23]
 Improved: Notifal templates are excluded from sitemaps.
 Improved: Tested with WordPress 7.0.
@@ -517,6 +531,9 @@ Enhanced: Addressed and resolved various security vulnerabilities to improve ove
 - Initial release.
 
 == Upgrade Notice ==
+
+= 2.3.0 =
+Improved influenced revenue tracking for guest checkout, unpaid orders, and WooCommerce order admin attribution display.
 
 = 2.0.0 =
 Major update: Notifal has been completely rebuilt. All previous notifications will be removed so you should create notifications again (import new ones with one click from the template library). If you need your previous notifications, back up your database before updating.

@@ -5,6 +5,7 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Shared\Utils\Helper;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationActivationGuard;
@@ -319,10 +320,51 @@ class NotificationSaveService
         $sanitized['rule_combination_logic'] = Helper::sanitizeInput($data['rule_combination_logic'] ?? 'OR', 'text');
 
         // Template settings
-        $sanitized['template_id'] = absint($data['template_id'] ?? 0);
-        $sanitized['template_content'] = wp_kses_post($data['template_content'] ?? '');
+        $templateId = absint($data['template_id'] ?? 0);
+        $rawTemplateContent = isset($data['template_content']) ? wp_unslash((string) $data['template_content']) : '';
+        $sanitized['template_id'] = $templateId;
+        $sanitized['template_content'] = $this->resolveTemplateContentForSave($templateId, $rawTemplateContent);
 
         return apply_filters(FilterHooks::ONPAGE_NOTIFICATION_SANITIZED_DATA, $sanitized, $data);
+    }
+
+    /**
+     * Resolve template content using template ID with safe fallback.
+     *
+     * Prefer server-side extraction by template ID to avoid relying on large
+     * client payloads in admin-ajax requests. Falls back to posted content when
+     * the template cannot be loaded.
+     *
+     * @since 2.0.0
+     * @param int $templateId Selected template ID.
+     * @param string $fallbackContent Fallback content received from request.
+     * @return string Sanitized template content.
+     */
+    private function resolveTemplateContentForSave(int $templateId, string $fallbackContent): string
+    {
+        // Return sanitized fallback when no template is selected.
+        if ($templateId <= 0) {
+            return wp_kses_post($fallbackContent);
+        }
+
+        // Load template post safely; use fallback when unavailable.
+        $template = Helper::getPostSafe($templateId, 'notifal_template');
+        if (!$template) {
+            return wp_kses_post($fallbackContent);
+        }
+
+        // Extract server-side template content for reliable persistence.
+        $content = ContentExtractor::extractFromElementorTemplate($template);
+        if ($content === '') {
+            $content = ContentExtractor::extractFromBlockTemplate($template);
+        }
+
+        // Keep previous fallback path if extractor returns empty content.
+        if ($content === '') {
+            $content = $fallbackContent;
+        }
+
+        return wp_kses_post($content);
     }
 
 

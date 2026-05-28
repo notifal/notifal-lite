@@ -142,9 +142,19 @@ class ConversionTracker
         add_action('wp_ajax_notifal_track_product_click', [$instance, 'handleProductClick']);
         add_action('wp_ajax_nopriv_notifal_track_product_click', [$instance, 'handleProductClick']);
 
-        // Store attribution data in order meta during checkout
+        // Store attribution data in order meta during checkout (classic + block checkout)
         add_action('woocommerce_checkout_create_order', [$instance, 'storeAttributionInOrder'], 10, 1);
+        add_action('woocommerce_checkout_order_created', [$instance, 'storeAttributionInOrder'], 10, 1);
+        add_action('woocommerce_store_api_checkout_order_processed', [$instance, 'storeAttributionInOrderById'], 10, 1);
     }
+
+    /**
+     * WooCommerce order statuses that count as paid for influenced revenue.
+     *
+     * @var string[]
+     * @since 2.3.0
+     */
+    private static $paidOrderStatuses = ['processing', 'completed'];
 
     /**
      * Track WooCommerce conversion on order completion.
@@ -182,9 +192,8 @@ class ConversionTracker
 
         // Only track conversions for paid orders
         $orderStatus = $order->get_status();
-        $paidStatuses = ['processing', 'completed'];
 
-        if (!in_array($orderStatus, $paidStatuses)) {
+        if (!in_array($orderStatus, self::$paidOrderStatuses, true)) {
             return;
         }
 
@@ -206,8 +215,13 @@ class ConversionTracker
             return;
         }
 
+        // Resolve guest session from order meta (stored at checkout) for reliable attribution
+        $guestSessionId = (int) $order->get_user_id() > 0
+            ? ''
+            : (string) $order->get_meta('_notifal_session_id', true);
+
         // Find attributed clicks for all products in a single query
-        $attributedClicks = $this->findAttributedProductClicksBulk($productIds, $order->get_user_id());
+        $attributedClicks = $this->findAttributedProductClicksBulk($productIds, (int) $order->get_user_id(), $guestSessionId);
 
         // Process each product
         foreach ($productData as $productId => $data) {
@@ -229,7 +243,7 @@ class ConversionTracker
                 'order_id' => $orderId,
                 'product_id' => $productId,
                 'product_revenue' => $data['item_total'],
-                'total_order_value' => $order->get_total(),
+                'total_order_value' => $this->resolveOrderTotalValue($order),
                 'currency' => $order->get_currency(),
                 'click_timestamp' => $mostRecentClick['click_timestamp'],
                 'conversion_timestamp' => current_time('mysql'),
@@ -243,6 +257,15 @@ class ConversionTracker
                 $this->markClickAsConverted($clickData['id']);
             }
         }
+
+        // Lock influenced revenue at payment time (refunds/cancellations must not change analytics)
+        $lockedRevenue = $this->resolveOrderTotalValue($order);
+        if ($lockedRevenue > 0) {
+            $order->update_meta_data('_notifal_influenced_revenue_locked', $lockedRevenue);
+        }
+
+        // Pending influence is no longer needed once conversion is recorded
+        $order->delete_meta_data('_notifal_pending_attribution');
 
         // Mark this order as processed to prevent duplicate tracking
         // Use WooCommerce order method for HPOS compatibility
@@ -263,13 +286,61 @@ class ConversionTracker
      */
     public function storeAttributionInOrder($order): void
     {
+        if (!$order instanceof \WC_Order) {
+            return;
+        }
+
+        // Persist session ID on the order so guest conversions match checkout clicks
+        $sessionId = Helper::getSessionId();
+        $order->update_meta_data('_notifal_session_id', $sessionId);
+
         // Get attribution data from session/cookies
         $attributionData = $this->getAttributionData();
 
         if (!empty($attributionData)) {
             // Store attribution data in order meta for later use
-            $order->add_meta_data('_notifal_attribution', $attributionData, true);
+            $order->update_meta_data('_notifal_attribution', $attributionData);
         }
+
+        // Snapshot pending influence for unpaid orders (on-hold, pending payment, etc.)
+        $pendingAttribution = $this->buildPendingAttributionSnapshot($order, $sessionId);
+
+        if (!empty($pendingAttribution)) {
+            $order->update_meta_data('_notifal_pending_attribution', $pendingAttribution);
+        }
+    }
+
+    /**
+     * Store attribution data for WooCommerce Blocks checkout payloads.
+     *
+     * WooCommerce may pass either a WC_Order object or a numeric order ID depending
+     * on version/hook internals, so this method safely normalizes both formats.
+     *
+     * @param \WC_Order|int $orderOrId WooCommerce order object or order ID
+     * @return void
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function storeAttributionInOrderById($orderOrId): void
+    {
+        if ($orderOrId instanceof \WC_Order) {
+            $this->storeAttributionInOrder($orderOrId);
+            return;
+        }
+
+        $orderId = (int) $orderOrId;
+
+        if ($orderId <= 0) {
+            return;
+        }
+
+        $order = wc_get_order($orderId);
+
+        if (!$order) {
+            return;
+        }
+
+        $this->storeAttributionInOrder($order);
     }
 
     /**
@@ -288,11 +359,8 @@ class ConversionTracker
      */
     public function handleOrderStatusChange(int $orderId, string $oldStatus, string $newStatus, $order): void
     {
-        // Define paid order statuses
-        $paidStatuses = ['processing', 'completed'];
-
         // Only track when transitioning to a paid status from a non-paid status
-        if (in_array($newStatus, $paidStatuses) && !in_array($oldStatus, $paidStatuses)) {
+        if (in_array($newStatus, self::$paidOrderStatuses, true) && !in_array($oldStatus, self::$paidOrderStatuses, true)) {
             $this->trackWooCommerceConversion($orderId);
         }
     }
@@ -401,12 +469,17 @@ class ConversionTracker
             return;
         }
 
+        // Allow frontend to pass session_id; otherwise use persistent cookie-based ID
+        $postedSessionId = isset($_POST['session_id'])
+            ? sanitize_text_field(wp_unslash($_POST['session_id']))
+            : '';
+
         // Sanitize and prepare product click data
         $data = [
             'notification_id' => (int)($_POST['notification_id'] ?? 0),
             'product_id' => (int)($_POST['product_id'] ?? 0),
             'user_id' => get_current_user_id(),
-            'session_id' => Helper::getSessionId(),
+            'session_id' => $postedSessionId !== '' ? $postedSessionId : Helper::getSessionId(),
             'timestamp' => time(),
             'attribution_window_hours' => 24,
             'page_url' => esc_url_raw($_POST['page_url'] ?? ''),
@@ -507,13 +580,15 @@ class ConversionTracker
      * Find attributed product clicks within the attribution window for multiple products.
      *
      *
-     * @param array $productIds Array of product IDs to search for
-     * @param int $userId User ID (0 for guest users)
+     * @param array  $productIds Array of product IDs to search for
+     * @param int    $userId     User ID (0 for guest users)
+     * @param string $sessionId  Guest session ID from order meta or cookie (optional)
      * @return array Array keyed by product_id with attributed clicks arrays
      * @since 2.0.2
+     * @since 2.3.0 Accepts order-stored session ID for guest checkout attribution.
      * @author Hossein <hossein@notifal.com>
      */
-    private function findAttributedProductClicksBulk(array $productIds, int $userId = 0): array
+    private function findAttributedProductClicksBulk(array $productIds, int $userId = 0, string $sessionId = ''): array
     {
         if (empty($productIds)) {
             return [];
@@ -544,9 +619,10 @@ class ConversionTracker
                 array_merge($productIds, [$userId, $cutoffTime])
             );
         } else {
-            // For guest users, use session_id from Helper
-            $sessionId = Helper::getSessionId();
-            if (!$sessionId) {
+            // For guest users, prefer session stored on the order, then cookie
+            $resolvedSessionId = $sessionId !== '' ? $sessionId : Helper::getSessionId();
+
+            if ($resolvedSessionId === '') {
                 return [];
             }
 
@@ -557,7 +633,7 @@ class ConversionTracker
                 AND click_timestamp >= %s
                 AND status = 'pending'
                 ORDER BY product_id, click_timestamp DESC",
-                array_merge($productIds, [$sessionId, $cutoffTime])
+                array_merge($productIds, [$resolvedSessionId, $cutoffTime])
             );
         }
 
@@ -649,10 +725,17 @@ class ConversionTracker
             $date = current_time('Y-m-d');
             $this->databaseRepository->updateDailyStats($conversionData['notification_id'], 'conversion', $date);
 
-            // Update daily revenue
+            // Update daily clicked revenue (revenue from the specific clicked product item)
             $revenue = (float)($conversionData['product_revenue'] ?? 0);
             if ($revenue > 0) {
                 $this->updateDailyRevenue($conversionData['notification_id'], $revenue, $date);
+            }
+
+            // Update daily influenced revenue (total order value) and influenced orders count (since 2.3.0)
+            $totalOrderValue = (float)($conversionData['total_order_value'] ?? 0);
+            $orderId         = (int)($conversionData['order_id'] ?? 0);
+            if ($totalOrderValue > 0 && $orderId > 0) {
+                $this->updateDailyInfluencedRevenue($conversionData['notification_id'], $totalOrderValue, $orderId, $date);
             }
 
             /**
@@ -798,6 +881,126 @@ class ConversionTracker
     }
 
     /**
+     * Update daily influenced revenue and orders statistics.
+     *
+     * Tracks the total order value (not just the clicked product line) for orders that were
+     * influenced by a Notifal notification. Each unique order_id is counted only once per
+     * notification per day to avoid double-counting when multiple items in the same order
+     * are attributed to the same notification.
+     *
+     * @param int    $notificationId  Notification ID
+     * @param float  $totalOrderValue Full order total (WooCommerce get_total or EDD payment total)
+     * @param int    $orderId         WooCommerce order ID or EDD payment ID (used for dedup check)
+     * @param string $date            Date in Y-m-d format
+     * @return bool True on success, false on failure
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function updateDailyInfluencedRevenue(int $notificationId, float $totalOrderValue, int $orderId, string $date): bool
+    {
+        global $wpdb;
+
+        // Get table names from repository (supports custom prefixes)
+        $tables            = $this->databaseRepository->getTableNames();
+        $dailyStatsTable   = $tables['daily_stats'] ?? '';
+        $conversionsTable  = $tables['conversions'] ?? '';
+
+        if (empty($dailyStatsTable) || empty($conversionsTable)) {
+            return false;
+        }
+
+        // Skip if this order was already counted for influenced metrics today (multiple line items)
+        $conversionRowsForOrder = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM `{$conversionsTable}`
+                WHERE notification_id = %d
+                AND order_id = %d
+                AND DATE(conversion_timestamp) = %s",
+                $notificationId,
+                $orderId,
+                $date
+            )
+        );
+
+        if ($conversionRowsForOrder > 1) {
+            return true;
+        }
+
+        // COALESCE guards against NULL influenced_* values on legacy daily_stats rows
+        $result = $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE `{$dailyStatsTable}` SET
+                    influenced_revenue = COALESCE(influenced_revenue, 0) + %f,
+                    influenced_orders  = COALESCE(influenced_orders, 0) + 1,
+                    updated_at         = CURRENT_TIMESTAMP
+                WHERE notification_id = %d AND date = %s",
+                $totalOrderValue,
+                $notificationId,
+                $date
+            )
+        );
+
+        if ($result === false) {
+            return false;
+        }
+
+        // If no daily_stats row exists yet for today, create one with influenced metrics
+        if ((int) $wpdb->rows_affected === 0) {
+            $inserted = $wpdb->insert(
+                $dailyStatsTable,
+                [
+                    'notification_id'   => $notificationId,
+                    'date'              => $date,
+                    'influenced_revenue'=> $totalOrderValue,
+                    'influenced_orders' => 1,
+                ],
+                [
+                    '%d',
+                    '%s',
+                    '%f',
+                    '%d',
+                ]
+            );
+
+            return $inserted !== false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Resolve the full order total used for influenced revenue attribution.
+     *
+     * @param \WC_Order $order WooCommerce order object
+     * @return float Order total in store currency
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function resolveOrderTotalValue($order): float
+    {
+        if (!$order instanceof \WC_Order) {
+            return 0.0;
+        }
+
+        $total = (float) $order->get_total('edit');
+
+        if ($total > 0) {
+            return $total;
+        }
+
+        // Fallback when totals are not yet calculated on the order object
+        foreach ($order->get_items() as $item) {
+            $total += (float) $item->get_total();
+        }
+
+        $total += (float) $order->get_shipping_total();
+        $total += (float) $order->get_total_tax();
+        $total -= (float) $order->get_total_discount();
+
+        return max(0.0, $total);
+    }
+
+    /**
      * Try fallback attribution when no specific product clicks are found.
      *
      * Uses general notification attribution data from session/cookies when
@@ -849,20 +1052,139 @@ class ConversionTracker
             }
         }
 
-        // Record conversion using fallback attribution if found
+        // Record conversion using fallback attribution if found (includes influenced revenue)
         if ($mostRecentNotification) {
-            $this->recordConversion([
-                'notification_id' => (int)$mostRecentNotification,
+            $orderObject = wc_get_order($orderId);
+            $orderUserId = $orderObject ? (int) $orderObject->get_user_id() : 0;
+
+            $this->recordProductConversion([
+                'notification_id' => (int) $mostRecentNotification,
+                'product_click_id' => 0,
                 'order_id' => $orderId,
-                'revenue' => $itemTotal,
-                'currency' => get_option('woocommerce_currency', 'USD'),
+                'product_id' => $productId,
+                'product_revenue' => $itemTotal,
+                'total_order_value' => $orderObject ? $this->resolveOrderTotalValue($orderObject) : 0.0,
+                'currency' => $orderObject ? $orderObject->get_currency() : get_option('woocommerce_currency', 'USD'),
                 'click_timestamp' => date('Y-m-d H:i:s', $mostRecentTimestamp),
                 'conversion_timestamp' => current_time('mysql'),
                 'attribution_type' => 'fallback',
-                'user_id' => get_current_user_id() ?: 0,
+                'user_id' => $orderUserId,
                 'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification((int) $mostRecentNotification),
             ]);
         }
+    }
+
+    /**
+     * Build a pending attribution snapshot for an order at checkout.
+     *
+     * Used to show influence in the admin order list before payment and to count
+     * total influenced orders separately from paid revenue in analytics.
+     *
+     * @param \WC_Order $order     WooCommerce order
+     * @param string    $sessionId Guest session ID stored on the order
+     * @return array Pending attribution rows
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function buildPendingAttributionSnapshot(\WC_Order $order, string $sessionId): array
+    {
+        $pendingRows = [];
+        $seenKeys    = [];
+
+        // Collect product IDs from the order for click lookup
+        $productIds = [];
+
+        foreach ($order->get_items() as $item) {
+            if ($item instanceof \WC_Order_Item_Product) {
+                $productIds[] = $this->getCorrectProductId($item);
+            }
+        }
+
+        $productIds = array_values(array_unique(array_filter($productIds)));
+
+        if (!empty($productIds)) {
+            // Match pending product clicks using the checkout session ID
+            $attributedClicks = $this->findAttributedProductClicksBulk(
+                $productIds,
+                (int) $order->get_user_id(),
+                $sessionId
+            );
+
+            foreach ($attributedClicks as $productId => $clicks) {
+                if (empty($clicks[0])) {
+                    continue;
+                }
+
+                $clickRow = $clicks[0];
+                $notificationId = (int) ($clickRow['notification_id'] ?? 0);
+                $dedupeKey = $notificationId . '_' . (int) $productId;
+
+                if ($notificationId <= 0 || isset($seenKeys[$dedupeKey])) {
+                    continue;
+                }
+
+                $seenKeys[$dedupeKey] = true;
+                $pendingRows[] = [
+                    'notification_id' => $notificationId,
+                    'product_id' => (int) $productId,
+                    'product_revenue' => 0.0,
+                    'total_order_value' => $this->resolveOrderTotalValue($order),
+                    'attribution_type' => 'pending_product_click',
+                    'is_pending' => true,
+                ];
+            }
+        }
+
+        // Include cookie/session notification attribution when no product click exists
+        $attributionData = $this->getAttributionData();
+
+        if (empty($attributionData)) {
+            $storedAttribution = $order->get_meta('_notifal_attribution', true);
+
+            if (!empty($storedAttribution)) {
+                $attributionData = is_string($storedAttribution)
+                    ? json_decode($storedAttribution, true)
+                    : $storedAttribution;
+            }
+        }
+
+        if (!is_array($attributionData)) {
+            $attributionData = [];
+        }
+
+        foreach ($attributionData as $notificationId => $data) {
+            $notificationId = (int) $notificationId;
+
+            if ($notificationId <= 0) {
+                continue;
+            }
+
+            $clickTimestamp = isset($data['timestamp'])
+                ? (is_string($data['timestamp']) ? strtotime($data['timestamp']) : (int) ($data['timestamp'] / 1000))
+                : time();
+
+            if (!$this->isWithinAttributionWindow((int) $clickTimestamp)) {
+                continue;
+            }
+
+            $dedupeKey = $notificationId . '_0';
+
+            if (isset($seenKeys[$dedupeKey])) {
+                continue;
+            }
+
+            $seenKeys[$dedupeKey] = true;
+            $pendingRows[] = [
+                'notification_id' => $notificationId,
+                'product_id' => 0,
+                'product_revenue' => 0.0,
+                'total_order_value' => $this->resolveOrderTotalValue($order),
+                'attribution_type' => 'pending_cookie',
+                'is_pending' => true,
+            ];
+        }
+
+        return $pendingRows;
     }
 
     /**

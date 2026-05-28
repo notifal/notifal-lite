@@ -524,8 +524,7 @@ class ActionButtonWidget extends BaseWidget
                 'unit' => 'px',
             ],
             'selectors' => [
-                '{{WRAPPER}} .notifal-action-button .elementor-icon' => 'margin-right: {{SIZE}}{{UNIT}};',
-                '{{WRAPPER}} .notifal-action-button .notifal-action-button-text + .elementor-icon' => 'margin-left: {{SIZE}}{{UNIT}}; margin-right: 0;',
+                '{{WRAPPER}} .notifal-action-button' => 'gap: {{SIZE}}{{UNIT}};',
             ],
         ]);
 
