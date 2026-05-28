@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.2.5';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.0';
     }
 
     /**
@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.3.0' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.0'),
+                'content' => $this->getVersion230Content(),
+                'action_buttons' => [],
+            ],
             '2.2.5' => [
                 'show_popup' => false,
                 'is_important' => false,
@@ -726,6 +733,76 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.0
+     *
+     * @return string HTML content for version 2.3.0
+     * @since 2.3.0
+     */
+    private function getVersion230Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.0", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">💰</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Improved influenced revenue tracking', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Guest checkout attribution is now more reliable with a persistent session cookie stored on checkout orders. Unpaid orders (on-hold and pending payment) now show pending influence and are counted in analytics revenue after payment.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Order attribution in WooCommerce and EDD admin', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('View influenced attribution in WooCommerce and Easy Digital Downloads order admin areas, including the orders list column and order details meta box (legacy and HPOS support for WooCommerce).', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📊</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('All Time range in OnPage analytics', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('A new All Time range lets you view analytics from the earliest available records through today. Influenced orders now show total influenced count with a paid-and-counted breakdown for clearer reporting.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📌</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WordPress dashboard widget expanded', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The dashboard widget now includes clicked revenue, influenced revenue, influenced orders, and active notifications in one place.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔄</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Faster analytics refresh workflow', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('OnPage analytics Refresh now processes pending analytics events first and then reloads the dashboard, so summary cards, tables, and charts update together with clearer refresh feedback.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Template SEO compatibility fix', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Notifal templates now remain compatible with Elementor editor loading while staying excluded from search engine sitemaps.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧩</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('More accurate template tag detection and HTML widget rendering', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Template analysis now detects only valid Notifal tags (ignoring CSS/JS brace syntax), and frontend notifications now apply inline template styles and execute inline template scripts reliably for Elementor HTML widget content.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

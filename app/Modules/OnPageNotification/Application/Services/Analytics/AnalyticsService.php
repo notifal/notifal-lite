@@ -2,7 +2,9 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Analytics;
 
+use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\EventProcessor;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\DatabaseRepository;
 use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 
@@ -182,14 +184,61 @@ class AnalyticsService
             }
         }
 
-        // Free version: return current time
-        return [
-            'timestamp' => current_time('timestamp'),
-            'formatted' => wp_date(get_option('date_format') . ' ' . get_option('time_format'), current_time('timestamp')),
-            'human_diff' => __('Just now', 'notifal'),
-            'next_update' => __('Upgrade to Pro', 'notifal'),
-            'next_update_human' => __('Upgrade to Pro', 'notifal'),
-        ];
+        // Lite and Pro-unavailable states share the same last-update helper.
+        return AnalyticsHelper::buildLastUpdateInfo();
+    }
+
+    /**
+     * Process pending analytics events and prepare the dashboard for reload.
+     *
+     * @return array Processing result
+     * @since 2.3.0
+     */
+    public function refreshDashboardAnalytics(): array
+    {
+        // Delegate to Pro when enhanced analytics processing is available.
+        $result = $this->forceProcessPendingEvents();
+
+        // Lite installs process queued events directly through the core processor.
+        if (! empty($result['is_pro_required'])) {
+            $result = $this->processPendingEventsForRefresh();
+        } elseif (empty($result['success'])) {
+            // Fall back to core processing when Pro delegation fails during manual refresh.
+            $fallbackResult = $this->processPendingEventsForRefresh();
+            if (! empty($fallbackResult['success'])) {
+                $result = $fallbackResult;
+            }
+        }
+
+        // Persist the manual refresh timestamp whenever processing succeeds.
+        if (! empty($result['success'])) {
+            AnalyticsHelper::recordLastProcessingTime();
+
+            /**
+             * Fires after analytics dashboard refresh processing completes.
+             *
+             * @since 2.3.0
+             * @param array $result Processing result payload.
+             */
+            do_action(ActionHooks::ONPAGE_ANALYTICS_REFRESH_COMPLETED, $result);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Process queued analytics events for manual dashboard refresh.
+     *
+     * @return array Processing result
+     * @since 2.3.0
+     */
+    private function processPendingEventsForRefresh(): array
+    {
+        // Resolve the shared event processor from the application container.
+        $eventProcessor = notifal_app(EventProcessor::class);
+
+        // Drain the queue in bounded batches so refresh reflects the latest metrics.
+        return $eventProcessor->forceProcessAllEvents();
     }
 
     /**
@@ -267,6 +316,7 @@ class AnalyticsService
      * @param array $filters Analytics filters
      * @return array Dashboard overview data with only revenue
      * @since 2.0.0
+     * @since 2.3.0 Also exposes influenced_revenue and influenced_orders.
      */
     private function getFreeDashboardOverview(array $filters = []): array
     {
@@ -277,19 +327,27 @@ class AnalyticsService
         // Get all notification IDs
         $notificationIds = AnalyticsHelper::getFilteredNotificationIds($filters);
 
-        // Calculate only total revenue
-        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
-        $totalRevenue = $this->calculateTotalRevenue($notificationIds, $startDate, $endDate, $campaignId);
+        // Calculate clicked product revenue (original) and influenced order revenue (new, since 2.3.0)
+        $campaignId         = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $totalRevenue       = $this->calculateTotalRevenue($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedRevenue       = $this->calculateTotalInfluencedRevenue($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedOrdersPaid    = $this->calculateTotalInfluencedOrders($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedOrdersPending = $this->calculateTotalPendingInfluencedOrders($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedOrdersTotal   = $influencedOrdersPaid + $influencedOrdersPending;
 
         return [
             "current_period" => [
-                "total_impressions" => 0,
-                "total_clicks" => 0,
-                "total_closes" => 0,
-                "total_dismisses" => 0,
-                "total_conversions" => 0,
-                "total_revenue" => $totalRevenue,
-                "total_unique_users" => 0,
+                "total_impressions"   => 0,
+                "total_clicks"        => 0,
+                "total_closes"        => 0,
+                "total_dismisses"     => 0,
+                "total_conversions"   => 0,
+                "total_revenue"       => $totalRevenue,
+                "influenced_revenue"  => $influencedRevenue,
+                "influenced_orders"   => $influencedOrdersTotal,
+                "influenced_orders_paid" => $influencedOrdersPaid,
+                "influenced_orders_pending" => $influencedOrdersPending,
+                "total_unique_users"  => 0,
             ],
             "previous_period" => [
                 "total_impressions" => 0,
@@ -335,19 +393,26 @@ class AnalyticsService
         $startDate = $dateRange["start"];
         $endDate = $dateRange["end"];
 
-        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
-        $revenue = $this->calculateProductRevenue($notificationId, $startDate, $endDate, $campaignId);
+        $campaignId       = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenue          = $this->calculateProductRevenue($notificationId, $startDate, $endDate, $campaignId);
+        $influencedRev    = $this->calculateInfluencedRevenue($notificationId, $startDate, $endDate, $campaignId);
+        $influencedOrdersPaid    = $this->calculateInfluencedOrders($notificationId, $startDate, $endDate, $campaignId);
+        $influencedOrdersPending = $this->calculatePendingInfluencedOrders($notificationId, $startDate, $endDate, $campaignId);
 
         return [
-            "notification_id" => $notificationId,
+            "notification_id"    => $notificationId,
             "notification_title" => get_the_title($notificationId),
             "total_stats" => [
-                "total_impressions" => 0,
-                "total_clicks" => 0,
-                "total_closes" => 0,
-                "total_dismisses" => 0,
-                "total_conversions" => 0,
-                "total_revenue" => $revenue,
+                "total_impressions"  => 0,
+                "total_clicks"       => 0,
+                "total_closes"       => 0,
+                "total_dismisses"    => 0,
+                "total_conversions"  => 0,
+                "total_revenue"      => $revenue,
+                "influenced_revenue" => $influencedRev,
+                "influenced_orders"  => $influencedOrdersPaid + $influencedOrdersPending,
+                "influenced_orders_paid" => $influencedOrdersPaid,
+                "influenced_orders_pending" => $influencedOrdersPending,
                 "total_unique_users" => 0,
             ],
             "daily_stats" => [],
@@ -423,41 +488,51 @@ class AnalyticsService
         $notifications = $this->getFilteredNotifications($filters);
 
         // Get revenue data for all notifications in one query if possible
-        $notificationIds = array_column($notifications, 'ID');
-        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
-        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $notificationIds    = array_column($notifications, 'ID');
+        $campaignId         = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenueData        = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedRevData  = $this->getBulkInfluencedRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedOrdData  = $this->getBulkInfluencedOrdersData($notificationIds, $startDate, $endDate, $campaignId);
 
         $analyticsData = [];
         foreach ($notifications as $notification) {
-            $revenue = $revenueData[$notification->ID] ?? 0;
+            $revenue          = $revenueData[$notification->ID] ?? 0;
+            $influencedRev    = $influencedRevData[$notification->ID] ?? 0;
+            $influencedOrders = $influencedOrdData[$notification->ID] ?? 0;
 
             $analyticsData[] = [
                 "notification_id" => $notification->ID,
-                "title" => $notification->post_title,
-                "status" => $notification->post_status,
-                "created_date" => $notification->post_date,
+                "title"           => $notification->post_title,
+                "status"          => $notification->post_status,
+                "created_date"    => $notification->post_date,
                 "stats" => [
-                    "total_impressions" => 0,
-                    "total_clicks" => 0,
-                    "total_closes" => 0,
-                    "total_dismisses" => 0,
-                    "total_conversions" => 0,
-                    "total_revenue" => $revenue,
+                    "total_impressions"  => 0,
+                    "total_clicks"       => 0,
+                    "total_closes"       => 0,
+                    "total_dismisses"    => 0,
+                    "total_conversions"  => 0,
+                    "total_revenue"      => $revenue,
+                    "influenced_revenue" => $influencedRev,
+                    "influenced_orders"  => $influencedOrders,
                     "total_unique_users" => 0,
                 ],
                 "period_stats" => [
-                    "total_impressions" => 0,
-                    "total_clicks" => 0,
-                    "total_closes" => 0,
-                    "total_dismisses" => 0,
-                    "total_conversions" => 0,
-                    "total_revenue" => $revenue,
+                    "total_impressions"  => 0,
+                    "total_clicks"       => 0,
+                    "total_closes"       => 0,
+                    "total_dismisses"    => 0,
+                    "total_conversions"  => 0,
+                    "total_revenue"      => $revenue,
+                    "influenced_revenue" => $influencedRev,
+                    "influenced_orders"  => $influencedOrders,
                     "total_unique_users" => 0,
                 ],
-                "ctr" => 0,
-                "conversion_rate" => 0,
-                "revenue" => $revenue,
-                "is_pro_upsell" => true,
+                "ctr"              => 0,
+                "conversion_rate"  => 0,
+                "revenue"          => $revenue,
+                "influenced_revenue" => $influencedRev,
+                "influenced_orders"  => $influencedOrders,
+                "is_pro_upsell"    => true,
             ];
         }
 
@@ -481,42 +556,52 @@ class AnalyticsService
         $notifications = $this->getFilteredNotificationsPaginated($filters);
 
         // Get revenue data for the paginated notifications
-        $notificationIds = array_column($notifications['items'], 'ID');
-        $campaignId = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
-        $revenueData = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $notificationIds   = array_column($notifications['items'], 'ID');
+        $campaignId        = isset($filters['campaign_id']) ? (int) $filters['campaign_id'] : 0;
+        $revenueData       = $this->getBulkRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedRevData = $this->getBulkInfluencedRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+        $influencedOrdData = $this->getBulkInfluencedOrdersData($notificationIds, $startDate, $endDate, $campaignId);
 
         // Build analytics data for paginated items
         $analyticsData = [];
         foreach ($notifications['items'] as $notification) {
-            $revenue = $revenueData[$notification->ID] ?? 0;
+            $revenue          = $revenueData[$notification->ID] ?? 0;
+            $influencedRev    = $influencedRevData[$notification->ID] ?? 0;
+            $influencedOrders = $influencedOrdData[$notification->ID] ?? 0;
 
             $analyticsData[] = [
                 "notification_id" => $notification->ID,
-                "title" => $notification->post_title,
-                "status" => $notification->post_status,
-                "created_date" => $notification->post_date,
+                "title"           => $notification->post_title,
+                "status"          => $notification->post_status,
+                "created_date"    => $notification->post_date,
                 "stats" => [
-                    "total_impressions" => 0,
-                    "total_clicks" => 0,
-                    "total_closes" => 0,
-                    "total_dismisses" => 0,
-                    "total_conversions" => 0,
-                    "total_revenue" => $revenue,
+                    "total_impressions"  => 0,
+                    "total_clicks"       => 0,
+                    "total_closes"       => 0,
+                    "total_dismisses"    => 0,
+                    "total_conversions"  => 0,
+                    "total_revenue"      => $revenue,
+                    "influenced_revenue" => $influencedRev,
+                    "influenced_orders"  => $influencedOrders,
                     "total_unique_users" => 0,
                 ],
                 "period_stats" => [
-                    "total_impressions" => 0,
-                    "total_clicks" => 0,
-                    "total_closes" => 0,
-                    "total_dismisses" => 0,
-                    "total_conversions" => 0,
-                    "total_revenue" => $revenue,
+                    "total_impressions"  => 0,
+                    "total_clicks"       => 0,
+                    "total_closes"       => 0,
+                    "total_dismisses"    => 0,
+                    "total_conversions"  => 0,
+                    "total_revenue"      => $revenue,
+                    "influenced_revenue" => $influencedRev,
+                    "influenced_orders"  => $influencedOrders,
                     "total_unique_users" => 0,
                 ],
-                "ctr" => 0,
-                "conversion_rate" => 0,
-                "revenue" => $revenue,
-                "is_pro_upsell" => true,
+                "ctr"               => 0,
+                "conversion_rate"   => 0,
+                "revenue"           => $revenue,
+                "influenced_revenue" => $influencedRev,
+                "influenced_orders"  => $influencedOrders,
+                "is_pro_upsell"     => true,
             ];
         }
 
@@ -863,6 +948,615 @@ class AnalyticsService
         }
 
         return $revenueData;
+    }
+
+    /**
+     * Calculate total influenced revenue (full order totals) across multiple notifications.
+     *
+     * Sums the `influenced_revenue` column from daily_stats for all given notification IDs.
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return float Total influenced revenue
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculateTotalInfluencedRevenue(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
+    {
+        if (empty($notificationIds)) {
+            return 0.0;
+        }
+
+        global $wpdb;
+
+        $tables      = $this->getTableNames();
+        $dailyStats  = $tables['daily_stats'] ?? '';
+
+        if (empty($dailyStats)) {
+            return 0.0;
+        }
+
+        // Campaign-level influenced revenue is tracked via the conversions table for precision
+        if ($campaignId > 0) {
+            $conversionsTable = $tables['conversions'] ?? '';
+            if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+                return 0.0;
+            }
+            $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+            $params       = array_merge($notificationIds, [$startDate . ' 00:00:00', $endDate . ' 23:59:59', $campaignId]);
+            // SUM distinct order totals per notification+order to avoid multi-product double-count
+            $sql = $wpdb->prepare(
+                "SELECT SUM(t.total_order_value) FROM (
+                    SELECT MAX(total_order_value) as total_order_value
+                    FROM {$conversionsTable}
+                    WHERE notification_id IN ({$placeholders})
+                    AND conversion_timestamp >= %s
+                    AND conversion_timestamp <= %s
+                    AND campaign_id = %d
+                    GROUP BY order_id
+                ) t",
+                $params
+            );
+            $result = $wpdb->get_var($sql);
+            return (float) ($result ?? 0.0);
+        }
+
+        $bulkData = $this->getBulkInfluencedRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+
+        return array_sum($bulkData);
+    }
+
+    /**
+     * Calculate total influenced orders count across multiple notifications.
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return int Total influenced orders
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculateTotalInfluencedOrders(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): int
+    {
+        if (empty($notificationIds)) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        $tables      = $this->getTableNames();
+        $dailyStats  = $tables['daily_stats'] ?? '';
+
+        if (empty($dailyStats)) {
+            return 0;
+        }
+
+        if ($campaignId > 0) {
+            $conversionsTable = $tables['conversions'] ?? '';
+            if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+                return 0;
+            }
+            $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+            $params       = array_merge($notificationIds, [$startDate . ' 00:00:00', $endDate . ' 23:59:59', $campaignId]);
+            // Count distinct order IDs across all notifs (avoid multi-notif-same-order double-count)
+            $sql = $wpdb->prepare(
+                "SELECT COUNT(DISTINCT order_id) FROM {$conversionsTable}
+                WHERE notification_id IN ({$placeholders})
+                AND conversion_timestamp >= %s AND conversion_timestamp <= %s
+                AND campaign_id = %d",
+                $params
+            );
+            $result = $wpdb->get_var($sql);
+            return (int) ($result ?? 0);
+        }
+
+        if ($campaignId > 0) {
+            return $this->countInfluencedOrdersFromConversions($notificationIds, $startDate, $endDate, $campaignId);
+        }
+
+        $bulkData = $this->getBulkInfluencedOrdersData($notificationIds, $startDate, $endDate, 0);
+
+        return array_sum($bulkData);
+    }
+
+    /**
+     * Calculate influenced revenue for a single notification.
+     *
+     * @param int    $notificationId Notification ID
+     * @param string $startDate      Start date (Y-m-d)
+     * @param string $endDate        End date (Y-m-d)
+     * @param int    $campaignId     Optional campaign ID (0 = no filter)
+     * @return float Influenced revenue
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculateInfluencedRevenue(int $notificationId, string $startDate, string $endDate, int $campaignId = 0): float
+    {
+        $bulkData = $this->getBulkInfluencedRevenueData([$notificationId], $startDate, $endDate, $campaignId);
+
+        return (float) ($bulkData[(int) $notificationId] ?? 0.0);
+    }
+
+    /**
+     * Calculate influenced orders for a single notification.
+     *
+     * @param int    $notificationId Notification ID
+     * @param string $startDate      Start date (Y-m-d)
+     * @param string $endDate        End date (Y-m-d)
+     * @param int    $campaignId     Optional campaign ID (0 = no filter)
+     * @return int Influenced orders count
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculateInfluencedOrders(int $notificationId, string $startDate, string $endDate, int $campaignId = 0): int
+    {
+        $bulkData = $this->getBulkInfluencedOrdersData([$notificationId], $startDate, $endDate, $campaignId);
+
+        return (int) ($bulkData[(int) $notificationId] ?? 0);
+    }
+
+    /**
+     * Get bulk influenced revenue data for multiple notifications (public proxy for Pro use).
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return array Influenced revenue values keyed by notification ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function getBulkInfluencedRevenueDataPublic(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
+    {
+        return $this->getBulkInfluencedRevenueData($notificationIds, $startDate, $endDate, $campaignId);
+    }
+
+    /**
+     * Get bulk influenced orders data for multiple notifications (public proxy for Pro use).
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return array Influenced orders counts keyed by notification ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function getBulkInfluencedOrdersDataPublic(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
+    {
+        return $this->getBulkInfluencedOrdersData($notificationIds, $startDate, $endDate, $campaignId);
+    }
+
+    /**
+     * Get bulk influenced revenue data for multiple notifications.
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return array Influenced revenue values keyed by notification ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function getBulkInfluencedRevenueData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
+    {
+        if (empty($notificationIds)) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $tables   = $this->getTableNames();
+        $result   = [];
+
+        foreach ($notificationIds as $notificationId) {
+            $result[(int) $notificationId] = 0.0;
+        }
+
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+            return $result;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params       = array_merge($notificationIds, [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        $campaignSql  = '';
+
+        if ($campaignId > 0) {
+            $campaignSql = ' AND campaign_id = %d';
+            $params[]    = $campaignId;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT notification_id, order_id, MAX(total_order_value) AS order_total
+                FROM `{$conversionsTable}`
+                WHERE notification_id IN ({$placeholders})
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s
+                AND order_id > 0
+                {$campaignSql}
+                GROUP BY notification_id, order_id",
+                $params
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $notificationId = (int) ($row['notification_id'] ?? 0);
+            $orderTotal     = (float) ($row['order_total'] ?? 0);
+
+            if ($notificationId <= 0) {
+                continue;
+            }
+
+            if ($orderTotal <= 0 && function_exists('wc_get_order')) {
+                $order = wc_get_order((int) ($row['order_id'] ?? 0));
+
+                if ($order) {
+                    $orderTotal = (float) $order->get_total('edit');
+                }
+            }
+
+            $result[$notificationId] = ($result[$notificationId] ?? 0.0) + $orderTotal;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get bulk influenced orders count for multiple notifications.
+     *
+     * @param array  $notificationIds Array of notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Optional campaign ID filter (0 = no filter)
+     * @return array Influenced orders counts keyed by notification ID
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function getBulkInfluencedOrdersData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
+    {
+        if (empty($notificationIds)) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $tables = $this->getTableNames();
+        $result = [];
+
+        foreach ($notificationIds as $notificationId) {
+            $result[(int) $notificationId] = 0;
+        }
+
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+            return $result;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params       = array_merge($notificationIds, [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+        $campaignSql  = '';
+
+        if ($campaignId > 0) {
+            $campaignSql = ' AND campaign_id = %d';
+            $params[]    = $campaignId;
+        }
+
+        $rows = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT notification_id, COUNT(DISTINCT order_id) AS io
+                FROM `{$conversionsTable}`
+                WHERE notification_id IN ({$placeholders})
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s
+                AND order_id > 0
+                {$campaignSql}
+                GROUP BY notification_id",
+                $params
+            ),
+            ARRAY_A
+        );
+
+        foreach ($rows as $row) {
+            $notificationId = (int) ($row['notification_id'] ?? 0);
+
+            if ($notificationId > 0) {
+                $result[$notificationId] = (int) ($row['io'] ?? 0);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Sum influenced revenue from conversions table (one total per order).
+     *
+     * @param array  $notificationIds Notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Campaign filter (0 = all)
+     * @return float
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function sumInfluencedRevenueFromConversions(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
+    {
+        global $wpdb;
+
+        $tables           = $this->getTableNames();
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+            return 0.0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params       = array_merge(
+            $notificationIds,
+            [$startDate . ' 00:00:00', $endDate . ' 23:59:59']
+        );
+
+        $campaignSql = '';
+        if ($campaignId > 0) {
+            $campaignSql = ' AND campaign_id = %d';
+            $params[]    = $campaignId;
+        }
+
+        $sql = $wpdb->prepare(
+            "SELECT COALESCE(SUM(t.order_total), 0) FROM (
+                SELECT MAX(total_order_value) AS order_total
+                FROM `{$conversionsTable}`
+                WHERE notification_id IN ({$placeholders})
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s
+                {$campaignSql}
+                GROUP BY notification_id, order_id
+            ) t",
+            $params
+        );
+
+        $sum = (float) ($wpdb->get_var($sql) ?? 0.0);
+
+        if ($sum > 0 || !function_exists('wc_get_order')) {
+            return $sum;
+        }
+
+        return $this->sumInfluencedRevenueFromWooOrders($notificationIds, $startDate, $endDate, $campaignId);
+    }
+
+    /**
+     * Sum order totals from WooCommerce for influenced orders (legacy rows missing total_order_value).
+     *
+     * @param array  $notificationIds Notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Campaign filter (0 = all)
+     * @return float
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function sumInfluencedRevenueFromWooOrders(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
+    {
+        global $wpdb;
+
+        $tables           = $this->getTableNames();
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if (empty($conversionsTable)) {
+            return 0.0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params       = array_merge(
+            $notificationIds,
+            [$startDate . ' 00:00:00', $endDate . ' 23:59:59']
+        );
+
+        $campaignSql = '';
+        if ($campaignId > 0) {
+            $campaignSql = ' AND campaign_id = %d';
+            $params[]    = $campaignId;
+        }
+
+        $orderIds = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT order_id FROM `{$conversionsTable}`
+                WHERE notification_id IN ({$placeholders})
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s
+                AND order_id > 0
+                {$campaignSql}",
+                $params
+            )
+        );
+
+        if (empty($orderIds)) {
+            return 0.0;
+        }
+
+        $total = 0.0;
+
+        foreach ($orderIds as $orderId) {
+            $order = wc_get_order((int) $orderId);
+
+            if (!$order) {
+                continue;
+            }
+
+            // Prefer revenue locked at payment time (unaffected by later refunds/cancellations)
+            $lockedRevenue = (float) $order->get_meta('_notifal_influenced_revenue_locked', true);
+
+            if ($lockedRevenue > 0) {
+                $total += $lockedRevenue;
+                continue;
+            }
+
+            // Use stored conversion total when available
+            $storedConversionTotal = (float) $wpdb->get_var(
+                $wpdb->prepare(
+                    "SELECT MAX(total_order_value) FROM `{$conversionsTable}`
+                    WHERE order_id = %d",
+                    (int) $orderId
+                )
+            );
+
+            if ($storedConversionTotal > 0) {
+                $total += $storedConversionTotal;
+                continue;
+            }
+
+            // Only use live order total for paid statuses when no locked value exists
+            if (in_array($order->get_status(), ['processing', 'completed'], true)) {
+                $total += (float) $order->get_total('edit');
+            }
+        }
+
+        return $total;
+    }
+
+    /**
+     * Calculate total pending influenced orders (unpaid) in a date range.
+     *
+     * @param array  $notificationIds Notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Campaign filter (0 = all)
+     * @return int Pending influenced order count
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculateTotalPendingInfluencedOrders(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): int
+    {
+        if (empty($notificationIds) || !function_exists('wc_get_orders')) {
+            return 0;
+        }
+
+        $notificationIds = array_map('intval', $notificationIds);
+        $matchedOrderIds = [];
+
+        $orderIds = wc_get_orders([
+            'limit' => -1,
+            'return' => 'ids',
+            'date_created' => $startDate . '...' . $endDate,
+            'meta_query' => [
+                'relation' => 'AND',
+                [
+                    'key' => '_notifal_pending_attribution',
+                    'compare' => 'EXISTS',
+                ],
+                [
+                    'key' => '_notifal_conversion_processed',
+                    'compare' => 'NOT EXISTS',
+                ],
+            ],
+        ]);
+
+        if (empty($orderIds)) {
+            return 0;
+        }
+
+        foreach ($orderIds as $orderId) {
+            $order = wc_get_order((int) $orderId);
+
+            if (!$order) {
+                continue;
+            }
+
+            $pending = $order->get_meta('_notifal_pending_attribution', true);
+
+            if (is_string($pending)) {
+                $pending = json_decode($pending, true);
+            }
+
+            if (!is_array($pending)) {
+                continue;
+            }
+
+            foreach ($pending as $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                if (!in_array((int) ($row['notification_id'] ?? 0), $notificationIds, true)) {
+                    continue;
+                }
+
+                $matchedOrderIds[(int) $orderId] = true;
+                break;
+            }
+        }
+
+        return count($matchedOrderIds);
+    }
+
+    /**
+     * Calculate pending influenced orders for a single notification.
+     *
+     * @param int    $notificationId Notification ID
+     * @param string $startDate      Start date (Y-m-d)
+     * @param string $endDate        End date (Y-m-d)
+     * @param int    $campaignId     Campaign filter (0 = all)
+     * @return int
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function calculatePendingInfluencedOrders(int $notificationId, string $startDate, string $endDate, int $campaignId = 0): int
+    {
+        return $this->calculateTotalPendingInfluencedOrders([$notificationId], $startDate, $endDate, $campaignId);
+    }
+
+    /**
+     * Count influenced orders from conversions table (distinct orders).
+     *
+     * @param array  $notificationIds Notification IDs
+     * @param string $startDate       Start date (Y-m-d)
+     * @param string $endDate         End date (Y-m-d)
+     * @param int    $campaignId      Campaign filter (0 = all)
+     * @return int
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function countInfluencedOrdersFromConversions(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): int
+    {
+        global $wpdb;
+
+        $tables           = $this->getTableNames();
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if (empty($conversionsTable) || $wpdb->get_var("SHOW TABLES LIKE \"{$conversionsTable}\"") !== $conversionsTable) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params       = array_merge(
+            $notificationIds,
+            [$startDate . ' 00:00:00', $endDate . ' 23:59:59']
+        );
+
+        $campaignSql = '';
+        if ($campaignId > 0) {
+            $campaignSql = ' AND campaign_id = %d';
+            $params[]    = $campaignId;
+        }
+
+        $sql = $wpdb->prepare(
+            "SELECT COUNT(DISTINCT order_id) FROM `{$conversionsTable}`
+            WHERE notification_id IN ({$placeholders})
+            AND conversion_timestamp >= %s
+            AND conversion_timestamp <= %s
+            AND order_id > 0
+            {$campaignSql}",
+            $params
+        );
+
+        return (int) ($wpdb->get_var($sql) ?? 0);
     }
 
     /**

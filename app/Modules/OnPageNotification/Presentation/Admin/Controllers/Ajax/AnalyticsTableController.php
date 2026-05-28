@@ -31,6 +31,7 @@ class AnalyticsTableController
         add_action('wp_ajax_notifal_get_sorted_analytics', [self::class, 'getSortedNotifications']);
         add_action('wp_ajax_notifal_get_chart_data', [self::class, 'getChartData']);
         add_action('wp_ajax_notifal_force_process_events', [self::class, 'forceProcessEvents']);
+        add_action('wp_ajax_notifal_refresh_analytics', [self::class, 'refreshAnalytics']);
     }
 
     /**
@@ -391,6 +392,8 @@ class AnalyticsTableController
             case 'last_30_days':
             case 'last_90_days':
                 return $dateTime->format('M j'); // Month and day
+            case 'all_time':
+                return $dateTime->format('M Y'); // Month and year for long ranges
             default:
                 return $dateTime->format('M j'); // Default to month and day
         }
@@ -427,6 +430,42 @@ class AnalyticsTableController
 
         } catch (\Exception $e) {
             notifal_json_error(__('Error processing events: ', 'notifal') . $e->getMessage());
+        }
+    }
+
+    /**
+     * AJAX: Process pending events and refresh analytics dashboard data.
+     *
+     * @return void
+     * @since 2.3.0
+     */
+    public static function refreshAnalytics(): void
+    {
+        // Verify dedicated refresh nonce and administrator capability.
+        notifal_verify_ajax_request('notifal_analytics_refresh_nonce', 'manage_options');
+
+        // Resolve analytics service from the application container.
+        $analyticsService = notifal_app(AnalyticsService::class);
+
+        try {
+            // Process queued events before the client reloads the dashboard page.
+            $result = $analyticsService->refreshDashboardAnalytics();
+
+            if (! empty($result['success'])) {
+                notifal_json_success([
+                    'message' => $result['message'] ?? __('Analytics refreshed successfully', 'notifal'),
+                    'total_processed' => $result['total_processed'] ?? $result['processed_count'] ?? 0,
+                    'total_errors' => $result['total_errors'] ?? $result['error_count'] ?? 0,
+                    'iterations' => $result['iterations'] ?? 0,
+                ]);
+
+                return;
+            }
+
+            notifal_json_error($result['message'] ?? __('Analytics refresh failed', 'notifal'));
+
+        } catch (\Exception $e) {
+            notifal_json_error(__('Error refreshing analytics: ', 'notifal') . $e->getMessage());
         }
     }
 }

@@ -1593,6 +1593,15 @@ class FilterHooks {
     public const ONPAGE_ANALYTICS_FILTERED_NOTIFICATION_IDS = 'notifal/onpage/analytics/filtered_notification_ids';
 
     /**
+     * Filters the start date (Y-m-d) used when analytics date_range is `all_time`.
+     *
+     * @param string $start_date Resolved start date before the current period end.
+     * @return string Start date in Y-m-d format.
+     * @since 2.3.0
+     */
+    public const ONPAGE_ANALYTICS_ALL_TIME_START_DATE = 'notifal/onpage/analytics/all_time_start_date';
+
+    /**
      * Filter for detecting if Notifal Pro is active and providing analytics.
      * Used to determine if detailed analytics should be shown or upsell UI.
      *
@@ -1723,6 +1732,40 @@ class FilterHooks {
      * @author Hossein <hossein@notifal.com> <hossein@notifal.com>
      */
     public const ANALYTICS_CALCULATE_METRIC_GROWTH = 'notifal/onpage/analytics/calculate_metric_growth';
+
+    /**
+     * Filter active notifications shown in the WordPress dashboard widget.
+     *
+     * @param array $items Each item: id (int), title (string), edit_url (string).
+     * @return array
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const DASHBOARD_WIDGET_ACTIVE_NOTIFICATIONS = 'notifal/dashboard_widget/active_notifications';
+
+    /**
+     * Filters the order attribution data for a given order/payment.
+     *
+     * Allows Pro plugin or third parties to modify or enrich the attribution rows
+     * returned for a WooCommerce order or EDD payment admin page.
+     *
+     * @param array $attributionData Attribution rows from the conversions table.
+     * @param int   $orderId         WooCommerce order ID or EDD payment ID.
+     * @return array Modified attribution data.
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_DATA = 'notifal/order_attribution/data';
+
+    /**
+     * Filters whether to show the Notifal order column in WooCommerce/EDD order list.
+     *
+     * @param bool $show  Whether to show the column (default: true).
+     * @return bool
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_SHOW_COLUMN = 'notifal/order_attribution/show_column';
 
     /**
      * Filter formatted money string for OnPage analytics (admin dashboard, exports, AJAX HTML).

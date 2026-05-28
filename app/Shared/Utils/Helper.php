@@ -266,21 +266,49 @@ class Helper {
     }
 
     /**
-     * Get or generate session ID.
+     * Get or generate a persistent session ID for guest attribution.
      *
-     * Starts session if not already started and returns the session ID.
+     * Uses a long-lived cookie so the same ID is available across AJAX, checkout,
+     * and background order-status updates (PHP sessions are unreliable for guests).
      *
      * @return string Session ID
      * @since 2.0.0
+     * @since 2.3.0 Cookie-based persistence for guest checkout attribution.
      * @author Hossein <hossein@notifal.com>
      */
     public static function getSessionId(): string
     {
-        if (!session_id()) {
-            session_start();
+        // Cookie name used for guest session tracking across the storefront
+        $cookieName = 'notifal_session_id';
+
+        // Reuse existing cookie when present (ignore stale/expired cleanup values)
+        if (!empty($_COOKIE[$cookieName])) {
+            $cookieSessionId = sanitize_text_field(wp_unslash($_COOKIE[$cookieName]));
+
+            if ($cookieSessionId !== '' && $cookieSessionId !== 'deleted' && strpos($cookieSessionId, 'notifal_') === 0) {
+                return $cookieSessionId;
+            }
         }
 
-        return session_id() ?: uniqid('notifal_', true);
+        // Generate a new stable identifier when no cookie exists yet
+        $sessionId = 'notifal_' . wp_generate_password(32, false, false);
+
+        // Persist in a single cookie for 30 days (WordPress COOKIEPATH for subdirectory installs)
+        if (!headers_sent()) {
+            $cookiePath = (defined('COOKIEPATH') && COOKIEPATH) ? COOKIEPATH : '/';
+
+            setcookie(
+                $cookieName,
+                $sessionId,
+                time() + (30 * DAY_IN_SECONDS),
+                $cookiePath,
+                COOKIE_DOMAIN,
+                is_ssl(),
+                true
+            );
+        }
+
+        return $sessionId;
     }
 
     /**

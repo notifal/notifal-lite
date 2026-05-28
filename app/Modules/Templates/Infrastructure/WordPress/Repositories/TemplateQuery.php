@@ -6,6 +6,7 @@ defined('ABSPATH') || exit;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Domain\Settings\Services\SettingsService;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TemplateContentTrait;
 use WP_Post;
 use WP_Query;
@@ -279,9 +280,69 @@ class TemplateQuery
      */
     private static function contentHasNotifalTags(string $content): bool
     {
-        // Check for Notifal tag pattern: {tag_name} with more specific regex
-        // This pattern matches tags like {product_name}, {user_first_name}, {order_id}, etc.
-        // but excludes other curly brace patterns that might be in HTML or CSS
-        return preg_match('/\{[a-zA-Z_][a-zA-Z0-9_]*\}/', $content) === 1;
+        $matches = [];
+        $tagPattern = '/(?<![\$\{])\{([a-zA-Z_][a-zA-Z0-9_\/\.\-]*)\}/';
+        preg_match_all($tagPattern, $content, $matches);
+
+        if (empty($matches[1]) || !is_array($matches[1])) {
+            return false;
+        }
+
+        $knownPrefixes = self::getKnownTagPrefixes();
+
+        foreach ($matches[1] as $candidateTag) {
+            if (!is_string($candidateTag) || $candidateTag === '') {
+                continue;
+            }
+
+            foreach ($knownPrefixes as $prefix) {
+                if (strpos($candidateTag, $prefix) === 0) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Get known Notifal tag prefixes for template classification.
+     *
+     * @since 2.3.0
+     * @return string[]
+     */
+    private static function getKnownTagPrefixes(): array
+    {
+        $prefixes = [
+            'product_',
+            'order_',
+            'user_',
+            'post_',
+            'page_',
+            'comment_',
+            'cpt_',
+        ];
+
+        if (!function_exists('notifal_app')) {
+            return $prefixes;
+        }
+
+        try {
+            /** @var SettingsService $settingsService */
+            $settingsService = notifal_app(SettingsService::class);
+            $generatedPostTypes = $settingsService->get('generated_posttype_list', []);
+
+            if (is_array($generatedPostTypes)) {
+                foreach ($generatedPostTypes as $postType) {
+                    if (is_string($postType) && $postType !== '') {
+                        $prefixes[] = $postType . '_';
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            return $prefixes;
+        }
+
+        return array_values(array_unique($prefixes));
     }
 }

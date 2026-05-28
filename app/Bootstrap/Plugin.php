@@ -26,6 +26,7 @@ use Notifal\Infrastructure\WordPress\DeactivationPopup\DeactivationPopupService;
 use Notifal\Infrastructure\WordPress\ActivationPopup\ActivationPopupService;
 use Notifal\Infrastructure\WordPress\WhatsNewPopup\WhatsNewPopupService;
 use Notifal\Infrastructure\WordPress\ChangelogPopup\ChangelogPopupService;
+use Notifal\Infrastructure\WordPress\Admin\Dashboard\DashboardWidget;
 
 defined('ABSPATH') || exit;
 
@@ -119,6 +120,7 @@ class Plugin
             WhatsNewPopupService::class,
             ChangelogPopupService::class,
             StickyMenuServiceProvider::class,
+            DashboardWidget::class,
         ];
 
         /**

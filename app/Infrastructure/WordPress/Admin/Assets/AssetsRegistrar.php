@@ -31,6 +31,7 @@ class AssetsRegistrar
 
         add_action('admin_enqueue_scripts', [self::class, 'enqueueIcons'], 1);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue'], 1);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueDashboardWidget'], 1);
         add_action('admin_footer', [self::class, 'injectGlobalToast']);
     }
 
@@ -103,8 +104,39 @@ class AssetsRegistrar
 
         // Render the global container for JavaScript toasts
         ToastRenderer::renderGlobalContainer();
-        
+
         // Render any PHP-based toasts from URL parameters
         ToastRenderer::render();
+    }
+
+    /**
+     * Enqueue the dashboard widget stylesheet on the WordPress Dashboard screen.
+     *
+     * @return void
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function enqueueDashboardWidget(): void
+    {
+        // Only load on the WordPress Dashboard screen (index.php)
+        $screen = get_current_screen();
+
+        if (!$screen || $screen->id !== 'dashboard') {
+            return;
+        }
+
+        // Enqueue shared admin style so widget inherits Notifal design tokens
+        notifal_enqueue_style(
+            'notifal-shared-admin-css',
+            Paths::cssAdminBuildUrl() . 'SharedAdminStyle.css',
+            []
+        );
+
+        // Enqueue dedicated dashboard widget stylesheet
+        notifal_enqueue_style(
+            'notifal-dashboard-widget',
+            Paths::cssAdminBuildUrl() . 'DashboardWidgetStyle.css',
+            ['notifal-shared-admin-css', 'notifal-icons']
+        );
     }
 }
