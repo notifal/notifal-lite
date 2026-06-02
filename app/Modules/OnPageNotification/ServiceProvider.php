@@ -24,6 +24,7 @@ use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\GetFi
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\AnalyticsTableController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\PreCreatedNotificationsAjaxController;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\PreCreatedNotificationsImportController;
+use Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax\OrderAttributionAjaxController;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\LabelService;
 use Notifal\Modules\OnPageNotification\Contracts\LabelProviderInterface;
@@ -40,6 +41,7 @@ use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsM
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\ConversionTracker;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\OrderAttributionService;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Modules\OnPageNotification\Helpers\NotificationHelper;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
@@ -207,10 +209,16 @@ class ServiceProvider extends AbstractServiceProvider
         // Register order attribution display (WooCommerce/EDD admin pages, since 2.3.0)
         OrderAttributionService::register();
 
+        // @since 2.3.5 Inject WooCommerce cart snapshot into frontend/API context.
+        if (PluginDetector::isWooCommerceActive()) {
+            WooCommerceCartContextBuilder::register();
+        }
+
         // Register AJAX controllers
         AnalyticsTableController::register();
         PreCreatedNotificationsAjaxController::register();
         PreCreatedNotificationsImportController::register();
+        OrderAttributionAjaxController::register();
 
 
         $this->verify_activation_guard_integrity();

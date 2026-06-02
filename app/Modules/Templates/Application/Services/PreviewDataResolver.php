@@ -10,6 +10,8 @@ use Notifal\Domain\Tags\TagManager;
 use Notifal\Modules\Templates\Domain\DTO\PreviewDataDTO;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
 use Notifal\Infrastructure\WordPress\Admin\Settings\Services\PostTypeDiscoveryService;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 
 defined('ABSPATH') || exit;
 
@@ -177,6 +179,12 @@ class PreviewDataResolver
             $context['product'] = $product;
         }
 
+        // Attach cart snapshot for cart tag previews when WooCommerce is active.
+        if (PluginDetector::isWooCommerceActive()) {
+            $context['cart']       = WooCommerceCartContextBuilder::build();
+            $context['is_preview'] = true;
+        }
+
         $resolvedTags = [];
         $allTags = $this->tagManager->allFiltered();
 
@@ -341,6 +349,17 @@ class PreviewDataResolver
             'product_name'           => 'Sample Product',
             'product_discount_amount'=> '$0.00',
             'product_discount_percent' => '0%',
+
+            // 🟢 Cart tags (WooCommerce)
+            'cart_total'              => '$149.99',
+            'cart_subtotal'           => '$159.99',
+            'cart_discount'           => '$10.00',
+            'cart_item_count'         => '3',
+            'cart_unique_products'    => '2',
+            'cart_coupons'            => 'SAVE10',
+            'cart_url'                => home_url('/cart/'),
+            'cart_checkout_url'       => home_url('/checkout/'),
+            'cart_first_product_name' => 'Sample Product',
 
             // 🟢 Post tags  
             'post_title'             => 'Sample Blog Post',

@@ -6,6 +6,7 @@ use Notifal\Domain\Orders\DTO\OrderItemDTO;
 use Notifal\Domain\Orders\OrderFetcherInterface;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Shared\Utils\FilterHelper;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 
 use WC_Order;
 
@@ -24,6 +25,14 @@ defined('ABSPATH') || exit;
 class OrderFetcher implements OrderFetcherInterface
 {
     /**
+     * WooCommerce parent order type (not a post-type-only value).
+     *
+     *
+     *    
+     */
+    private const ORDER_TYPE_SHOP_ORDER = 'shop_order';
+
+    /**
      * Retrieve a random order for preview.
      *
      * @param array $filters Optional filters to apply
@@ -39,20 +48,28 @@ class OrderFetcher implements OrderFetcherInterface
         $args = [
             'limit'   => 1,
             'orderby' => 'rand',
+            'type'    => self::ORDER_TYPE_SHOP_ORDER,
         ];
 
         // Apply custom filters if provided
         $args = $this->applyFilters($args, $filters);
+        $args = $this->ensureShopOrderType($args);
 
         $context = $this->extractContextFromFilters($filters);
 
-        $orders = wc_get_orders($args);
+        $orders = wc_get_orders($this->buildWcGetOrdersArgs($args));
 
         if (empty($orders)) {
             return null;
         }
 
-        return $this->buildOrderDTO($orders[0], $context);
+        $order = $this->pickFirstProcessableOrder($orders);
+
+        if ($order === null) {
+            return null;
+        }
+
+        return $this->buildOrderDTO($order, $context);
     }
 
     /**
@@ -75,18 +92,20 @@ class OrderFetcher implements OrderFetcherInterface
         $args = [
             'limit'   => $count,
             'orderby' => 'rand',
+            'type'    => self::ORDER_TYPE_SHOP_ORDER,
         ];
 
         // Apply custom filters if provided
         $args = $this->applyFilters($args, $filters);
-        
+        $args = $this->ensureShopOrderType($args);
+
         $context = $this->extractContextFromFilters($filters);
 
-        // Check if we have meta_query that WooCommerce doesn't support
+        // meta_query: use wc_get_orders on HPOS; legacy CPT falls back to WP_Query inside helper
         if (!empty($args['meta_query'])) {
             $orders = $this->getOrdersWithMetaQuery($args);
         } else {
-            $orders = wc_get_orders($args);
+            $orders = wc_get_orders($this->buildWcGetOrdersArgs($args));
         }
         
         if (empty($orders)) {
@@ -95,6 +114,10 @@ class OrderFetcher implements OrderFetcherInterface
 
         $orderDTOs = [];
         foreach ($orders as $order) {
+            if (! $this->isProcessableOrder($order)) {
+                continue;
+            }
+
             $orderDTOs[] = $this->buildOrderDTO($order, $context);
         }
 
@@ -206,7 +229,11 @@ class OrderFetcher implements OrderFetcherInterface
 
         if ($logic === 'OR') {
             $final_order_ids = [];
-            $base_args = ['limit' => -1, 'return' => 'ids'];
+            $base_args = [
+                'limit'  => -1,
+                'return' => 'ids',
+                'type'   => self::ORDER_TYPE_SHOP_ORDER,
+            ];
 
             foreach ($conditions as $condition) {
                 $single_condition_filters = [
@@ -449,7 +476,76 @@ class OrderFetcher implements OrderFetcherInterface
     }
 
     /**
-     * Get orders using WP_Query when meta_query is needed (WooCommerce compatibility).
+     * Whether WooCommerce stores orders in custom tables (HPOS).
+     *
+     * @return bool
+     * @since 2.0.0
+     */
+    private function isHposEnabled(): bool
+    {
+        if (! class_exists(OrderUtil::class)) {
+            return false;
+        }
+
+        return OrderUtil::custom_orders_table_usage_is_enabled();
+    }
+
+    /**
+     * Force parent-order type on wc_get_orders args (HPOS + legacy).
+     *
+     * @param array $args Query arguments.
+     * @return array
+     * @since 2.0.0
+     */
+    private function ensureShopOrderType(array $args): array
+    {
+        $args['type'] = self::ORDER_TYPE_SHOP_ORDER;
+
+        return $args;
+    }
+
+    /**
+     * Map internal fetcher args to wc_get_orders() (storage-agnostic).
+     *
+     * @param array $args Internal query arguments.
+     * @return array Arguments for wc_get_orders().
+     * @since 2.0.0
+     */
+    private function buildWcGetOrdersArgs(array $args): array
+    {
+        $wcArgs = [
+            'limit'   => $args['limit'] ?? 20,
+            'orderby' => $args['orderby'] ?? 'rand',
+            'order'   => $args['order'] ?? 'DESC',
+            'type'    => $args['type'] ?? self::ORDER_TYPE_SHOP_ORDER,
+            'return'  => 'objects',
+        ];
+
+        if (! empty($args['meta_query'])) {
+            $wcArgs['meta_query'] = $args['meta_query'];
+        }
+
+        if (! empty($args['status'])) {
+            $wcArgs['status'] = $args['status'];
+        }
+
+        if (! empty($args['date_created'])) {
+            $wcArgs['date_created'] = $args['date_created'];
+        }
+
+        // include is the documented ID filter for wc_get_orders (works on HPOS and legacy).
+        if (! empty($args['post__in'])) {
+            $wcArgs['include'] = $args['post__in'];
+        }
+
+        return $wcArgs;
+    }
+
+    /**
+     * Get orders when meta_query is required.
+     *
+     * HPOS: wc_get_orders() with meta_query (custom tables).
+     * Legacy CPT: WP_Query on shop_order posts (meta_query not supported on wc_get_orders pre-HPOS).
      *
      * @param array $args Query arguments with meta_query
      * @return array Array of WC_Order objects
@@ -457,9 +553,15 @@ class OrderFetcher implements OrderFetcherInterface
      */
     private function getOrdersWithMetaQuery(array $args): array
     {
-        // Convert WooCommerce args to WP_Query args
+        if ($this->isHposEnabled()) {
+            $orders = wc_get_orders($this->buildWcGetOrdersArgs($args));
+
+            return $this->filterProcessableOrders(is_array($orders) ? $orders : []);
+        }
+
+        // Legacy post-type storage: WP_Query against shop_order posts.
         $queryArgs = [
-            'post_type' => 'shop_order',
+            'post_type' => self::ORDER_TYPE_SHOP_ORDER,
             'post_status' => ['wc-completed', 'wc-processing', 'wc-on-hold', 'wc-pending'],
             'posts_per_page' => $args['limit'] ?? 20,
             'orderby' => $args['orderby'] ?? 'rand',
@@ -491,15 +593,35 @@ class OrderFetcher implements OrderFetcherInterface
         if ($query->have_posts()) {
             foreach ($query->posts as $post) {
                 $order = wc_get_order($post->ID);
-                if ($order) {
+                if ($this->isProcessableOrder($order)) {
                     $orders[] = $order;
                 }
             }
         }
         
         wp_reset_postdata();
-        
-        return $orders;
+
+        return $this->filterProcessableOrders($orders);
+    }
+
+    /**
+     * Keep only parent shop orders from a query result (excludes refunds).
+     *
+     * @param array $orders Order objects from WooCommerce.
+     * @return WC_Order[]
+     * @since 2.0.0
+     */
+    private function filterProcessableOrders(array $orders): array
+    {
+        $processable = [];
+
+        foreach ($orders as $order) {
+            if ($this->isProcessableOrder($order)) {
+                $processable[] = $order;
+            }
+        }
+
+        return $processable;
     }
 
     /**
@@ -539,6 +661,46 @@ class OrderFetcher implements OrderFetcherInterface
 
 
 
+
+    /**
+     * Whether the order object can be converted into preview/notification DTO data.
+     *
+     * Uses WC_Order instance check plus get_type() so HPOS and legacy both exclude refunds.
+     *
+     * @param mixed $order WooCommerce order instance from wc_get_order / wc_get_orders.
+     * @return bool
+     * @since 2.0.0
+     */
+    private function isProcessableOrder($order): bool
+    {
+        if (! $order instanceof WC_Order) {
+            return false;
+        }
+
+        if (! method_exists($order, 'get_type')) {
+            return true;
+        }
+
+        return $order->get_type() === self::ORDER_TYPE_SHOP_ORDER;
+    }
+
+    /**
+     * Return the first real shop order from a wc_get_orders result (skips refunds).
+     *
+     * @param array $orders Order objects from WooCommerce.
+     * @return WC_Order|null
+     * @since 2.0.0
+     */
+    private function pickFirstProcessableOrder(array $orders): ?WC_Order
+    {
+        foreach ($orders as $order) {
+            if ($this->isProcessableOrder($order)) {
+                return $order;
+            }
+        }
+
+        return null;
+    }
 
     /**
      * Build an OrderDTO from WC_Order object.

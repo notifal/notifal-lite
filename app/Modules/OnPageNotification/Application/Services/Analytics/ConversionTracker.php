@@ -212,6 +212,8 @@ class ConversionTracker
         }
 
         if (empty($productIds)) {
+            // Paid order reached conversion processing; clear stale attribution markers.
+            $this->clearAttributionStorage();
             return;
         }
 
@@ -223,13 +225,18 @@ class ConversionTracker
         // Find attributed clicks for all products in a single query
         $attributedClicks = $this->findAttributedProductClicksBulk($productIds, (int) $order->get_user_id(), $guestSessionId);
 
+        // Track how many conversions were actually persisted for this order
+        $conversionsRecorded = 0;
+
         // Process each product
         foreach ($productData as $productId => $data) {
             $productClicks = $attributedClicks[$productId] ?? [];
 
             if (empty($productClicks)) {
                 // No specific product clicks found - try fallback attribution
-                $this->tryFallbackAttribution($orderId, $productId, $data['item_total']);
+                if ($this->tryFallbackAttribution($orderId, $productId, $data['item_total'])) {
+                    $conversionsRecorded++;
+                }
                 continue;
             }
 
@@ -237,7 +244,7 @@ class ConversionTracker
             $mostRecentClick = $productClicks[0]; // Already ordered by click_timestamp DESC
 
             // Record conversion for this specific product
-            $this->recordProductConversion([
+            if ($this->recordProductConversion([
                 'notification_id' => $mostRecentClick['notification_id'],
                 'product_click_id' => $mostRecentClick['id'],
                 'order_id' => $orderId,
@@ -250,12 +257,27 @@ class ConversionTracker
                 'attribution_type' => 'woocommerce',
                 'user_id' => $order->get_user_id() ?: 0,
                 'campaign_id' => isset($mostRecentClick['campaign_id']) ? (int) $mostRecentClick['campaign_id'] : 0,
-            ]);
+            ])) {
+                $conversionsRecorded++;
 
-            // Mark all attributed clicks as converted to prevent double-counting
-            foreach ($productClicks as $clickData) {
-                $this->markClickAsConverted($clickData['id']);
+                // Mark all attributed clicks as converted to prevent double-counting
+                foreach ($productClicks as $clickData) {
+                    $this->markClickAsConverted($clickData['id']);
+                }
             }
+        }
+
+        // Admin status changes (on-hold/pending -> completed) often run after the live click window expires
+        if ($conversionsRecorded === 0) {
+            $conversionsRecorded = $this->recordConversionsFromPendingSnapshot($order, $productData);
+        }
+
+        // Keep pending attribution visible until at least one conversion row exists
+        if ($conversionsRecorded <= 0) {
+            // Always clear browser/server attribution markers after a paid order is processed
+            // so future orders do not reuse stale influence data.
+            $this->clearAttributionStorage();
+            return;
         }
 
         // Lock influenced revenue at payment time (refunds/cancellations must not change analytics)
@@ -271,6 +293,9 @@ class ConversionTracker
         // Use WooCommerce order method for HPOS compatibility
         $order->update_meta_data('_notifal_conversion_processed', current_time('mysql'));
         $order->save();
+
+        // A completed attribution cycle must clear temporary click/session markers.
+        $this->clearAttributionStorage();
     }
 
     /**
@@ -393,6 +418,8 @@ class ConversionTracker
         $attributionData = $this->getAttributionData();
 
         if (empty($attributionData)) {
+            // Even if no conversion is attributed, clear existing markers after payment completion.
+            $this->clearAttributionStorage();
             return;
         }
 
@@ -412,6 +439,10 @@ class ConversionTracker
                 ]);
             }
         }
+
+        // Clear browser/server attribution markers after a completed EDD payment
+        // to prevent accidental reuse in later unrelated orders.
+        $this->clearAttributionStorage();
     }
 
 
@@ -725,9 +756,11 @@ class ConversionTracker
             $date = current_time('Y-m-d');
             $this->databaseRepository->updateDailyStats($conversionData['notification_id'], 'conversion', $date);
 
-            // Update daily clicked revenue (revenue from the specific clicked product item)
+            // Update clicked revenue only when we have a real product-click match.
+            // Fallback/cookie-based influence must not increase clicked revenue.
             $revenue = (float)($conversionData['product_revenue'] ?? 0);
-            if ($revenue > 0) {
+            $productClickId = (int) ($conversionData['product_click_id'] ?? 0);
+            if ($revenue > 0 && $productClickId > 0) {
                 $this->updateDailyRevenue($conversionData['notification_id'], $revenue, $date);
             }
 
@@ -1014,7 +1047,7 @@ class ConversionTracker
      * @since 2.0.2
      * @author Hossein <hossein@notifal.com>
      */
-    private function tryFallbackAttribution(int $orderId, int $productId, float $itemTotal): void
+    private function tryFallbackAttribution(int $orderId, int $productId, float $itemTotal): bool
     {
         // Get general attribution data from session/cookies
         $attributionData = $this->getAttributionData();
@@ -1031,7 +1064,7 @@ class ConversionTracker
             }
 
             if (empty($attributionData)) {
-                return;
+                return false;
             }
         }
 
@@ -1053,25 +1086,269 @@ class ConversionTracker
         }
 
         // Record conversion using fallback attribution if found (includes influenced revenue)
-        if ($mostRecentNotification) {
-            $orderObject = wc_get_order($orderId);
-            $orderUserId = $orderObject ? (int) $orderObject->get_user_id() : 0;
+        if (!$mostRecentNotification) {
+            return false;
+        }
 
-            $this->recordProductConversion([
-                'notification_id' => (int) $mostRecentNotification,
-                'product_click_id' => 0,
+        $orderObject = wc_get_order($orderId);
+        $orderUserId = $orderObject ? (int) $orderObject->get_user_id() : 0;
+
+        return $this->recordProductConversion([
+            'notification_id' => (int) $mostRecentNotification,
+            'product_click_id' => 0,
+            'order_id' => $orderId,
+            'product_id' => $productId,
+            // Fallback influence has no proven product click; clicked revenue must remain zero.
+            'product_revenue' => 0.0,
+            'total_order_value' => $orderObject ? $this->resolveOrderTotalValue($orderObject) : 0.0,
+            'currency' => $orderObject ? $orderObject->get_currency() : get_option('woocommerce_currency', 'USD'),
+            'click_timestamp' => date('Y-m-d H:i:s', $mostRecentTimestamp),
+            'conversion_timestamp' => current_time('mysql'),
+            'attribution_type' => 'fallback',
+            'user_id' => $orderUserId,
+            'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification((int) $mostRecentNotification),
+        ]);
+    }
+
+    /**
+     * Record conversions from the checkout pending attribution snapshot.
+     *
+     * Used when live click lookup fails (e.g. on-hold -> completed after the attribution window).
+     * The snapshot was captured at checkout when influence was already validated.
+     *
+     * @param \WC_Order $order       WooCommerce order object
+     * @param array     $productData Order line items keyed by product ID
+     * @return int Number of conversions recorded
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function recordConversionsFromPendingSnapshot(\WC_Order $order, array $productData): int
+    {
+        // Read the pending snapshot stored during checkout
+        $pending = $order->get_meta('_notifal_pending_attribution', true);
+
+        if (empty($pending)) {
+            return 0;
+        }
+
+        if (is_string($pending)) {
+            $pending = json_decode($pending, true);
+        }
+
+        if (!is_array($pending)) {
+            return 0;
+        }
+
+        $orderId        = (int) $order->get_id();
+        $guestSessionId = (int) $order->get_user_id() > 0
+            ? ''
+            : (string) $order->get_meta('_notifal_session_id', true);
+        $recorded       = 0;
+
+        foreach ($pending as $pendingRow) {
+            if (!is_array($pendingRow)) {
+                continue;
+            }
+
+            $notificationId = (int) ($pendingRow['notification_id'] ?? 0);
+            $productId      = (int) ($pendingRow['product_id'] ?? 0);
+
+            if ($notificationId <= 0) {
+                continue;
+            }
+
+            // Skip rows that were already converted for this order
+            if ($this->conversionExistsForOrderProduct($orderId, $notificationId, $productId)) {
+                continue;
+            }
+
+            // Resolve line revenue from the current order totals
+            $itemTotal = $productId > 0 && isset($productData[$productId])
+                ? (float) $productData[$productId]['item_total']
+                : 0.0;
+
+            $clickId          = 0;
+            $clickTimestamp   = current_time('mysql');
+            $attributionType  = (string) ($pendingRow['attribution_type'] ?? 'pending_snapshot');
+
+            if ($productId > 0) {
+                // Match the original product click without the live attribution window limit
+                $storedClick = $this->findStoredProductClickForOrder(
+                    $productId,
+                    (int) $order->get_user_id(),
+                    $guestSessionId,
+                    $notificationId
+                );
+
+                if (!empty($storedClick)) {
+                    $clickId        = (int) ($storedClick['id'] ?? 0);
+                    $clickTimestamp = (string) ($storedClick['click_timestamp'] ?? $clickTimestamp);
+                    $attributionType = 'woocommerce';
+                }
+            } else {
+                // Cookie/session attribution rows use order meta timestamps when available
+                $clickTimestamp = $this->resolveStoredAttributionClickTimestamp($order, $notificationId);
+            }
+
+            if (!$this->recordProductConversion([
+                'notification_id' => $notificationId,
+                'product_click_id' => $clickId,
                 'order_id' => $orderId,
                 'product_id' => $productId,
-                'product_revenue' => $itemTotal,
-                'total_order_value' => $orderObject ? $this->resolveOrderTotalValue($orderObject) : 0.0,
-                'currency' => $orderObject ? $orderObject->get_currency() : get_option('woocommerce_currency', 'USD'),
-                'click_timestamp' => date('Y-m-d H:i:s', $mostRecentTimestamp),
+                // Keep clicked revenue strict: only rows tied to a stored product click can add it.
+                'product_revenue' => $clickId > 0 ? $itemTotal : 0.0,
+                'total_order_value' => $this->resolveOrderTotalValue($order),
+                'currency' => $order->get_currency(),
+                'click_timestamp' => $clickTimestamp,
                 'conversion_timestamp' => current_time('mysql'),
-                'attribution_type' => 'fallback',
-                'user_id' => $orderUserId,
-                'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification((int) $mostRecentNotification),
-            ]);
+                'attribution_type' => $attributionType,
+                'user_id' => (int) $order->get_user_id(),
+                'campaign_id' => $this->campaignAttributionResolver->resolveCampaignIdForNotification($notificationId),
+            ])) {
+                continue;
+            }
+
+            $recorded++;
+
+            if ($clickId > 0) {
+                $this->markClickAsConverted($clickId);
+            }
         }
+
+        return $recorded;
+    }
+
+    /**
+     * Check whether a conversion row already exists for an order product pair.
+     *
+     * @param int $orderId        WooCommerce order ID
+     * @param int $notificationId Notification ID
+     * @param int $productId      Product ID (0 for cookie attribution)
+     * @return bool
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function conversionExistsForOrderProduct(int $orderId, int $notificationId, int $productId): bool
+    {
+        global $wpdb;
+
+        $tables = $this->databaseRepository->getTableNames();
+        $table  = $tables['conversions'] ?? '';
+
+        if ($orderId <= 0 || $notificationId <= 0 || empty($table)) {
+            return false;
+        }
+
+        $count = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table}
+                WHERE order_id = %d
+                AND notification_id = %d
+                AND product_id = %d
+                LIMIT 1",
+                $orderId,
+                $notificationId,
+                $productId
+            )
+        );
+
+        return $count > 0;
+    }
+
+    /**
+     * Find a stored product click for an order without the live attribution window filter.
+     *
+     * @param int    $productId      Product ID
+     * @param int    $userId         WordPress user ID
+     * @param string $sessionId      Guest session ID from order meta
+     * @param int    $notificationId Notification ID
+     * @return array|null
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function findStoredProductClickForOrder(int $productId, int $userId, string $sessionId, int $notificationId): ?array
+    {
+        if ($productId <= 0 || $notificationId <= 0) {
+            return null;
+        }
+
+        global $wpdb;
+
+        $tables = $this->databaseRepository->getTableNames();
+        $table  = $tables['product_clicks'] ?? '';
+
+        if (empty($table)) {
+            return null;
+        }
+
+        if ($userId > 0) {
+            $row = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT * FROM {$table}
+                    WHERE product_id = %d
+                    AND notification_id = %d
+                    AND user_id = %d
+                    ORDER BY click_timestamp DESC
+                    LIMIT 1",
+                    $productId,
+                    $notificationId,
+                    $userId
+                ),
+                ARRAY_A
+            );
+        } else {
+            $resolvedSessionId = $sessionId !== '' ? $sessionId : Helper::getSessionId();
+
+            if ($resolvedSessionId === '') {
+                return null;
+            }
+
+            $row = $wpdb->get_row(
+                $wpdb->prepare(
+                    "SELECT * FROM {$table}
+                    WHERE product_id = %d
+                    AND notification_id = %d
+                    AND session_id = %s
+                    ORDER BY click_timestamp DESC
+                    LIMIT 1",
+                    $productId,
+                    $notificationId,
+                    $resolvedSessionId
+                ),
+                ARRAY_A
+            );
+        }
+
+        return is_array($row) ? $row : null;
+    }
+
+    /**
+     * Resolve click timestamp from order-stored notification attribution meta.
+     *
+     * @param \WC_Order $order          WooCommerce order
+     * @param int       $notificationId Notification ID
+     * @return string MySQL datetime string
+     * @since 2.3.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function resolveStoredAttributionClickTimestamp(\WC_Order $order, int $notificationId): string
+    {
+        $attributionData = $order->get_meta('_notifal_attribution', true);
+
+        if (is_string($attributionData)) {
+            $attributionData = json_decode($attributionData, true);
+        }
+
+        if (!is_array($attributionData) || empty($attributionData[$notificationId])) {
+            return current_time('mysql');
+        }
+
+        $data = $attributionData[$notificationId];
+        $clickTimestamp = isset($data['timestamp'])
+            ? (is_string($data['timestamp']) ? strtotime($data['timestamp']) : (int) ($data['timestamp'] / 1000))
+            : time();
+
+        return date('Y-m-d H:i:s', (int) $clickTimestamp);
     }
 
     /**
@@ -1185,6 +1462,42 @@ class ConversionTracker
         }
 
         return $pendingRows;
+    }
+
+    /**
+     * Clear server-readable attribution storage after order completion.
+     *
+     * Removes PHP session attribution and browser cookies that feed fallback attribution.
+     * This prevents old notification clicks from being reused in future orders.
+     *
+     * @return void
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function clearAttributionStorage(): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+
+        if (isset($_SESSION['notifal_attribution'])) {
+            unset($_SESSION['notifal_attribution']);
+        }
+
+        foreach ($_COOKIE as $name => $value) {
+            if (strpos($name, 'notifal_attr_') !== 0) {
+                continue;
+            }
+
+            // Expire the cookie for the default and site-specific cookie paths.
+            setcookie($name, '', time() - HOUR_IN_SECONDS, COOKIEPATH ?: '/');
+
+            if (defined('SITECOOKIEPATH') && SITECOOKIEPATH && SITECOOKIEPATH !== COOKIEPATH) {
+                setcookie($name, '', time() - HOUR_IN_SECONDS, SITECOOKIEPATH);
+            }
+
+            unset($_COOKIE[$name]);
+        }
     }
 
     /**

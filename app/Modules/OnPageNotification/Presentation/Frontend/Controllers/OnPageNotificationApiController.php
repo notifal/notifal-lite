@@ -3,7 +3,9 @@
 namespace Notifal\Modules\OnPageNotification\Presentation\Frontend\Controllers;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\CacheManager;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationDataPreparer;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
@@ -111,6 +113,12 @@ class OnPageNotificationApiController
                 if ($forceFreshNotificationId) {
                     $context['force_fresh_notification_id'] = $forceFreshNotificationId;
                     $context['force_fresh_content'] = true;
+                }
+
+                // Rotation seed so API retrigger picks a different pool member than the first paint.
+                $cacheBust = $request->get_param('cache_bust');
+                if ($cacheBust !== null && $cacheBust !== '') {
+                    $context['retrigger_rotation'] = sanitize_text_field((string) $cacheBust);
                 }
             }
 
@@ -625,6 +633,11 @@ class OnPageNotificationApiController
         $context['is_admin'] = current_user_can('manage_options');
         $context['is_logged_in'] = is_user_logged_in();
 
+        // @since 2.3.5 Attach WooCommerce cart snapshot for cart display rules.
+        if (PluginDetector::isWooCommerceActive()) {
+            $context = WooCommerceCartContextBuilder::mergeIntoContext($context);
+        }
+
         return $context;
     }
 
@@ -857,4 +870,28 @@ class OnPageNotificationApiController
             'data' => $validated,
         ];
     }
-} 
+
+    /**
+     * Return the current WooCommerce cart snapshot for client-side rule evaluation.
+     *
+     * @param WP_REST_Request $request REST request (no parameters required).
+     * @return WP_REST_Response Cart snapshot JSON response.
+     * @since 2.3.5
+     */
+    public function getCartContext(WP_REST_Request $request): WP_REST_Response
+    {
+        // Respond with empty snapshot when WooCommerce is unavailable.
+        if (!PluginDetector::isWooCommerceActive()) {
+            return new WP_REST_Response([
+                'success' => true,
+                'cart'    => WooCommerceCartContextBuilder::emptySnapshot(),
+            ], 200);
+        }
+
+        return new WP_REST_Response([
+            'success'   => true,
+            'cart'      => WooCommerceCartContextBuilder::build(),
+            'timestamp' => current_time('timestamp'),
+        ], 200);
+    }
+}

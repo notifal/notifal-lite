@@ -52,6 +52,16 @@ class Urls
     public const PRICING = 'https://notifal.com/pricing/';
 
     /**
+     * Free configuration landing page URL.
+     *
+     * Used by admin menu, plugin row meta, and deactivation popup CTAs.
+     *
+     * @var string
+     * @since 2.3.5
+     */
+    public const FREE_CONFIGURATION = 'https://notifal.com/same-traffic-more-sales/';
+
+    /**
      * Account management URLs
      */
     public const LICENSE_MANAGER = 'https://notifal.com/my-account/license-manager/';

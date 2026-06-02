@@ -177,36 +177,46 @@ class SettingsAssetsController
     /**
      * Add row meta links below plugin name
      *
-     * Adds "Get Notifal Pro" or "Connect & Activate" link based on plugin and Notifal Pro status.
+     * Adds "Free Configuration" for all installs and "Upgrade for Free" when Pro is not installed.
      *
      * @param array $links Existing plugin row meta links
      * @param string $file Plugin file name
      * @return array Modified links array
      * @since 2.0.0
+     * @since 2.3.5 Adds Free Configuration row-meta link (Urls::FREE_CONFIGURATION) with plugin_row_meta UTM tracking.
      */
     public function addPluginRowMeta(array $links, string $file): array
     {
-        // Handle Notifal plugin
-        if ($file === 'notifal/notifal.php') {
-            // Check if Notifal Pro is installed
-            $is_pro_installed = PluginDetector::isNotifalProInstalled();
+        if ($file !== 'notifal/notifal.php') {
+            return $links;
+        }
 
-            if (!$is_pro_installed) {
-                // Notifal Pro is not installed - add "Get Notifal Pro" link
-                $pro_url = add_query_arg([
-                    'utm_source' => 'wordpress_plugin',
-                    'utm_medium' => 'plugin_row_meta',
-                    'utm_campaign' => 'get_notifal_pro',
-                    'utm_content' => 'get_pro_link',
-                    'domain' => parse_url(get_site_url(), PHP_URL_HOST)
-                ], Urls::PRICING);
+        $free_configuration_url = Urls::withCustomUtm(Urls::FREE_CONFIGURATION, [
+            'utm_medium' => 'plugin_row_meta',
+            'utm_campaign' => 'notifal_free_configuration',
+            'utm_content' => 'free_configuration_row_meta_link',
+        ]);
 
-                $links[] = sprintf(
-                    '<a href="%s" target="_blank" rel="noopener noreferrer" style="color: #93003f !important; font-weight: 700;">%s</a>',
-                    esc_url($pro_url),
-                    esc_html__('Get Notifal Pro', 'notifal')
-                );
-            }
+        $links[] = sprintf(
+            '<a href="%s" target="_blank" rel="noopener noreferrer" class="notifal-menu-free-configuration">%s</a>',
+            esc_url($free_configuration_url),
+            esc_html__('Free Configuration', 'notifal')
+        );
+
+        // Show upgrade CTA only when Pro plugin files are not present on disk (not merely deactivated).
+        if (!PluginDetector::isNotifalProInstalled()) {
+            // License manager link for free upgrade flow (same destination as admin menu upgrade item).
+            $upgrade_for_free_url = Urls::withCustomUtm(Urls::LICENSE_MANAGER, [
+                'utm_medium' => 'plugin_row_meta',
+                'utm_campaign' => 'notifal_pro_upgrade',
+                'utm_content' => 'upgrade_for_free_row_meta_link',
+            ]);
+
+            $links[] = sprintf(
+                '<a href="%s" target="_blank" rel="noopener noreferrer" class="notifal-menu-upgrade-btn">%s</a>',
+                esc_url($upgrade_for_free_url),
+                esc_html__('Upgrade for Free', 'notifal')
+            );
         }
 
         return $links;

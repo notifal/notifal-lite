@@ -189,7 +189,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
                                 </span>
                             </h3>
                             <p class="notifal-group-description">
-                                <?php echo esc_html__('Tags for WooCommerce products, orders, and e-commerce functionality. These tags require WooCommerce to be active and will be automatically disabled if WooCommerce is not available.', 'notifal'); ?>
+                                <?php echo esc_html__('Tags for WooCommerce products, orders, cart, and e-commerce functionality. These tags require WooCommerce to be active and will be automatically disabled if WooCommerce is not available.', 'notifal'); ?>
                             </p>
 
                             <div class="notifal-settings-grid">
@@ -238,13 +238,36 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
                                         <?php echo esc_html__('Tags for WooCommerce orders like {order_total}, {order_status}, etc.', 'notifal'); ?>
                                     </p>
                                 </div>
+
+                                <!-- Cart Tags (WooCommerce) -->
+                                <div class="notifal-setting-item <?php echo !$woocommerce_active ? 'notifal-setting-disabled' : ''; ?>">
+                                    <label class="notifal-setting-label">
+                                        <input type="checkbox"
+                                               name="cart_tags_enabled"
+                                               value="1"
+                                               <?php checked(!empty($tag_settings['cart_tags_enabled']) && $woocommerce_active); ?>
+                                               <?php disabled(!$woocommerce_active); ?>
+                                               class="notifal-setting-checkbox">
+                                        <span class="notifal-setting-title">
+                                            <?php echo esc_html__('Cart Tags', 'notifal'); ?>
+                                            <?php if (!$woocommerce_active): ?>
+                                                <span class="notifal-plugin-required">
+                                                    (<?php echo esc_html__('WooCommerce Required', 'notifal'); ?>)
+                                                </span>
+                                            <?php endif; ?>
+                                        </span>
+                                    </label>
+                                    <p class="notifal-setting-description">
+                                        <?php echo esc_html__('Tags for the visitor cart like {cart_total}, {cart_item_count}, {cart_coupons}, etc.', 'notifal'); ?>
+                                    </p>
+                                </div>
                             </div>
 
                             <?php if (!$woocommerce_active): ?>
                                 <div class="notifal-plugin-notice">
                                     <p>
                                         <strong><?php echo esc_html__('Note:', 'notifal'); ?></strong>
-                                        <?php echo esc_html__('WooCommerce is not currently active. Product and Order tags will be automatically disabled until WooCommerce is activated.', 'notifal'); ?>
+                                        <?php echo esc_html__('WooCommerce is not currently active. Product, Order, and Cart tags will be automatically disabled until WooCommerce is activated.', 'notifal'); ?>
                                     </p>
                                 </div>
                             <?php endif; ?>

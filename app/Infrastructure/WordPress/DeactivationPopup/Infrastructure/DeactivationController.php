@@ -306,6 +306,7 @@ class DeactivationController
      *
      * @return void
      * @since 2.0.0
+     * @since 2.3.5 Adds help panel, team note, reason-select wrapper, and per-reason help text for "Other".
      */
     public function renderDeactivationPopup(): void
     {
@@ -335,14 +336,18 @@ class DeactivationController
                     </button>
                 </div>
                 <div class="notifal-deactivation-body">
+                    <?php $this->renderDeactivationHelpPanel(); ?>
                     <form id="notifal-deactivation-form">
+                        <?php $this->renderDeactivationTeamNote(); ?>
                         <ul class="notifal-deactivation-reasons" id="notifal-deactivation-reasons">
                             <?php foreach ($reasons as $reason): ?>
                                 <li class="notifal-deactivation-reason">
-                                    <input type="radio" name="notifal_deactivation_reason" value="<?php echo esc_attr($reason['value']); ?>" class="notifal-deactivation-reason-input" id="reason-<?php echo esc_attr($reason['value']); ?>">
-                                    <label for="reason-<?php echo esc_attr($reason['value']); ?>" class="notifal-deactivation-reason-label">
-                                        <?php echo esc_html($reason['label']); ?>
-                                    </label>
+                                    <div class="notifal-deactivation-reason-select">
+                                        <input type="radio" name="notifal_deactivation_reason" value="<?php echo esc_attr($reason['value']); ?>" class="notifal-deactivation-reason-input" id="reason-<?php echo esc_attr($reason['value']); ?>">
+                                        <label for="reason-<?php echo esc_attr($reason['value']); ?>" class="notifal-deactivation-reason-label">
+                                            <?php echo esc_html($reason['label']); ?>
+                                        </label>
+                                    </div>
                                     <?php if (isset($reason['requiresInput']) && $reason['requiresInput']): ?>
                                         <div class="notifal-deactivation-input-container" style="display: none;">
                                             <?php $input_type = $reason['inputType'] ?? 'text'; ?>
@@ -351,7 +356,7 @@ class DeactivationController
                                                     name="<?php echo esc_attr($reason['inputName']); ?>"
                                                     class="notifal-deactivation-input notifal-deactivation-textarea"
                                                     placeholder="<?php echo esc_attr($reason['inputPlaceholder']); ?>"
-                                                    rows="3"
+                                                    rows="2"
                                                 ></textarea>
                                             <?php else: ?>
                                                 <input
@@ -365,7 +370,16 @@ class DeactivationController
                                     <?php endif; ?>
                                     <?php if (isset($reason['showHelpText']) && $reason['showHelpText']): ?>
                                         <div class="notifal-deactivation-help-text" id="help-<?php echo esc_attr($reason['value']); ?>" style="display: none;">
-                                            <?php echo wp_kses($this->getCouldNotWorkHelpText(), ['a' => ['href' => [], 'target' => [], 'rel' => []]]); ?>
+                                            <?php
+                                            if ($reason['value'] === DeactivationReason::OTHER) {
+                                                echo esc_html($this->getOtherReasonHelpText());
+                                            } else {
+                                                echo wp_kses(
+                                                    $this->getCouldNotWorkHelpText(),
+                                                    ['a' => ['href' => [], 'target' => [], 'rel' => []]]
+                                                );
+                                            }
+                                            ?>
                                         </div>
                                     <?php endif; ?>
                                 </li>
@@ -389,17 +403,112 @@ class DeactivationController
     }
 
     /**
+     * Render help panel with support and free configuration options.
+     *
+     * @return void
+     * @since 2.3.5 Outputs two compact rows: support ticket (Urls::SUPPORT_PAGE) and free setup (Urls::FREE_CONFIGURATION).
+     */
+    private function renderDeactivationHelpPanel(): void
+    {
+        $support_url = Urls::withCustomUtm(Urls::SUPPORT_PAGE, [
+            'utm_medium' => 'deactivation_popup',
+            'utm_campaign' => 'notifal_support',
+            'utm_content' => 'support_ticket_link',
+        ]);
+
+        $free_configuration_url = Urls::withCustomUtm(Urls::FREE_CONFIGURATION, [
+            'utm_medium' => 'deactivation_popup',
+            'utm_campaign' => 'notifal_free_configuration',
+            'utm_content' => 'free_configuration_link',
+        ]);
+        ?>
+        <div
+            class="notifal-deactivation-help-panel"
+            role="region"
+            aria-label="<?php esc_attr_e('Get help before deactivating', 'notifal'); ?>"
+        >
+            <div class="notifal-deactivation-help-rows">
+                <div class="notifal-deactivation-help-row notifal-deactivation-help-row--support">
+                    <span class="notifal-deactivation-help-row__icon dashicons dashicons-sos" aria-hidden="true"></span>
+                    <p class="notifal-deactivation-help-row__text">
+                        <strong><?php esc_html_e('Need help?', 'notifal'); ?></strong>
+                        <?php esc_html_e('Open a ticket. We reply within 2 hours.', 'notifal'); ?>
+                    </p>
+                    <a
+                        class="notifal-deactivation-help-row__btn notifal-deactivation-help-row__btn--primary"
+                        href="<?php echo esc_url($support_url); ?>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <?php esc_html_e('Support', 'notifal'); ?>
+                    </a>
+                </div>
+                <div class="notifal-deactivation-help-row notifal-deactivation-help-row--setup">
+                    <span class="notifal-deactivation-help-row__icon dashicons dashicons-admin-tools" aria-hidden="true"></span>
+                    <p class="notifal-deactivation-help-row__text">
+                        <strong><?php esc_html_e('Free configuration', 'notifal'); ?></strong>
+                        <?php esc_html_e('We set up notifications on your site for free.', 'notifal'); ?>
+                    </p>
+                    <a
+                        class="notifal-deactivation-help-row__btn notifal-deactivation-help-row__btn--secondary"
+                        href="<?php echo esc_url($free_configuration_url); ?>"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <?php esc_html_e('Get setup', 'notifal'); ?>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render a short note encouraging specific feedback.
+     *
+     * @return void
+     * @since 2.3.5 Displays a team note above reasons asking users to pick the closest reason instead of "Other".
+     */
+    private function renderDeactivationTeamNote(): void
+    {
+        ?>
+        <p class="notifal-deactivation-team-note">
+            <?php esc_html_e('Our team spent 18+ months building Notifal. Please choose the reason that fits best, your answer helps us improve the plugin for everyone.', 'notifal'); ?>
+        </p>
+        <?php
+    }
+
+    /**
+     * Get help text when "Other" is selected.
+     *
+     * @return string Plain help text
+     * @since 2.3.5 Guides users toward a specific reason or an actionable note when "Other" is selected.
+     */
+    private function getOtherReasonHelpText(): string
+    {
+        return __(
+            '«Other» is the hardest option for us to act on. If something did not work, try «I could not get the plugin to work» above, or leave a short, honest note here, we read every message.',
+            'notifal'
+        );
+    }
+
+    /**
      * Get help text for "couldn't get to work" reason
      *
      * @return string Help text with links
      * @since 2.0.0
+     * @since 2.3.5 Updated copy and links to knowledge base plus support ticket (Urls::SUPPORT_PAGE) with 2-hour reply note.
      */
     private function getCouldNotWorkHelpText(): string
     {
+        $support_url = esc_url(Urls::SUPPORT_PAGE);
+        $knowledge_base_url = esc_url(Urls::KNOWLEDGE_BASE);
+
         return sprintf(
-            __('We have many documents and onboarding resources on %s. Also, our team can set up notifications on your site for free, just open a support ticket on %s.', 'notifal'),
-            '<a href="' . esc_url(Urls::KNOWLEDGE_BASE) . '" target="_blank" rel="noopener noreferrer">notifal.com/knowledge-base/</a>',
-            '<a href="' . esc_url(Urls::SUPPORT_PAGE) . '" target="_blank" rel="noopener noreferrer">notifal.com/my-account/support/</a>'
+            /* translators: 1: knowledge base link, 2: support link */
+            __('Browse guides in our %1$s or open a %2$s — we typically reply within 2 hours.', 'notifal'),
+            '<a href="' . $knowledge_base_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__('knowledge base', 'notifal') . '</a>',
+            '<a href="' . $support_url . '" target="_blank" rel="noopener noreferrer">' . esc_html__('support ticket', 'notifal') . '</a>'
         );
     }
 

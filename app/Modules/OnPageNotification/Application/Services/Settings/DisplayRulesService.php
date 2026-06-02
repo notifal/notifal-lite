@@ -3,6 +3,9 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartRulesMatcher;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\WooCommerceCartDisplayRulesService;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -18,6 +21,26 @@ defined('ABSPATH') || exit;
  */
 class DisplayRulesService
 {
+
+    /**
+     * Basic rule types supported by the lite version.
+     * Pro features (categories, url_match, users) are added via filters.
+     *
+     * @since 2.0.0
+     * @var array
+     */
+    /**
+     * Allowed visit-history values for the Users display rule (client-side evaluation).
+     *
+     * @since 2.3.5
+     * @var array<int, string>
+     */
+    private const USER_VISITOR_TYPE_OPTIONS = [
+        'any',
+        'new_visitor',
+        'return_visitor',
+        'first_session',
+    ];
 
     /**
      * Basic rule types supported by the lite version.
@@ -59,6 +82,11 @@ class DisplayRulesService
     public static function getSupportedRuleTypes(): array
     {
         $rule_types = self::LITE_RULE_TYPES;
+
+        // @since 2.3.5 WooCommerce cart conditions when WooCommerce is active.
+        if (WooCommerceCartDisplayRulesService::isAvailable()) {
+            $rule_types[WooCommerceCartDisplayRulesService::RULE_TYPE] = WooCommerceCartDisplayRulesService::getRuleTypeConfig();
+        }
 
         // If Pro plugin is not active, add pro rule types with pro_feature flag
         // so they appear disabled in the UI
@@ -102,25 +130,38 @@ class DisplayRulesService
     public static function validateRules(array $rules, string $combinationLogic = 'OR'): array
     {
         $errors = [];
+        $items = DisplayRulesDataNormalizer::extractItems($rules);
+        $ruleCount = count($items);
 
-        // Only validate combination logic when there are multiple rules (where it matters)
-        if (count($rules) > 1 && !in_array($combinationLogic, ['AND', 'OR'])) {
+        // Only validate combination logic when there are multiple rules (where it matters).
+        if ($ruleCount > 1 && !in_array($combinationLogic, ['AND', 'OR'], true)) {
             $errors[] = __('Invalid rule combination logic. Must be either AND or OR.', 'notifal');
         }
 
-        if (count($rules) > 1 && !self::isProFeatureAllowed()) {
+        if ($ruleCount > 1 && !self::isProFeatureAllowed()) {
             $errors[] = __('Multiple display rules require Notifal Pro. Please activate your license or use only one rule.', 'notifal');
         }
 
-        foreach ($rules as $ruleType => $ruleData) {
-            $supported_types = self::getSupportedRuleTypes();
-            if (!isset($supported_types[$ruleType])) {
+        $supportedTypes = self::getSupportedRuleTypes();
+
+        foreach ($items as $item) {
+            $ruleType = $item['type'] ?? '';
+            $ruleData = $item['data'] ?? [];
+
+            if (!isset($supportedTypes[$ruleType])) {
                 $errors[] = sprintf(__('Unsupported rule type: %s', 'notifal'), $ruleType);
                 continue;
             }
 
-            // Pro plugin will handle validation of its own rule types
+            // Pro plugin will handle validation of its own rule types.
             if (!self::isLiteRuleType($ruleType)) {
+                continue;
+            }
+
+            // @since 2.3.5 WooCommerce cart rule validation.
+            if ($ruleType === WooCommerceCartDisplayRulesService::RULE_TYPE) {
+                $ruleErrors = WooCommerceCartDisplayRulesService::validateRule($ruleData);
+                $errors = array_merge($errors, $ruleErrors);
                 continue;
             }
 
@@ -247,67 +288,86 @@ class DisplayRulesService
      * @return bool
      * @since 2.0.0
      */
-    public static function shouldDisplay(array $rules, string $combinationLogic = 'OR', ?int $currentPostId = null, array $context = []): bool
-    {
-        if (empty($rules)) {
-            return true; // No rules means display everywhere
+    public static function shouldDisplay(
+        array $rules,
+        string $combinationLogic = 'OR',
+        ?int $currentPostId = null,
+        array $context = [],
+        string $visibilityMode = DisplayRulesDataNormalizer::VISIBILITY_SHOW_IF
+    ): bool {
+        if (!DisplayRulesDataNormalizer::hasActiveRules($rules)) {
+            // No rules means show everywhere; visibility mode only applies when rules exist.
+            return true;
         }
+
+        $visibilityMode = DisplayRulesDataNormalizer::sanitizeVisibilityMode($visibilityMode);
 
         $filtered_data = apply_filters(
             FilterHooks::ONPAGE_DISPLAY_RULES_BEFORE_VALIDATION,
-            compact('rules', 'combinationLogic'),
+            compact('rules', 'combinationLogic', 'visibilityMode'),
             $context
         );
 
         $rules = $filtered_data['rules'];
         $combinationLogic = $filtered_data['combinationLogic'];
+        $visibilityMode = isset($filtered_data['visibilityMode'])
+            ? DisplayRulesDataNormalizer::sanitizeVisibilityMode((string) $filtered_data['visibilityMode'])
+            : $visibilityMode;
 
         $currentPostId = $currentPostId ?? get_the_ID();
         $currentUrl = $context['url'] ?? $_SERVER['REQUEST_URI'] ?? '';
 
-        // Allow Pro plugin to override the entire evaluation process
+        // Allow Pro plugin to override the entire evaluation process.
         $pro_result = apply_filters(
             FilterHooks::ONPAGE_DISPLAY_RULES_EVALUATION_RESULT,
             null,
             $rules,
             $combinationLogic,
-            compact('currentPostId', 'currentUrl') + $context
+            compact('currentPostId', 'currentUrl', 'visibilityMode') + $context
         );
 
-        // If Pro plugin handled the evaluation, return its result
+        // If Pro plugin handled the evaluation, return its result.
         if ($pro_result !== null) {
             return (bool) $pro_result;
         }
 
-        // Continue with lite version evaluation logic
+        $items = DisplayRulesDataNormalizer::extractItems($rules);
         $ruleResults = [];
 
-        foreach ($rules as $ruleType => $ruleData) {
-            // Only process lite rule types in main plugin
+        foreach ($items as $item) {
+            $ruleType = $item['type'] ?? '';
+            $ruleData = $item['data'] ?? [];
+
+            // Only process lite rule types in main plugin.
             if (!self::isLiteRuleType($ruleType)) {
                 continue;
             }
 
-            // Convert rule type to proper method name (handle underscores)
+            // Convert rule type to proper method name (handle underscores).
             $methodName = str_replace('_', '', ucwords($ruleType, '_'));
             $checkMethod = 'check' . $methodName . 'Rule';
 
             if (method_exists(self::class, $checkMethod)) {
-                $ruleResults[$ruleType] = self::$checkMethod($ruleData, $currentPostId, $currentUrl, $context);
+                $ruleResults[] = self::$checkMethod($ruleData, $currentPostId, $currentUrl, $context);
             }
         }
 
-        $finalResult = false;
+        $matches = false;
+
         if (empty($ruleResults)) {
-            // No rules evaluated successfully - default to showing
-            $finalResult = true;
+            // No lite rules evaluated — default to showing.
+            $matches = true;
         } elseif ($combinationLogic === 'AND') {
-            $finalResult = !in_array(false, $ruleResults, true);
+            $matches = !in_array(false, $ruleResults, true);
         } else {
-            $finalResult = in_array(true, $ruleResults, true);
+            $matches = in_array(true, $ruleResults, true);
         }
 
-        return $finalResult;
+        if ($visibilityMode === DisplayRulesDataNormalizer::VISIBILITY_HIDE_IF) {
+            return !$matches;
+        }
+
+        return $matches;
     }
 
     /**
@@ -319,6 +379,11 @@ class DisplayRulesService
      */
     private static function isLiteRuleType(string $ruleType): bool
     {
+        // @since 2.3.5 Cart rules are lite features when WooCommerce is active.
+        if ($ruleType === WooCommerceCartDisplayRulesService::RULE_TYPE && WooCommerceCartDisplayRulesService::isAvailable()) {
+            return true;
+        }
+
         return array_key_exists($ruleType, self::LITE_RULE_TYPES);
     }
 
@@ -493,6 +558,31 @@ class DisplayRulesService
     }
 
     /**
+     * Check WooCommerce cart display rule against the current cart snapshot.
+     *
+     * @param array $ruleData Rule configuration.
+     * @param int $currentPostId Unused for cart rules; kept for signature parity.
+     * @param string $currentUrl Unused for cart rules.
+     * @param array $context Request context; may include a `cart` snapshot.
+     * @return bool True when the cart condition matches.
+     * @since 2.3.5
+     */
+    private static function checkWoocommerceCartRule(array $ruleData, int $currentPostId, string $currentUrl, array $context = []): bool
+    {
+        // Cart rules require WooCommerce.
+        if (!WooCommerceCartDisplayRulesService::isAvailable()) {
+            return false;
+        }
+
+        // Use provided cart snapshot or build one from the current session.
+        $cartContext = isset($context['cart']) && is_array($context['cart'])
+            ? $context['cart']
+            : WooCommerceCartContextBuilder::build();
+
+        return WooCommerceCartRulesMatcher::matches($ruleData, $cartContext);
+    }
+
+    /**
      * Format rules for display in the admin interface.
      *
      * @param array $rules
@@ -503,10 +593,13 @@ class DisplayRulesService
     public static function formatRulesForDisplay(array $rules, string $combinationLogic = 'OR'): array
     {
         $formatted = [];
-
         $supported_types = self::getSupportedRuleTypes();
+        $items = DisplayRulesDataNormalizer::extractItems($rules);
 
-        foreach ($rules as $ruleType => $ruleData) {
+        foreach ($items as $item) {
+            $ruleType = $item['type'] ?? '';
+            $ruleData = $item['data'] ?? [];
+
             if (!isset($supported_types[$ruleType])) {
                 continue;
             }
@@ -520,7 +613,7 @@ class DisplayRulesService
             ];
         }
 
-        // Add combination logic info
+        // Add combination logic info.
         if (count($formatted) > 1) {
             $formatted['combination_logic'] = $combinationLogic;
         }
@@ -670,6 +763,10 @@ class DisplayRulesService
                     $count
                 );
 
+            case WooCommerceCartDisplayRulesService::RULE_TYPE:
+                // @since 2.3.5 Human-readable cart rule summary.
+                return WooCommerceCartDisplayRulesService::generateSummary($ruleData);
+
             default:
                 return $config['label'];
         }
@@ -697,6 +794,20 @@ class DisplayRulesService
         return [
             'OR' => __('OR - Show if ANY rule matches', 'notifal'),
             'AND' => __('AND - Show if ALL rules match', 'notifal'),
+        ];
+    }
+
+    /**
+     * Visibility mode options for display rules (show vs hide when rules match).
+     *
+     * @return array<string, string> Option value => label.
+     * @since 2.3.5
+     */
+    public static function getVisibilityModeOptions(): array
+    {
+        return [
+            DisplayRulesDataNormalizer::VISIBILITY_SHOW_IF => __('Show if', 'notifal'),
+            DisplayRulesDataNormalizer::VISIBILITY_HIDE_IF => __("Don't show if", 'notifal'),
         ];
     }
 
@@ -741,16 +852,26 @@ class DisplayRulesService
      */
     public static function sanitizeSettings(array $settings): array
     {
-        $sanitized = [];
         $supportedTypes = self::getSupportedRuleTypes();
+        $items = DisplayRulesDataNormalizer::extractItems($settings);
+        $sanitizedItems = [];
 
-        foreach ($settings as $ruleType => $ruleData) {
+        foreach ($items as $item) {
+            $ruleType = $item['type'] ?? '';
+            $ruleData = $item['data'] ?? [];
+
             if (!isset($supportedTypes[$ruleType])) {
-                continue; // Skip unsupported rule types
+                continue;
             }
 
-            $sanitized[$ruleType] = self::sanitizeRuleData($ruleType, $ruleData);
+            $sanitizedItems[] = [
+                'id'   => isset($item['id']) ? sanitize_key((string) $item['id']) : DisplayRulesDataNormalizer::generateRuleId(),
+                'type' => $ruleType,
+                'data' => self::sanitizeRuleData($ruleType, $ruleData),
+            ];
         }
+
+        $sanitized = DisplayRulesDataNormalizer::wrapItems($sanitizedItems);
 
         return apply_filters(FilterHooks::ONPAGE_DISPLAY_RULES_SANITIZED_SETTINGS, $sanitized, $settings);
     }
@@ -794,12 +915,19 @@ class DisplayRulesService
                 $sanitized['post_items'] = self::sanitizePostIds($ruleData['post_items'] ?? []);
                 break;
 
-            case 'categories':
-                $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'specific', 'text');
-                $sanitized['post_types_visibility'] = Helper::sanitizeInput($ruleData['post_types_visibility'] ?? 'specific', 'text');
+            case 'categories': {
+                $allowedCategoryModes = ['all_archives', 'exclude', 'specific'];
+                $mode = Helper::sanitizeInput($ruleData['mode'] ?? 'all_archives', 'text');
+                $sanitized['mode'] = in_array($mode, $allowedCategoryModes, true) ? $mode : 'all_archives';
+                $allowedPostTypeVisibility = ['all', 'exclude', 'specific'];
+                $postTypesVisibility = Helper::sanitizeInput($ruleData['post_types_visibility'] ?? 'specific', 'text');
+                $sanitized['post_types_visibility'] = in_array($postTypesVisibility, $allowedPostTypeVisibility, true)
+                    ? $postTypesVisibility
+                    : 'specific';
                 $sanitized['post_types'] = self::sanitizePostTypeSlugs($ruleData['post_types'] ?? []);
                 $sanitized['targets'] = self::sanitizeTermIds($ruleData['targets'] ?? []);
                 break;
+            }
 
             case 'url_match': {
                 $sanitized['mode'] = Helper::sanitizeInput($ruleData['mode'] ?? 'contains', 'text');
@@ -819,7 +947,16 @@ class DisplayRulesService
                 $sanitized['user_type'] = Helper::sanitizeInput($ruleData['user_type'] ?? 'guest', 'text');
                 $sanitized['limit_by_roles'] = (bool) ($ruleData['limit_by_roles'] ?? false);
                 $sanitized['roles'] = self::sanitizeUserRoles($ruleData['roles'] ?? []);
+                // @since 2.3.5 Visit-history filter (evaluated client-side when not "any").
+                $visitorType = Helper::sanitizeInput($ruleData['visitor_type'] ?? 'any', 'text');
+                $sanitized['visitor_type'] = in_array($visitorType, self::USER_VISITOR_TYPE_OPTIONS, true)
+                    ? $visitorType
+                    : 'any';
                 break;
+
+            case WooCommerceCartDisplayRulesService::RULE_TYPE:
+                // @since 2.3.5 WooCommerce cart display rule sanitization.
+                return WooCommerceCartDisplayRulesService::sanitizeRule($ruleData);
         }
 
         return $sanitized;

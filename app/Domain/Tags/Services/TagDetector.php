@@ -45,6 +45,13 @@ class TagDetector
     public const PRODUCT_TAG_PATTERN = '/\{(product_|product_meta_|product_name)/i';
 
     /**
+     * Regex pattern for WooCommerce cart-related tags.
+     *
+     * @since 2.3.5
+     */
+    public const CART_TAG_PATTERN = '/\{cart_/i';
+
+    /**
      * Check if template content contains user-related tags.
      *
      * @param string $templateContent Template content to check.
@@ -114,6 +121,18 @@ class TagDetector
     public static function hasProductTags(string $templateContent): bool
     {
         return preg_match(self::PRODUCT_TAG_PATTERN, $templateContent) === 1;
+    }
+
+    /**
+     * Check if template content contains WooCommerce cart-related tags.
+     *
+     * @param string $templateContent Template content to check.
+     * @return bool True if cart tags are found.
+     * @since 2.3.5
+     */
+    public static function hasCartTags(string $templateContent): bool
+    {
+        return preg_match(self::CART_TAG_PATTERN, $templateContent) === 1;
     }
 
     /**
@@ -195,6 +214,18 @@ class TagDetector
     }
 
     /**
+     * Count occurrences of cart-related tags in template content.
+     *
+     * @param string $templateContent Template content to analyze.
+     * @return int Number of cart tag occurrences.
+     * @since 2.3.5
+     */
+    public static function countCartTags(string $templateContent): int
+    {
+        return preg_match_all(self::CART_TAG_PATTERN, $templateContent);
+    }
+
+    /**
      * Get all tag counts for different entity types.
      *
      * @param string $templateContent Template content to analyze.
@@ -210,6 +241,7 @@ class TagDetector
             'comment' => self::countCommentTags($templateContent),
             'order' => self::countOrderTags($templateContent),
             'product' => self::countProductTags($templateContent),
+            'cart' => self::countCartTags($templateContent),
         ];
     }
 }

@@ -132,6 +132,7 @@ class CacheManager
     {
         $this->poolCacheManager->clearOrderPoolCaches();
         $this->poolCacheManager->clearProductPoolCaches();
+        $this->poolCacheManager->clearContentPoolObjectCaches();
         $this->clearFrontendTemplateCache();
         $this->elementorCacheManager->clearElementorCaches(0, []); // Clear all Elementor caches
         $this->wordpressCacheManager->clearWordPressObjectCache();

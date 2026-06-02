@@ -551,6 +551,9 @@ class FrontendAssetsRegistrar
             'context' => $currentPageContext,
             'immediateNotifications' => [],
             'siteName' => get_bloginfo('name'),
+            'analyticsTrackClickClass' => sanitize_html_class(
+                (string) apply_filters(FilterHooks::ONPAGE_ANALYTICS_TRACK_CLICK_CLASS, 'notifal-track-click')
+            ),
         ];
 
         if (self::isPreviewMode()) {
@@ -566,6 +569,8 @@ class FrontendAssetsRegistrar
         if (PluginDetector::isWooCommerceActive()) {
             $config['ajaxAddToCartUrl'] = admin_url('admin-ajax.php');
             $config['ajaxAddToCartNonce'] = wp_create_nonce('notifal_ajax_add_to_cart');
+            // @since 2.3.5 REST endpoint to refresh cart snapshot after Ajax cart changes.
+            $config['cartContextEndpoint'] = rest_url('notifal/v1/onpage/cart-context');
         }
 
         wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', $config);

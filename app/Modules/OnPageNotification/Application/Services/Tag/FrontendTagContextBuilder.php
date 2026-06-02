@@ -8,6 +8,7 @@ use Notifal\Infrastructure\WordPress\WooCommerce\Services\ProductFetcher;
 use Notifal\Infrastructure\WordPress\Services\UserFetcher;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Domain\Tags\Services\TagDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 
 defined('ABSPATH') || exit;
 
@@ -48,6 +49,24 @@ class FrontendTagContextBuilder
      * @var array Cache for WooCommerce product objects during validation
      */
     private $productCache = [];
+
+    /**
+     * Request-scoped cache for pool entity picks (cleared between retrigger variant renders).
+     *
+     * @var array<string, mixed>
+     */
+    private static $poolEntityRequestCache = [];
+
+    /**
+     * Clear request-scoped pool entity cache (used when pre-rendering retrigger variants).
+     *
+     * @return void
+     * @since 2.3.5
+     */
+    public static function clearRequestEntityCache(): void
+    {
+        self::$poolEntityRequestCache = [];
+    }
 
 
     /**
@@ -171,10 +190,10 @@ class FrontendTagContextBuilder
 
         // If product restrictions exist, we need to find an order that ALSO satisfies those restrictions
         if ($hasProductFilters || $hasLegacyProductFilters) {
-            $order = $this->findOrderWithValidProducts($contentSourceSettings);
+            $order = $this->findOrderWithValidProducts($contentSourceSettings, $pageContext);
         } else {
-            // No product restrictions, just get any order matching order restrictions
-            $order = $this->contentSourceService->getRandomOrder($contentSourceSettings);
+            // No product restrictions — pick a consistent order from the pool (supports retrigger variant index).
+            $order = $this->getConsistentRandomOrder($contentSourceSettings, $pageContext);
         }
 
         if (!$order) {
@@ -221,12 +240,35 @@ class FrontendTagContextBuilder
      * If the first pool doesn't contain valid orders, it tries additional pools.
      *
      * @param array $contentSourceSettings Content source settings
+     * @param array $pageContext Page context; may include `notifal_pool_variant_index` for retrigger variants
      * @return mixed Order DTO or null if no valid order found
      * @since 2.0.0
+     * @since 2.3.5 Added `$pageContext` and pool walk for retrigger variant index.
      * @author Hossein <hossein@notifal.com>
      */
-    private function findOrderWithValidProducts(array $contentSourceSettings)
+    private function findOrderWithValidProducts(array $contentSourceSettings, array $pageContext = [])
     {
+        // Retrigger variant: walk the cached order pool starting at the forced index.
+        if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
+            $ordersPool = $this->contentSourceService->getOrderPool($contentSourceSettings);
+            $poolCount = count($ordersPool);
+            if ($poolCount > 0) {
+                $startIdx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
+                for ($offset = 0; $offset < $poolCount; $offset++) {
+                    $idx = ($startIdx + $offset) % $poolCount;
+                    $order = $ordersPool[ $idx ];
+                    $orderItems = $order->getItems();
+                    if (empty($orderItems)) {
+                        continue;
+                    }
+                    $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
+                    if (!empty($validProducts)) {
+                        return $order;
+                    }
+                }
+            }
+        }
+
         // Get a pool of orders matching order restrictions
         $orderFilters = $contentSourceSettings['order_filters'] ?? [];
         if (empty($orderFilters)) {
@@ -543,7 +585,7 @@ class FrontendTagContextBuilder
      */
     private function buildPostBasedContext(array $contentSourceSettings, array $pageContext): array
     {
-        $post = $this->contentSourceService->getRandomPost($contentSourceSettings);
+        $post = $this->getConsistentRandomPost($contentSourceSettings, $pageContext);
 
         if (!$post) {
             return $this->buildFallbackContext($contentSourceSettings, $pageContext);
@@ -564,7 +606,7 @@ class FrontendTagContextBuilder
      */
     private function buildPageBasedContext(array $contentSourceSettings, array $pageContext): array
     {
-        $page = $this->contentSourceService->getRandomPage($contentSourceSettings);
+        $page = $this->getConsistentRandomPage($contentSourceSettings, $pageContext);
 
         if (!$page) {
             return $this->buildFallbackContext($contentSourceSettings, $pageContext);
@@ -650,7 +692,7 @@ class FrontendTagContextBuilder
             if (isset($context['product'])) {
                 $order = $this->findOrderContainingProductWithValidation($context['product']->getId(), $contentSourceSettings);
             } else {
-                $order = $this->contentSourceService->getRandomOrder($contentSourceSettings);
+                $order = $this->getConsistentRandomOrder($contentSourceSettings, $pageContext);
             }
 
             if ($order) {
@@ -698,6 +740,13 @@ class FrontendTagContextBuilder
             }
         }
 
+        // Add cart snapshot when cart tags are detected or page context already includes cart data.
+        if (TagDetector::hasCartTags($templateContent) || isset($pageContext['cart'])) {
+            $context['cart'] = isset($pageContext['cart']) && is_array($pageContext['cart'])
+                ? $pageContext['cart']
+                : WooCommerceCartContextBuilder::build();
+        }
+
         return $context;
     }
 
@@ -726,7 +775,7 @@ class FrontendTagContextBuilder
      */
     private function buildCustomPostTypeBasedContext(string $postType, array $contentSourceSettings, array $pageContext): array
     {
-        $post = $this->contentSourceService->getRandomCustomPostType($postType, $contentSourceSettings);
+        $post = $this->getConsistentRandomCustomPostType($postType, $contentSourceSettings, $pageContext);
 
         if (!$post) {
             return $this->buildFallbackContext($contentSourceSettings, $pageContext);
@@ -834,7 +883,7 @@ class FrontendTagContextBuilder
         }
 
         if (TagDetector::hasOrderTags($templateContent)) {
-            $order = $this->contentSourceService->getRandomOrder($contentSourceSettings);
+            $order = $this->getConsistentRandomOrder($contentSourceSettings, $pageContext);
             if ($order) {
                 $context['order'] = $order;
             }
@@ -1065,24 +1114,16 @@ class FrontendTagContextBuilder
 
         $requestId = $pageContext['request_id'] ?? ($_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true));
 
-        $cacheKeyParts = [
-            'template_id' => $templateId,
-            'request_id' => floor($requestId),
-            'content_source_settings' => $contentSourceSettings,
-        ];
-        if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
-            $cacheKeyParts['pool_variant_index'] = (int) $pageContext['notifal_pool_variant_index'];
-        }
+        $cacheKeyParts = $this->buildPoolSelectionCacheKeyParts($contentSourceSettings, $pageContext, $templateId, $requestId);
         $cacheKey = 'notifal_product_context_' . md5(serialize($cacheKeyParts));
 
-        static $requestCache = [];
-        if (isset($requestCache[$cacheKey])) {
-            return $requestCache[$cacheKey];
+        if (isset(self::$poolEntityRequestCache[$cacheKey])) {
+            return self::$poolEntityRequestCache[$cacheKey];
         }
 
         $product = $this->getDeterministicProductFromPool($contentSourceSettings, $cacheKey, $pageContext);
 
-        $requestCache[$cacheKey] = $product;
+        self::$poolEntityRequestCache[$cacheKey] = $product;
 
         return $product;
     }
@@ -1110,15 +1151,233 @@ class FrontendTagContextBuilder
             return null;
         }
 
-        $poolCount = count($productPool);
+        return $this->selectEntityFromPool($productPool, $cacheKey, $pageContext, 'product', $contentSourceSettings);
+    }
+
+    /**
+     * Get a consistent order from the order pool (deterministic per request / retrigger variant).
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @param array $pageContext Current page context.
+     * @return mixed Order DTO or null.
+     * @since 2.3.5
+     */
+    private function getConsistentRandomOrder(array $contentSourceSettings, array $pageContext)
+    {
+        $templateId = $pageContext['template_id'] ?? 0;
+        if (!$templateId && isset($pageContext['notification_id'])) {
+            $templateId = $pageContext['notification_id'];
+        }
+
+        $requestId = $pageContext['request_id'] ?? ($_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true));
+        $cacheKeyParts = $this->buildPoolSelectionCacheKeyParts($contentSourceSettings, $pageContext, $templateId, $requestId);
+        $cacheKey = 'notifal_order_context_' . md5(serialize($cacheKeyParts));
+
+        if (isset(self::$poolEntityRequestCache[$cacheKey])) {
+            return self::$poolEntityRequestCache[$cacheKey];
+        }
+
+        $orderPool = $this->contentSourceService->getOrderPool($contentSourceSettings);
+        $order = $this->selectEntityFromPool($orderPool, $cacheKey, $pageContext, 'order', $contentSourceSettings);
+        self::$poolEntityRequestCache[$cacheKey] = $order;
+
+        return $order;
+    }
+
+    /**
+     * Get a consistent post from the post pool.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @param array $pageContext Current page context.
+     * @return \WP_Post|null
+     * @since 2.3.5
+     */
+    private function getConsistentRandomPost(array $contentSourceSettings, array $pageContext)
+    {
+        return $this->getConsistentPoolEntity(
+            'notifal_post_context_',
+            function () use ($contentSourceSettings) {
+                return $this->contentSourceService->getPostPool($contentSourceSettings);
+            },
+            $contentSourceSettings,
+            $pageContext
+        );
+    }
+
+    /**
+     * Get a consistent page from the page pool.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @param array $pageContext Current page context.
+     * @return \WP_Post|null
+     * @since 2.3.5
+     */
+    private function getConsistentRandomPage(array $contentSourceSettings, array $pageContext)
+    {
+        return $this->getConsistentPoolEntity(
+            'notifal_page_context_',
+            function () use ($contentSourceSettings) {
+                return $this->contentSourceService->getPagePool($contentSourceSettings);
+            },
+            $contentSourceSettings,
+            $pageContext
+        );
+    }
+
+    /**
+     * Get a consistent custom post type item from its pool.
+     *
+     * @param string $postType Custom post type slug.
+     * @param array  $contentSourceSettings Content source settings.
+     * @param array  $pageContext Current page context.
+     * @return \WP_Post|null
+     * @since 2.3.5
+     */
+    private function getConsistentRandomCustomPostType(string $postType, array $contentSourceSettings, array $pageContext)
+    {
+        $cachePrefix = 'notifal_cpt_' . $postType . '_context_';
+
+        return $this->getConsistentPoolEntity(
+            $cachePrefix,
+            function () use ($postType, $contentSourceSettings) {
+                return $this->contentSourceService->getCustomPostTypePool($postType, $contentSourceSettings);
+            },
+            $contentSourceSettings,
+            $pageContext
+        );
+    }
+
+    /**
+     * Request-scoped consistent entity from a content pool.
+     *
+     * @param string   $cacheKeyPrefix Cache key prefix for this entity type.
+     * @param callable $poolLoader Returns the pool array.
+     * @param array    $contentSourceSettings Content source settings.
+     * @param array    $pageContext Page context.
+     * @return mixed|null
+     * @since 2.3.5
+     */
+    private function getConsistentPoolEntity(string $cacheKeyPrefix, callable $poolLoader, array $contentSourceSettings, array $pageContext)
+    {
+        $templateId = $pageContext['template_id'] ?? 0;
+        if (!$templateId && isset($pageContext['notification_id'])) {
+            $templateId = $pageContext['notification_id'];
+        }
+
+        $requestId = $pageContext['request_id'] ?? ($_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true));
+        $cacheKeyParts = $this->buildPoolSelectionCacheKeyParts($contentSourceSettings, $pageContext, $templateId, $requestId);
+        $cacheKey = $cacheKeyPrefix . md5(serialize($cacheKeyParts));
+
+        if (isset(self::$poolEntityRequestCache[$cacheKey])) {
+            return self::$poolEntityRequestCache[$cacheKey];
+        }
+
+        $pool = $poolLoader();
+        $entityType = $this->resolvePoolEntityTypeFromCachePrefix($cacheKeyPrefix);
+        $entity = $this->selectEntityFromPool(is_array($pool) ? $pool : [], $cacheKey, $pageContext, $entityType, $contentSourceSettings);
+        self::$poolEntityRequestCache[$cacheKey] = $entity;
+
+        return $entity;
+    }
+
+    /**
+     * Pick one entity from a pool (variant index, retrigger bust, or deterministic seed).
+     *
+     * @param array  $pool Content pool.
+     * @param string $cacheKey Deterministic seed when no variant index is set.
+     * @param array  $pageContext Page context.
+     * @param string $sourceType Source type key used for per-session duplicate control.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @return mixed|null
+     * @since 2.0.0
+     * @since 2.3.5 Updated to filter already-seen source IDs before deterministic selection.
+     */
+    private function selectEntityFromPool(array $pool, string $cacheKey, array $pageContext, string $sourceType = 'mixed', array $contentSourceSettings = [])
+    {
+        if (empty($pool)) {
+            return null;
+        }
+
+        $pool = $this->contentSourceService->excludeSeenSourcesFromPool($sourceType, $pool, $contentSourceSettings);
+        if (empty($pool)) {
+            return null;
+        }
+
+        $poolCount = count($pool);
+
         if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
             $idx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
-            return $productPool[$idx];
+
+            $entity = $pool[ $idx ];
+            $this->contentSourceService->rememberShownSource($sourceType, $entity, $contentSourceSettings);
+
+            return $entity;
         }
 
         $deterministicIndex = crc32($cacheKey) % $poolCount;
+        $entity = $pool[ $deterministicIndex ];
+        $this->contentSourceService->rememberShownSource($sourceType, $entity, $contentSourceSettings);
 
-        return $productPool[$deterministicIndex];
+        return $entity;
+    }
+
+    /**
+     * Resolve logical source type from a consistent-pool cache key prefix.
+     *
+     * @param string $cacheKeyPrefix Prefix used by consistent-pool selection.
+     * @return string
+     * @since 2.3.5
+     */
+    private function resolvePoolEntityTypeFromCachePrefix(string $cacheKeyPrefix): string
+    {
+        if (strpos($cacheKeyPrefix, 'notifal_post_context_') === 0) {
+            return 'post';
+        }
+
+        if (strpos($cacheKeyPrefix, 'notifal_page_context_') === 0) {
+            return 'page';
+        }
+
+        if (strpos($cacheKeyPrefix, 'notifal_cpt_') === 0) {
+            if (preg_match('/^notifal_cpt_(.+?)_context_$/', $cacheKeyPrefix, $matches)) {
+                return 'custom_posttype:' . sanitize_key($matches[1]);
+            }
+
+            return 'custom_posttype';
+        }
+
+        return 'mixed';
+    }
+
+    /**
+     * Build cache key parts shared by pool-based entity selection.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @param array $pageContext Page context.
+     * @param int   $templateId Template or notification id.
+     * @param mixed $requestId Request identifier.
+     * @return array<string, mixed>
+     * @since 2.3.5
+     */
+    private function buildPoolSelectionCacheKeyParts(array $contentSourceSettings, array $pageContext, $templateId, $requestId): array
+    {
+        $cacheKeyParts = [
+            'template_id' => $templateId,
+            'request_id' => floor((float) $requestId),
+            'content_source_settings' => $contentSourceSettings,
+        ];
+
+        if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
+            $cacheKeyParts['pool_variant_index'] = (int) $pageContext['notifal_pool_variant_index'];
+        }
+
+        if (!empty($pageContext['force_fresh_content'])) {
+            $cacheKeyParts['retrigger_rotation'] = $pageContext['retrigger_rotation']
+                ?? $pageContext['retrigger_timestamp']
+                ?? microtime(true);
+        }
+
+        return $cacheKeyParts;
     }
 
     /**
@@ -1127,7 +1386,7 @@ class FrontendTagContextBuilder
      * @param string $templateContent Raw template content
      * @param array $contentSourceSettings Content source settings
      * @return string Primary entity type slug
-     * @since 2.2.0
+     * @since 2.3.5
      * @author Hossein <hossein@notifal.com>
      */
     public function resolvePrimaryEntityType(string $templateContent, array $contentSourceSettings): string

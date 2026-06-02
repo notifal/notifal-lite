@@ -31,6 +31,13 @@ final class TagCategory
     public const ORDERS = 'orders';
 
     /**
+     * Tags related to WooCommerce cart data.
+     *
+     * @since 2.3.5
+     */
+    public const CART = 'cart';
+
+    /**
      * Tags related to user data.
      */
     public const USERS = 'users';
@@ -70,6 +77,7 @@ final class TagCategory
         $categories = [
             self::PRODUCTS,
             self::ORDERS,
+            self::CART,
             self::USERS,
             self::POSTS,
             self::PAGES,

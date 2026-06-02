@@ -25,10 +25,12 @@ class PoolCacheManager
      * when notification content sources or filters are modified.
      *
      * @since 2.0.0
+     * @since 2.3.5 Flushes `notifal_order_pools` object cache group on retrigger refresh.
      */
     public function clearOrderPoolCaches(): void
     {
         $this->clearPoolCachesByPattern('_transient_notifal_order_pool_%', ActionHooks::ONPAGE_ORDER_POOL_CACHE_CLEARED);
+        $this->flushObjectCacheGroup('notifal_order_pools');
     }
 
     /**
@@ -38,10 +40,45 @@ class PoolCacheManager
      * when notification content sources, categories, or sale filters are modified.
      *
      * @since 2.0.0
+     * @since 2.3.5 Flushes `notifal_product_pools` object cache group on retrigger refresh.
      */
     public function clearProductPoolCaches(): void
     {
         $this->clearPoolCachesByPattern('_transient_notifal_product_pool_%', ActionHooks::ONPAGE_PRODUCT_POOL_CACHE_CLEARED);
+        $this->flushObjectCacheGroup('notifal_product_pools');
+    }
+
+    /**
+     * Clear post, page, user, and custom post type object-cache pools.
+     *
+     * @since 2.3.5
+     */
+    public function clearContentPoolObjectCaches(): void
+    {
+        $groups = [
+            'notifal_post_pools',
+            'notifal_page_pools',
+            'notifal_user_pools',
+            'notifal_custom_posttype_pools',
+        ];
+
+        foreach ($groups as $group) {
+            $this->flushObjectCacheGroup($group);
+        }
+    }
+
+    /**
+     * Flush a WordPress object-cache group when supported.
+     *
+     * @param string $group Cache group name.
+     * @return void
+     * @since 2.3.5
+     */
+    private function flushObjectCacheGroup(string $group): void
+    {
+        if (function_exists('wp_cache_flush_group')) {
+            wp_cache_flush_group($group);
+        }
     }
 
     /**

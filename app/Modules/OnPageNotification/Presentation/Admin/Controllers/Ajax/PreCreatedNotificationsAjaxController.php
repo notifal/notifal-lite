@@ -405,7 +405,10 @@ class PreCreatedNotificationsAjaxController
             $filters['page'] = 1;
 
             $apiService = self::getApiService();
+
+            // Warm taxonomy + trending caches first (often cached); notifications call is the heaviest.
             $taxonomies = $apiService->getTaxonomies();
+            $preloaded_trending = $apiService->getTrendingCategories();
             $apiResponse = $apiService->getNotifications($filters);
 
             $currentFilters = [
@@ -422,7 +425,17 @@ class PreCreatedNotificationsAjaxController
             $preloaded_taxonomies = $taxonomies;
             $preloaded_api_response = $apiResponse;
             $preloaded_filters = $currentFilters;
-            $preloaded_trending = $apiService->getTrendingCategories();
+
+            // Modal context: hide duplicate title/wrapper (modal already has its own header).
+            $archiveContext = 'page';
+            if (isset($_POST['archive_context'])) {
+                $archiveContext = sanitize_key(wp_unslash((string) $_POST['archive_context']));
+            }
+            if ($archiveContext === 'modal') {
+                $hide_header = true;
+                $hide_wrapper = true;
+                $component_id = 'precreated-notifications-modal-archive';
+            }
 
             $viewPath = dirname(__DIR__, 2) . '/Views/components/precreated-notifications-archive.php';
             if (!is_readable($viewPath)) {

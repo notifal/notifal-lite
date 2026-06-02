@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.0';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.5';
     }
 
     /**
@@ -194,6 +194,20 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.3.5' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.5'),
+                'content' => $this->getVersion235Content(),
+                'action_buttons' => [],
+            ],
+            '2.3.1' => [
+                'show_popup' => false,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.1'),
+                'content' => $this->getVersion231Content(),
+                'action_buttons' => [],
+            ],
             '2.3.0' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -733,6 +747,125 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.5
+     *
+     * @return string HTML content for version 2.3.5
+     * @since 2.3.5
+     */
+    private function getVersion235Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.5", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WooCommerce cart display rules', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When WooCommerce is active, target visitors by cart state: empty or not empty, specific product in or not in cart, product category, cart total, item count, or coupon applied. Rules update in real time after Ajax add-to-cart or cart changes, no full page refresh needed.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🏷️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WooCommerce cart dynamic tags', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Use cart values in notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Order list attribution at a glance', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Spot Notifal-influenced orders faster in WooCommerce and EDD, and open a quick attribution summary from the orders list. Attribution and influenced revenue stay visible when an on-hold or pending order is marked completed in admin.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔁</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smarter retrigger after hide', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When Allow Re-trigger After Hide is enabled, each retrigger now shows fresh dynamic content for orders, products, posts, pages, and custom post types—not a repeat of the first notification.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📦</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Pool-based content rotation', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Notifications pre-load alternate pool variants for faster retriggers and more variety on the same page visit.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔄</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Show duplicate source (Content Source)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Under Content Source > Dynamic Content Restrictions, control whether the same product, order, post, page, or custom post type can appear again in a visitor session. Default is OFF so each session rotates through available items; turn it ON when you want duplicates allowed.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">👤</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Users rule visit history filters', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The Users display rule now includes optional visit history targeting: new visitor for welcome offers, return visitor for re-engagement, and first browser session for entry-page nudges—alongside guest, logged-in, and role targeting.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎯</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Display rules overhaul', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Multiple rules per notification with unique IDs, click-to-edit, Show if / Don\'t show if visibility mode, duplicate-rule prevention, and rules that save automatically when you save the notification.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔔</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Prevent Multiple Instances', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Notifications with this option now take turns, the next one can show after the previous closes.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.1
+     *
+     * @return string HTML content for version 2.3.1
+     * @since 2.3.1
+     */
+    private function getVersion231Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.1", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛠️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Reported issue fixed', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('A reported issue has been fixed to improve stability.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎬</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Animation duration settings', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('In Appearance settings, Animation Duration (ms) is hidden only when both Show Animation and Hide Animation are set to No Animation. The duration value is ignored on the frontend in that case.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

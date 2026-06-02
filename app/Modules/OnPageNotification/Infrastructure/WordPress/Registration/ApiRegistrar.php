@@ -53,6 +53,9 @@ class ApiRegistrar
         // Register user preferences endpoints
         register_rest_route('notifal/v1', '/onpage/preferences', self::getPreferencesGetRouteArgs());
         register_rest_route('notifal/v1', '/onpage/preferences', self::getPreferencesPostRouteArgs());
+
+        // @since 2.3.5 WooCommerce cart snapshot for client-side cart display rules.
+        register_rest_route('notifal/v1', '/onpage/cart-context', self::getCartContextRouteArgs());
     }
 
     /**
@@ -232,6 +235,21 @@ class ApiRegistrar
                     ],
                 ],
             ],
+        ];
+    }
+
+    /**
+     * Get route arguments for WooCommerce cart context endpoint.
+     *
+     * @return array Route configuration array.
+     * @since 2.3.5
+     */
+    private static function getCartContextRouteArgs(): array
+    {
+        return [
+            'methods'             => 'GET',
+            'callback'            => [new OnPageNotificationApiController(), 'getCartContext'],
+            'permission_callback' => '__return_true',
         ];
     }
 }

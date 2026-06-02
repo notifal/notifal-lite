@@ -14,6 +14,7 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSet
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\GeneralSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 
@@ -318,6 +319,9 @@ class NotificationSaveService
         $displayRulesData = $this->parseJsonField($data['display_rules_data'] ?? '{}');
         $sanitized['display_rules_data'] = DisplayRulesService::sanitizeSettings($displayRulesData);
         $sanitized['rule_combination_logic'] = Helper::sanitizeInput($data['rule_combination_logic'] ?? 'OR', 'text');
+        $sanitized['display_rules_visibility_mode'] = DisplayRulesDataNormalizer::sanitizeVisibilityMode(
+            Helper::sanitizeInput($data['display_rules_visibility_mode'] ?? 'show_if', 'text')
+        );
 
         // Template settings
         $templateId = absint($data['template_id'] ?? 0);
@@ -474,6 +478,7 @@ class NotificationSaveService
         // Save display rules settings
         update_post_meta($postId, '_notifal_display_rules_data', $sanitizedData['display_rules_data']);
         update_post_meta($postId, '_notifal_rule_combination_logic', $sanitizedData['rule_combination_logic']);
+        update_post_meta($postId, '_notifal_display_rules_visibility_mode', $sanitizedData['display_rules_visibility_mode']);
 
         // Save template settings
         update_post_meta($postId, '_notifal_template_id', $sanitizedData['template_id']);
@@ -601,6 +606,8 @@ class NotificationSaveService
             'content_source_settings' => get_post_meta($post->ID, '_notifal_content_source_settings', true) ?: [],
             'display_rules_data' => $normalizedDisplayRules,
             'rule_combination_logic' => get_post_meta($post->ID, '_notifal_rule_combination_logic', true) ?: 'OR',
+            'display_rules_visibility_mode' => get_post_meta($post->ID, '_notifal_display_rules_visibility_mode', true)
+                ?: DisplayRulesDataNormalizer::VISIBILITY_SHOW_IF,
             'template_id' => get_post_meta($post->ID, '_notifal_template_id', true) ?: 0,
             'template_content' => get_post_meta($post->ID, '_notifal_template_content', true) ?: '',
         ];
@@ -631,15 +638,13 @@ class NotificationSaveService
         }
 
         // Unwrap common container formats such as ['rules' => [ ... ]].
-        // Older saves and some import/duplicate flows may store rules under
-        // a top-level "rules" key instead of directly by rule type.
-        if (isset($rawRules['rules']) && is_array($rawRules['rules'])) {
+        if (isset($rawRules['rules']) && is_array($rawRules['rules']) && !isset($rawRules['items'])) {
             $rawRules = $rawRules['rules'];
         }
 
-        // Return the structure as-is; JavaScript loader and DisplayRulesService
-        // are responsible for handling edge cases (numeric keys, unsupported
-        // types, empty values, etc.).
-        return $rawRules;
+        // @since 2.3.5 Always expose list format to the admin UI.
+        return DisplayRulesDataNormalizer::wrapItems(
+            DisplayRulesDataNormalizer::extractItems($rawRules)
+        );
     }
 } 

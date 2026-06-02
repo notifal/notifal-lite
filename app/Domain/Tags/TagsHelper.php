@@ -87,7 +87,7 @@ class TagsHelper
         }
 
         // Sort categories by priority and name for consistent ordering
-        $categoryOrder = ['users', 'products', 'orders'];
+        $categoryOrder = ['users', 'products', 'orders', 'cart'];
 
         uksort($grouped, function($a, $b) use ($categoryOrder) {
             $aIndex = array_search($a, $categoryOrder);
