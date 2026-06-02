@@ -4,10 +4,10 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\Campaign\Application\Services\CampaignSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
-use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
 
@@ -25,6 +25,7 @@ defined('ABSPATH') || exit;
 class NotificationEligibilityChecker
 {
     use NotificationDataTrait;
+
     /**
      * @var DisplayRulesService
      */
@@ -59,39 +60,32 @@ class NotificationEligibilityChecker
      */
     public function isEligible(\WP_Post $notification, array $context): bool
     {
-        // Verify notification is enabled
         $enabledMeta = get_post_meta($notification->ID, '_notifal_notif_enabled', true);
         if ($enabledMeta !== '1') {
             return false;
         }
 
-        // Verify notification is published
         if ($notification->post_status !== 'publish') {
             return false;
         }
 
-        // Get complete notification data from save service
         $notificationData = $this->getNotificationData($notification);
         if (empty($notificationData) || !($notificationData['notif_enabled'] ?? false)) {
             return false;
         }
 
-        // Validate display rules match current context
         if (!$this->checkDisplayRules($notification, $context)) {
             return false;
         }
 
-        // Check user-specific eligibility criteria
         if (!$this->checkUserEligibility($notification, $context)) {
             return false;
         }
 
-        // Verify frequency caps are not exceeded
         if (!$this->checkFrequencyCaps($notification, $context)) {
             return false;
         }
 
-        // Check scheduling constraints
         if (!$this->checkSchedule($notification)) {
             return false;
         }
@@ -111,14 +105,21 @@ class NotificationEligibilityChecker
     {
         $displayRules = get_post_meta($notification->ID, '_notifal_display_rules_data', true);
         $combinationLogic = get_post_meta($notification->ID, '_notifal_rule_combination_logic', true) ?: 'OR';
+        $visibilityMode = get_post_meta($notification->ID, '_notifal_display_rules_visibility_mode', true) ?: 'show_if';
 
-        if (empty($displayRules)) {
-            return true; // No rules means show everywhere
+        if (!DisplayRulesDataNormalizer::hasActiveRules($displayRules)) {
+            return true;
         }
 
         $currentPostId = $context['page_id'] ?? null;
 
-        return $this->displayRulesService->shouldDisplay($displayRules, $combinationLogic, $currentPostId, $context);
+        return $this->displayRulesService->shouldDisplay(
+            $displayRules,
+            $combinationLogic,
+            $currentPostId,
+            $context,
+            $visibilityMode
+        );
     }
 
     /**
@@ -138,12 +139,10 @@ class NotificationEligibilityChecker
             'user_roles' => $userId > 0 ? wp_get_current_user()->roles : [],
         ];
 
-        // Check if user has seen this notification too many times
         if ($this->hasUserReachedFrequencyCap($notification->ID, $userId)) {
             return false;
         }
 
-        // Apply user eligibility filter
         $isEligible = apply_filters(
             FilterHooks::ONPAGE_USER_ELIGIBILITY,
             true,
@@ -166,7 +165,6 @@ class NotificationEligibilityChecker
     {
         $behaviorSettings = get_post_meta($notification->ID, '_notifal_behavior_settings', true) ?: [];
 
-        // Check daily cap (only if Pro is active for impression tracking)
         $dailyCap = $behaviorSettings['frequency_cap_daily'] ?? 0;
         if ($dailyCap > 0 && function_exists('is_notifal_pro_active') && is_notifal_pro_active()) {
             $proStatsService = \notifal_pro_app(\NotifalPro\Modules\OnPageNotification\Application\Services\Analytics\StatsService::class);
@@ -176,7 +174,6 @@ class NotificationEligibilityChecker
             }
         }
 
-        // Check total cap (only if Pro is active for impression tracking)
         $totalCap = $behaviorSettings['frequency_cap_total'] ?? 0;
         if ($totalCap > 0 && function_exists('is_notifal_pro_active') && is_notifal_pro_active()) {
             $proStatsService = \notifal_pro_app(\NotifalPro\Modules\OnPageNotification\Application\Services\Analytics\StatsService::class);
@@ -203,38 +200,27 @@ class NotificationEligibilityChecker
         $endDate = '';
 
         if (!empty($campaignId)) {
-            $within = $this->campaignSettingsService->isWithinSchedule( (int) $campaignId );
+            $within = $this->campaignSettingsService->isWithinSchedule((int) $campaignId);
 
-            /**
-             * Filters whether the campaign schedule allows the notification to run.
-             *
-             * @since 2.0.0
-             * @param bool     $within          Whether the current instant is within start/end.
-             * @param int      $campaignId      Campaign post ID.
-             * @param \WP_Post $notification    On-page notification post.
-             */
             return (bool) apply_filters(
                 FilterHooks::CAMPAIGN_SCHEDULE_CHECK,
                 $within,
                 (int) $campaignId,
                 $notification
             );
-        } else {
-            $timingSettings = get_post_meta($notification->ID, '_notifal_timing_settings', true) ?: [];
-            $scheduleEnabled = (bool) ( $timingSettings['schedule_enabled'] ?? false );
-
-            // When schedule is disabled, skip schedule constraints for notifications.
-            if (!$scheduleEnabled) {
-                return true;
-            }
-
-            $startDate = (string) ( $timingSettings['start_date'] ?? '' );
-            $endDate = (string) ( $timingSettings['end_date'] ?? '' );
         }
 
-        $within = ScheduleDateTimeHelper::isNowWithinBoundaries( $startDate, $endDate );
+        $timingSettings = get_post_meta($notification->ID, '_notifal_timing_settings', true) ?: [];
+        $scheduleEnabled = (bool) ($timingSettings['schedule_enabled'] ?? false);
 
-        return $within;
+        if (!$scheduleEnabled) {
+            return true;
+        }
+
+        $startDate = (string) ($timingSettings['start_date'] ?? '');
+        $endDate = (string) ($timingSettings['end_date'] ?? '');
+
+        return ScheduleDateTimeHelper::isNowWithinBoundaries($startDate, $endDate);
     }
 
     /**
@@ -248,12 +234,11 @@ class NotificationEligibilityChecker
     private function hasUserReachedFrequencyCap(int $notificationId, int $userId): bool
     {
         if ($userId <= 0) {
-            return false; // Anonymous users don't have frequency caps
+            return false;
         }
 
         $behaviorSettings = get_post_meta($notificationId, '_notifal_behavior_settings', true) ?: [];
 
-        // Check user-specific daily cap (only if Pro is active for impression tracking)
         $userDailyCap = $behaviorSettings['user_frequency_cap_daily'] ?? 0;
         if ($userDailyCap > 0 && function_exists('is_notifal_pro_active') && is_notifal_pro_active()) {
             $proStatsService = \notifal_pro_app(\NotifalPro\Modules\OnPageNotification\Application\Services\Analytics\StatsService::class);
@@ -263,7 +248,6 @@ class NotificationEligibilityChecker
             }
         }
 
-        // Check user-specific total cap (only if Pro is active for impression tracking)
         $userTotalCap = $behaviorSettings['user_frequency_cap_total'] ?? 0;
         if ($userTotalCap > 0 && function_exists('is_notifal_pro_active') && is_notifal_pro_active()) {
             $proStatsService = \notifal_pro_app(\NotifalPro\Modules\OnPageNotification\Application\Services\Analytics\StatsService::class);
@@ -275,5 +259,4 @@ class NotificationEligibilityChecker
 
         return false;
     }
-
 }

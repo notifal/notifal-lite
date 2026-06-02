@@ -363,14 +363,19 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 __( 'How the notification disappears', 'notifal' )
             );
 
+            $is_animation_duration_applicable = AppearanceSettingsService::isAnimationDurationApplicable( $appearance_settings );
+            ?>
+            <div class="notifal-animation-duration-wrapper<?php echo $is_animation_duration_applicable ? '' : ' notifal-hidden'; ?>">
+            <?php
             FieldRenderer::numberInput(
                 'animation_duration',
                 $appearance_settings['animation_duration'],
                 __( 'Animation Duration (ms)', 'notifal' ),
-                __( 'Duration of appear/disappear animations', 'notifal' ),
+                __( 'Duration of appear/disappear animations. Hidden when both show and hide are set to No Animation.', 'notifal' ),
                 ['input' => ['min' => 0, 'max' => 2000, 'step' => 50]]
             );
             ?>
+            </div>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'animation')); ?>
         </div>
 

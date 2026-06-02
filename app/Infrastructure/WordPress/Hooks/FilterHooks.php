@@ -385,9 +385,9 @@ class FilterHooks {
     public const ONPAGE_PRODUCT_POOL_SALE_REVALIDATION_INTERVAL = 'notifal/onpage/product_pool/sale_revalidation_interval';
 
     /**
-     * Filter max number of pre-rendered product-pool variants shipped for client-side retrigger (no extra HTTP).
+     * Filter max number of pre-rendered pool variants shipped for client-side retrigger (no extra HTTP).
      *
-     * @since 2.2.0
+     * @since 2.3.5
      * @author Hossein <hossein@notifal.com>
      */
     public const ONPAGE_RETRIGGER_CLIENT_VARIANTS_MAX = 'notifal/onpage/retrigger_variants/max';
@@ -1478,6 +1478,41 @@ class FilterHooks {
     public const ONPAGE_FRONTEND_CONTEXT = 'notifal/onpage/frontend/context';
 
     /**
+     * Filters client-side user display rules attached to a notification frontend payload.
+     *
+     * Used for visit-history constraints (new / return / first session) evaluated in JS.
+     *
+     * @param array<string, string>|null $clientRules    Client rules or null.
+     * @param int                          $notificationId Notification post ID.
+     * @return array<string, string>|null
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_CLIENT_USER_RULES = 'notifal/onpage/client_user_rules';
+
+    /**
+     * Filters client-side WooCommerce cart display rules attached to a notification frontend payload.
+     *
+     * @param array<string, mixed>|null $clientRules    Client cart rules or null.
+     * @param int                         $notificationId Notification post ID.
+     * @return array<string, mixed>|null
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_CLIENT_CART_RULES = 'notifal/onpage/client_cart_rules';
+
+    /**
+     * Filters the WooCommerce cart snapshot used for display rule evaluation.
+     *
+     * @param array<string, mixed> $cart    Normalized cart snapshot.
+     * @param array<string, mixed> $context Full page context.
+     * @return array<string, mixed>
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_WOOCOMMERCE_CART_CONTEXT = 'notifal/onpage/woocommerce/cart_context';
+
+    /**
      * Filters the dynamic tag context data for OnPage notifications.
      *
      * Allows modification of the context data used for tag replacement
@@ -1600,6 +1635,14 @@ class FilterHooks {
      * @since 2.3.0
      */
     public const ONPAGE_ANALYTICS_ALL_TIME_START_DATE = 'notifal/onpage/analytics/all_time_start_date';
+
+    /**
+     * Filter the CSS class (without dot) used on custom template elements to count as analytics clicks.
+     *
+     * @since 2.3.1
+     * @param string $class_name Default `notifal-track-click`.
+     */
+    public const ONPAGE_ANALYTICS_TRACK_CLICK_CLASS = 'notifal/onpage/analytics/track_click_class';
 
     /**
      * Filter for detecting if Notifal Pro is active and providing analytics.
@@ -1766,6 +1809,27 @@ class FilterHooks {
      * @author Hossein <hossein@notifal.com>
      */
     public const ORDER_ATTRIBUTION_SHOW_COLUMN = 'notifal/order_attribution/show_column';
+
+    /**
+     * Filters the capability required for order attribution AJAX requests.
+     *
+     * @param string $capability Default capability slug.
+     * @return string
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_AJAX_CAPABILITY = 'notifal/order_attribution/ajax_capability';
+
+    /**
+     * Filters whether the current user can view order attribution details via AJAX.
+     *
+     * @param bool $allowed Default false when no commerce order was matched.
+     * @param int  $orderId WooCommerce order ID or EDD payment ID.
+     * @return bool
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ORDER_ATTRIBUTION_CAN_VIEW = 'notifal/order_attribution/can_view';
 
     /**
      * Filter formatted money string for OnPage analytics (admin dashboard, exports, AJAX HTML).

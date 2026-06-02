@@ -7,6 +7,7 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\AppearanceS
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationSaveService;
 use Notifal\Modules\Templates\Infrastructure\WordPress\Import\Importer as TemplateImporter;
@@ -296,6 +297,9 @@ class Importer
                 'content_source_settings' => $contentSourceService->sanitizeSettings($contentSourceSettings),
                 'display_rules_data' => $displayRulesService->sanitizeSettings($settings['display_rules'] ?? []),
                 'rule_combination_logic' => Helper::sanitizeInput($settings['rule_combination_logic'] ?? 'OR', 'key'),
+                'display_rules_visibility_mode' => DisplayRulesDataNormalizer::sanitizeVisibilityMode(
+                    Helper::sanitizeInput($settings['display_rules_visibility_mode'] ?? 'show_if', 'key')
+                ),
             ];
 
             // Save settings to post meta with correct _notifal_ prefixes
@@ -306,6 +310,7 @@ class Importer
                 'content_source_settings' => '_notifal_content_source_settings',
                 'display_rules_data' => '_notifal_display_rules_data',
                 'rule_combination_logic' => '_notifal_rule_combination_logic',
+                'display_rules_visibility_mode' => '_notifal_display_rules_visibility_mode',
             ];
 
             foreach ($validatedSettings as $key => $value) {

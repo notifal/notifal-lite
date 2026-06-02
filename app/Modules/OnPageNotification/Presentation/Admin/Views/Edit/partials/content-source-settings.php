@@ -112,12 +112,30 @@ class ContentSourceSettingsRenderer
      * @return void
      *
      * @since 2.0.0
+     * @since 2.3.5 Updated with "Show duplicate source" toggle.
      */
     private function renderDynamicRestrictionsSection(): void
     {
         ?>
         <!-- Dynamic Content Restrictions -->
         <div class="notifal-dynamic-restrictions notifal-hidden" id="notifal-dynamic-restrictions">
+            <?php
+            FieldRenderer::toggle(
+                'allow_duplicate_source',
+                false,
+                __('Show duplicate source', 'notifal'),
+                __('When disabled, each visitor session sees each source item only once per notification context until the pool is exhausted.', 'notifal'),
+                [
+                    'input' => [
+                        'value' => '1',
+                    ],
+                    'wrapper' => [
+                        'id' => 'notifal-allow-duplicate-source-wrapper',
+                    ],
+                ]
+            );
+            ?>
+
             <div class="notifal-field-wrapper notifal-direction-column">
                 <div class="notifal-field-header notifal-flex notifal-flex-row">
                     <label class="notifal-form-label"><?php esc_html_e('Dynamic Content Restrictions', 'notifal'); ?></label>

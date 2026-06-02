@@ -23,11 +23,6 @@ require_once __DIR__ . '/../../Components/NotificationDetailPopupComponent.php';
 // Get required service instances
 $urlService = notifal_app(UrlService::class);
 
-// Configuration for archive component inclusion
-$hide_header = true;
-$hide_wrapper = true;
-$component_id = 'precreated-notifications-modal-archive';
-
 ?>
 
 <!-- Pre-created Notifications Modal -->
@@ -61,7 +56,24 @@ $component_id = 'precreated-notifications-modal-archive';
             <!-- Archive View (Default) -->
             <div class="notifal-modal-view notifal-modal-archive-view" id="notifal-modal-archive-view">
                 <div class="notifal-marketplace-archive" data-component="precreated-notifications-modal-archive">
-                    <?php include __DIR__ . '/precreated-notifications-archive.php'; ?>
+                    <div
+                        id="notifal-modal-precreated-archive-container"
+                        class="notifal-modal-archive-host"
+                        data-notifal-archive-async="1"
+                        data-archive-lazy="1"
+                    >
+                        <div
+                            class="notifal-precreated-archive-loading"
+                            aria-live="polite"
+                            role="status"
+                            aria-label="<?php esc_attr_e('Loading pre-created notifications...', 'notifal'); ?>"
+                        >
+                            <div class="notifal-precreated-archive-loading-spinner" aria-hidden="true"></div>
+                            <p class="notifal-precreated-archive-loading-text">
+                                <?php esc_html_e('Loading pre-created notifications...', 'notifal'); ?>
+                            </p>
+                        </div>
+                    </div>
                 </div>
             </div>
 

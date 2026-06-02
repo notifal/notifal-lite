@@ -127,13 +127,12 @@ class NoticeService
             return;
         }
 
-        $pricing_url = add_query_arg([
-            'utm_source' => 'wordpress_plugin',
+        // License manager URL with UTM tracking for the admin pro upgrade notice CTA.
+        $upgrade_url = Urls::withCustomUtm(Urls::LICENSE_MANAGER, [
             'utm_medium' => 'admin_notice',
             'utm_campaign' => 'notifal_pro_upgrade',
             'utm_content' => 'upgrade_notice_dismissible',
-            'domain' => parse_url(get_site_url(), PHP_URL_HOST)
-        ], Urls::PRICING);
+        ]);
 
         ?>
         <div class="notice notice-info is-dismissible notifal-pro-notice" data-notice-id="pro_upgrade">
@@ -145,8 +144,8 @@ class NoticeService
                     <h4><?php esc_html_e('Unlock Advanced Features with Notifal Pro', 'notifal'); ?></h4>
                     <p><?php esc_html_e('Get advanced targeting, multiple notifications, custom styling, and detailed analytics with Notifal Pro.', 'notifal'); ?></p>
                     <p>
-                        <a href="<?php echo esc_url($pricing_url); ?>" class="button button-primary" target="_blank">
-                            <?php esc_html_e('Upgrade Now', 'notifal'); ?>
+                        <a href="<?php echo esc_url($upgrade_url); ?>" class="button button-primary" target="_blank" rel="noopener noreferrer">
+                            <?php esc_html_e('Upgrade for Free!', 'notifal'); ?>
                         </a>
                         <a href="#" class="notifal-notice-dismiss" data-notice-id="pro_upgrade" data-nonce="<?php echo esc_attr(wp_create_nonce('notifal_dismiss_notice')); ?>">
                             <?php esc_html_e('Dismiss', 'notifal'); ?>

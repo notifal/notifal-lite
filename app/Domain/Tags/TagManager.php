@@ -142,7 +142,7 @@ class TagManager
             $isEnabled = $this->settingsService->get($categoryMap[$category], true);
 
             // For plugin-dependent categories, also check plugin availability
-            if ($isEnabled && in_array($category, ['products', 'orders'])) {
+            if ($isEnabled && in_array($category, ['products', 'orders', 'cart'], true)) {
                 return PluginDetector::isWooCommerceActive();
             }
 
@@ -181,7 +181,7 @@ class TagManager
     private function isCustomPostTypeCategory(string $category): bool
     {
         // Core and plugin categories that are NOT custom post types
-        $coreCategories = ['users', 'posts', 'pages', 'comments', 'products', 'orders'];
+        $coreCategories = ['users', 'posts', 'pages', 'comments', 'products', 'orders', 'cart'];
 
         if (in_array($category, $coreCategories)) {
             return false;

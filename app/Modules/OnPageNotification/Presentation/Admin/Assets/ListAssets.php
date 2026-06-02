@@ -207,7 +207,8 @@ class ListAssets
             'nonce' => NonceManager::create('notifal_admin_ajax_nonce'),
             'ajax_url' => UrlHelper::baseAjax(),
             'archive_fragment_action' => 'notifal_precreated_archive_fragment',
-            'archive_load_timeout_sec' => 15,
+            'archive_load_timeout_sec' => 25,
+            'archive_load_timeout_modal_sec' => 45,
             'strings' => [
                 'loading' => __('Loading...', 'notifal'),
                 'loadingPrecreated' => __('Loading pre-created notifications...', 'notifal'),
@@ -228,6 +229,7 @@ class ListAssets
                 'importPartialSuccess' => $translations['importPartialSuccess'] ?? __('Import completed: {success} succeeded, {failed} failed.', 'notifal'),
                 'importFailed' => $translations['importFailed'] ?? __('Import failed.', 'notifal'),
                 'networkError' => $translations['networkError'] ?? __('Network error. Please try again.', 'notifal'),
+                'timeoutError' => __('Loading took too long. The marketplace may be slow, please try again.', 'notifal'),
                 'requestHere' => __('Request here', 'notifal'),
                 'requesting' => __('Requesting...', 'notifal'),
                 'requestSubmitted' => __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),

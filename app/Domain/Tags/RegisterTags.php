@@ -7,6 +7,7 @@ use Notifal\Domain\Tags\Enums\TagCategory;
 use Notifal\Domain\Tags\Services\DateFormatterService;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Domain\Tags\TagManager;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 
 defined('ABSPATH') || exit;
 
@@ -795,6 +796,13 @@ class RegisterTags
             TagCategory::ORDERS,
             __('Displays the order shipped date (if available). Supports custom format: {order_shipped_date_Y/m/d} or relative: {order_shipped_date_diff}', 'notifal')
         ));
+
+        // -----------------------
+        // WooCommerce Cart Tags
+        // -----------------------
+        if (PluginDetector::isWooCommerceActive()) {
+            RegisterWooCommerceCartTags::register($manager);
+        }
 
         /**
          * Action: Allow developers to register custom tags.

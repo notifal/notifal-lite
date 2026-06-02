@@ -84,6 +84,17 @@ class SettingsKeys
     public const ORDER_TAGS_ENABLED = 'order_tags_enabled';
 
     /**
+     * Enable/disable WooCommerce cart tags.
+     *
+     * Controls visibility of cart-related tags like {cart_total}, {cart_item_count}.
+     * Only available when WooCommerce plugin is active.
+     *
+     * @var string
+     * @since 2.3.5
+     */
+    public const CART_TAGS_ENABLED = 'cart_tags_enabled';
+
+    /**
      * Future settings placeholders
      * 
      * These will be used in upcoming versions for additional features.
@@ -137,6 +148,7 @@ class SettingsKeys
             // self::COMMENT_TAGS_ENABLED, // Moved to Notifal Pro
             self::PRODUCT_TAGS_ENABLED,
             self::ORDER_TAGS_ENABLED,
+            self::CART_TAGS_ENABLED,
         ];
     }
 
@@ -173,6 +185,7 @@ class SettingsKeys
         return [
             self::PRODUCT_TAGS_ENABLED,
             self::ORDER_TAGS_ENABLED,
+            self::CART_TAGS_ENABLED,
         ];
     }
 
@@ -196,7 +209,8 @@ class SettingsKeys
 
             // Plugin-dependent tags (require WooCommerce)
             'products' => self::PRODUCT_TAGS_ENABLED,
-            'orders' => self::ORDER_TAGS_ENABLED,
+            'orders'   => self::ORDER_TAGS_ENABLED,
+            'cart'     => self::CART_TAGS_ENABLED,
         ];
     }
 
@@ -217,7 +231,8 @@ class SettingsKeys
             self::PAGE_TAGS_ENABLED => true,
             self::COMMENT_TAGS_ENABLED => self::getDefaultCommentTagsValue(),
             self::PRODUCT_TAGS_ENABLED => true,
-            self::ORDER_TAGS_ENABLED => true,
+            self::ORDER_TAGS_ENABLED   => true,
+            self::CART_TAGS_ENABLED    => true,
         ];
     }
 

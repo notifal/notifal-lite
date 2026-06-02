@@ -2,6 +2,7 @@
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 use Notifal\Shared\Helpers\UserHelper;
@@ -34,10 +35,19 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
  */
 $hasExistingRules = false;
 $existingRulesData = [];
+$existingRuleCount = 0;
+$visibilityMode = DisplayRulesDataNormalizer::VISIBILITY_SHOW_IF;
 
 if (isset($notification_data['display_rules_data']) && !empty($notification_data['display_rules_data'])) {
     $existingRulesData = $notification_data['display_rules_data'];
-    $hasExistingRules = !empty($existingRulesData);
+    $existingRuleCount = DisplayRulesDataNormalizer::countItems($existingRulesData);
+    $hasExistingRules = $existingRuleCount > 0;
+}
+
+if (isset($notification_data['display_rules_visibility_mode'])) {
+    $visibilityMode = DisplayRulesDataNormalizer::sanitizeVisibilityMode(
+        (string) $notification_data['display_rules_visibility_mode']
+    );
 }
 
 // Determine CSS classes for conditional UI display
@@ -69,14 +79,37 @@ $rulesSummaryClass = $hasExistingRules ? '' : 'notifal-hidden';
         <div class="notifal-display-rules-summary notifal-mt-20 <?php echo esc_attr($rulesSummaryClass); ?>" id="notifal-display-rules-summary">
             <div class="notifal-summary-header">
                 <div class="notifal-flex notifal-flex-row notifal-align-center">
-                    <h3 class="notifal-mb-10"><?php esc_html_e( 'Active Rules', 'notifal' ); ?></h4>
-                    <span><?php FieldRenderer::tooltip( sprintf( __( 'Click on any rule box to edit it. Use the %s button to view detailed information about each rule.', 'notifal' ), '"' . __( 'Show Details', 'notifal' ) . '"' ) ); ?></span>
+                    <h3 class="notifal-mb-10"><?php esc_html_e( 'Active Rules', 'notifal' ); ?></h3>
+                    <span><?php FieldRenderer::tooltip( __( 'Click a rule to edit it. To add another rule, fill the form below and click Save Rule without selecting a rule first.', 'notifal' ) ); ?></span>
                 </div>
-                <span class="notifal-summary-count" id="notifal-rules-count"><?php echo esc_html(count($existingRulesData)); ?></span>
+                <span class="notifal-summary-count" id="notifal-rules-count"><?php echo esc_html($existingRuleCount); ?></span>
+            </div>
+
+            <p class="notifal-display-rules-click-hint notifal-text-description notifal-mb-12" id="notifal-display-rules-click-hint">
+                <?php esc_html_e( 'Tip: Click a rule below to edit it. Leave no rule selected to add a new one.', 'notifal' ); ?>
+            </p>
+
+            <!-- Show if / Don't show if -->
+            <div class="notifal-display-rules-visibility-mode notifal-mb-16" id="notifal-display-rules-visibility-mode">
+                <div class="notifal-logic-selector">
+                    <div class="notifal-field-header notifal-flex notifal-flex-row">
+                        <label for="display_rules_visibility_mode" class="notifal-logic-label">
+                            <?php esc_html_e( 'When rules match:', 'notifal' ); ?>
+                        </label>
+                        <?php FieldRenderer::tooltip( __( 'Show if: display the notification when the rules below match (using AND/OR logic). Don\'t show if: hide the notification when those rules match.', 'notifal' ) ); ?>
+                    </div>
+                    <select id="display_rules_visibility_mode" name="display_rules_visibility_mode" class="notifal-logic-select">
+                        <?php foreach (DisplayRulesService::getVisibilityModeOptions() as $modeValue => $modeLabel) : ?>
+                            <option value="<?php echo esc_attr($modeValue); ?>" <?php selected($visibilityMode, $modeValue); ?>>
+                                <?php echo esc_html($modeLabel); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
             </div>
             
             <!-- Rule Combination Logic Selector - PRO FEATURE -->
-            <div class="notifal-rule-combination-logic notifal-mb-16 <?php echo count($existingRulesData) > 1 ? 'notifal-pro-visible' : 'notifal-pro-hidden'; ?>" id="notifal-rule-combination-logic">
+            <div class="notifal-rule-combination-logic notifal-mb-16 <?php echo $existingRuleCount > 1 ? 'notifal-pro-visible' : 'notifal-pro-hidden'; ?>" id="notifal-rule-combination-logic">
                 <div class="notifal-logic-selector">
                     <div class="notifal-field-header notifal-flex notifal-flex-row">
                         <label for="rule_combination_logic" class="notifal-logic-label">
@@ -106,8 +139,16 @@ $rulesSummaryClass = $hasExistingRules ? '' : 'notifal-hidden';
         </div>
 
         <!-- Rule Configuration Form -->
-        <div class="notifal-rule-configuration">
-            <h4><?php esc_html_e( 'Add New Rule', 'notifal' ); ?></h4>
+        <div class="notifal-rule-configuration" id="notifal-rule-configuration">
+            <div class="notifal-rule-configuration-header notifal-flex notifal-flex-row notifal-align-center notifal-justify-between notifal-mb-12">
+                <h4 id="notifal-rule-configuration-title"><?php esc_html_e( 'Add New Rule', 'notifal' ); ?></h4>
+                <span class="notifal-rule-editing-badge notifal-hidden" id="notifal-rule-editing-badge" role="status">
+                    <?php esc_html_e( 'Editing selected rule', 'notifal' ); ?>
+                </span>
+            </div>
+            <p class="notifal-rule-configuration-hint notifal-text-description notifal-mb-12" id="notifal-rule-configuration-hint">
+                <?php esc_html_e( 'Choose a target type, configure conditions, then save. You can add multiple rules of the same type with Notifal Pro.', 'notifal' ); ?>
+            </p>
             
             <!-- Rule Type Selector -->
             <?php
@@ -263,13 +304,21 @@ $rulesSummaryClass = $hasExistingRules ? '' : 'notifal-hidden';
                 <!-- Users - PRO FEATURE -->
                 <?php do_action('notifal_display_rules_users_section'); ?>
 
+                <?php
+                // WooCommerce cart conditions — only when WooCommerce is active. @since 2.3.5
+                require __DIR__ . '/woocommerce-cart-rules-section.php';
+                ?>
+
                 <!-- Add Rule Button -->
-                <div class="notifal-add-rule-container notifal-flex notifal-justify-end notifal-mt-20">
-                    <button type="button" class="notifal-button primary notifal-add-display-rule">
+                <div class="notifal-add-rule-container notifal-flex notifal-justify-end notifal-gap-10 notifal-mt-20">
+                    <button type="button" class="notifal-button secondary notifal-hidden" id="notifal-cancel-rule-edit">
+                        <?php esc_html_e( 'Cancel Edit', 'notifal' ); ?>
+                    </button>
+                    <button type="button" class="notifal-button primary notifal-add-display-rule" id="notifal-add-display-rule-btn">
                         <span class="notifal-button-icon">
                             <?php echo NotifalIconService::render('plus-circle', 16); ?>
                         </span>
-                        <?php esc_html_e( 'Save Rule', 'notifal' ); ?>
+                        <span id="notifal-add-display-rule-label"><?php esc_html_e( 'Save Rule', 'notifal' ); ?></span>
                     </button>
                 </div>
 

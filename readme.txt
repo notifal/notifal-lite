@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.3.0
+Stable tag: 2.3.5
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -122,13 +122,13 @@ With dynamic tags, you create a notification once, and its content updates autom
 
 Instead of writing static text like: ***"New Offer for You"*** You write: ***"New Offer for You, {user_name}"***. Now every visitor sees their own name. Sara sees ***"New Offer for You, Sara*. Alex sees ***"New Offer for You, Alex"***.
 
-This is just a simple example. With tags, you can pull in product names, prices, discount percentages, order details, comment content, usernames, and so much more. Creating fully personalized, real-time notifications.
+This is just a simple example. With tags, you can pull in product names, prices, discount percentages, order details, cart totals, coupon codes, comment content, usernames, and more, fully personalized, real-time notifications.
 
 **🏷️ Three Powerful Tag Categories**
 
 * **📝 WordPress Tags**: Dynamically insert Post, Page, Comment, and User data into your notifications.
 
-* **🛒 WooCommerce Tags**: Pull real-time Order and Product data, perfect for sale announcements, recent purchases, and discount popups.
+* **🛒 WooCommerce Tags**: Pull real-time Order, Product, and Cart data including `{cart_total}`, `{cart_item_count}`, `{cart_coupons}`, and `{cart_checkout_url}` — perfect for sale announcements, abandoned-cart reminders, and discount popups.
 
 * **⚙️ Post Type Tag Generator [PRO]**: Have custom post types? Generate your own tags based on any post type in your database. Complete flexibility.
 
@@ -150,9 +150,11 @@ Target by:
 
 * **📁 Categories [PRO]**: Display popups based on post or product categories.
 
-* **👤 User Roles [PRO]**: Show different notifications to guests, subscribers, customers, or administrators.
+* **👤 User Roles [PRO]**: Show different notifications to guests, subscribers, customers, or administrators with optional visit history filters (new visitor, return visitor, or first browser session).
 
-* **🔀 Multi Rules [PRO]**: Combine multiple conditions for laser-focused targeting. Example: Show only to logged-out users, on product pages, in the "Sale" category.
+* **🛒 Cart Conditions (WooCommerce)**: Target visitors by cart total, item count, products or categories in cart, empty cart, or applied coupons.
+
+* **🔀 Multi Rules [PRO]**: Combine multiple conditions for laser-focused targeting. Example: logged-out users on product pages in the "Sale" category.
 
 **With Timing Triggers, Control When It Appears**
 
@@ -176,9 +178,7 @@ Stop showing popups randomly. Start showing them strategically.
 
 ## 📅 Campaign Manager — Align Timing Across Notifications ##
 
-Running a seasonal sale, a product launch, or a limited-time offer? With Campaign Manager, you can group related notifications under one campaign, define the campaign schedule once, and manage the whole promotion more clearly from one place.
-
-Instead of treating every notification as an isolated item, campaigns help you organize multiple messages around a single goal. Assign several notifications to the same campaign, keep their timing aligned, simplify management for larger promotions, and review performance with campaign-based filtering in analytics. When a notification belongs to a campaign, the campaign schedule takes priority, so your messages stay coordinated without repeating the same date settings on every notification.
+Running a seasonal sale, product launch, or limited-time offer? Campaign Manager groups related notifications under one schedule, keeps messaging aligned, and lets you review performance with campaign-based analytics filters. When a notification belongs to a campaign, the campaign schedule takes priority, no repeating date settings on every notification.
 
 ## Built for Every Website. Tailored for Your Goals. ##
 
@@ -235,6 +235,7 @@ Whatever you build, Notifal helps you grow it.
 * Targeting by Post Type
 * Targeting by Pages
 * Targeting by Posts
+* WooCommerce Cart Display Rules (cart total, products, coupons, and more)
 * **Targeting by Categories [PRO]**
 * **Targeting by URL Conditions [PRO]**
 * **Targeting by Users [PRO]**
@@ -288,6 +289,7 @@ Whatever you build, Notifal helps you grow it.
 * Page Tags
 * Product Tags
 * Order Tags
+* Cart Tags (WooCommerce)
 * **Comment Tags [PRO]**
 * **All Post Types Tags [PRO]**
 
@@ -389,6 +391,32 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.3.5 [2026-05-30]
+Added: WooCommerce cart display rules (when WooCommerce is active), target visitors by cart is empty or not empty, specific product in or not in cart, product category in cart, cart total, cart item count, or coupon applied.
+Added: WooCommerce cart dynamic tags for notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.
+Improved: Cart tag context and preview data now include WooCommerce cart snapshot values for more accurate frontend and editor rendering.
+Changed: Removed {cart_is_empty} from WooCommerce cart dynamic tags list.
+Added: Real-time cart rule evaluation on the storefront, notifications update after Ajax add-to-cart or cart changes without a full page refresh.
+Added: Users display rule visit history filters, target new visitors, return visitors, or first browser session alongside guest/logged-in and role targeting.
+Added: Content Source option, "Show duplicate source" (Content Source > Dynamic Content Restrictions). Default is OFF, so each visitor session avoids repeating the same dynamic source item (product/order/post/page/custom post type) until available items rotate; turn it ON to allow duplicates when needed.
+Added: Order list attribution badge and quick-view popup on WooCommerce and EDD order screens.
+Fixed: WooCommerce order attribution and influenced revenue no longer disappear when an on-hold or pending order is marked completed in admin.
+Fixed: On-page notification “Allow Re-trigger After Hide” now loads fresh dynamic content on every retrigger for all content sources.
+Fixed: Some reported performance issues.
+Improved: Deterministic pool selection and cache clearing on retrigger API requests for consistent alternate content.
+Improved: Display rules save automatically when you save the notification if you forgot to click Save Rule.
+Fixed: Prevent Multiple Instances now shows notifications one at a time, the next can appear after the previous closes.
+Improved: Display rules UI/logic now supports multiple rules as a list structure with unique rule IDs, including multiple rules for the same rule type  with AND/OR combination support in Pro.
+Added: New display rule visibility mode, "Show if" / "Don't show if", so admins can invert rule matching behavior while keeping AND/OR logic.
+Improved: Display rules edit experience, click a rule to edit, clear editing state, and save as update vs add-new with clearer inline guidance.
+Improved: Duplicate-prevention for display rules, exact duplicate rules are blocked in the admin with an informational message.
+Improved: Rule combination logic now consistently falls back to OR as the default when missing or invalid.
+
+2.3.1 [2026-05-29]
+Fixed: Reported issue.
+Fixed: Action Button hash links (#section) no longer show loading; clicks are still tracked.
+Improved: On-page notification animation settings in Appearance.
+
 2.3.0 [2026-05-27]
 Added: All Time date range in OnPage analytics to view data from earliest available records through today.
 Added: Influenced revenue and order attribution on WooCommerce and Easy Digital Downloads order admin screens (order list column and order meta box).

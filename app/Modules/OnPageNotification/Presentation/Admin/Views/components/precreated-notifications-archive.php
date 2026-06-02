@@ -54,6 +54,10 @@ if ($usePreloaded) {
 $hideHeader = isset($hide_header) ? $hide_header : false;
 $componentId = isset($component_id) ? $component_id : 'precreated-notifications-archive';
 $hideWrapper = isset($hide_wrapper) ? $hide_wrapper : false;
+$archiveContainerId = 'notifal-precreated-archive-container';
+if ($componentId !== 'precreated-notifications-archive') {
+    $archiveContainerId = sanitize_html_class($componentId) . '-root';
+}
 
 $notifications = [];
 $pagination = ['current' => 1, 'pages' => 1, 'total' => 0];
@@ -121,14 +125,12 @@ if ($cacheExpiresAt > 0) {
 <?php if (!$hideWrapper) : ?>
 <div class="notifal-marketplace-archive" data-component="<?php echo esc_attr(sanitize_key($componentId)); ?>">
 <?php endif; ?>
-    <?php if (!$hideHeader || $cacheNextUpdateText !== '') : ?>
+    <?php if (!$hideHeader) : ?>
         <div class="notifal-archive-header">
             <div class="notifal-archive-title-section">
-                <?php if (!$hideHeader) : ?>
-                    <h2 class="notifal-archive-title notifal-page-title">
-                        <?php esc_html_e('Explore Pre-created Notifications', 'notifal'); ?>
-                    </h2>
-                <?php endif; ?>
+                <h2 class="notifal-archive-title notifal-page-title">
+                    <?php esc_html_e('Explore Pre-created Notifications', 'notifal'); ?>
+                </h2>
             </div>
             <?php if ($cacheNextUpdateText !== '') : ?>
                 <div class="notifal-archive-cache-info notifal-flex notifal-align-center notifal-gap-8">
@@ -139,7 +141,7 @@ if ($cacheExpiresAt > 0) {
         </div>
     <?php endif; ?>
 
-    <div class="archive-container" id="notifal-precreated-archive-container">
+    <div class="archive-container" id="<?php echo esc_attr($archiveContainerId); ?>">
         <aside class="archive-sidebar" id="notifal-archive-sidebar" aria-label="<?php esc_attr_e( 'Filters', 'notifal' ); ?>">
             <div class="filter-sidebar">
                 <?php $filterRenderer->renderArchiveFilters( $taxonomies, $currentFilters ); ?>
@@ -170,7 +172,7 @@ if ($cacheExpiresAt > 0) {
                     <input
                         type="search"
                         id="notifal-precreated-archive-search"
-                        class="archive-search-input"
+                        class="archive-search-input notifal-precreated-archive-search"
                         name="search"
                         placeholder="<?php esc_attr_e( 'Search by name, template code (e.g. 80 or 80,82), or category…', 'notifal' ); ?>"
                         value="<?php echo esc_attr( $currentFilters['search'] ?? '' ); ?>"

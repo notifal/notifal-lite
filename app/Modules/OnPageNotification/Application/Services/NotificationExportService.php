@@ -130,6 +130,7 @@ class NotificationExportService extends BaseExportService
                     'content_source' => $notificationData['content_source_settings'] ?? [],
                     'display_rules' => $notificationData['display_rules_data'] ?? [],
                     'rule_combination_logic' => $notificationData['rule_combination_logic'] ?? 'OR',
+                    'display_rules_visibility_mode' => $notificationData['display_rules_visibility_mode'] ?? 'show_if',
                 ],
             ],
         ];

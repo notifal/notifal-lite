@@ -644,6 +644,23 @@ class AppearanceSettingsService
     }
 
     /**
+     * Whether the animation duration setting applies to the current show/hide configuration.
+     *
+     * Duration is hidden and ignored only when both show and hide are set to "No Animation".
+     *
+     * @since 2.0.0
+     * @param array $settings Appearance settings.
+     * @return bool True when animation duration should be shown and applied.
+     */
+    public static function isAnimationDurationApplicable(array $settings): bool
+    {
+        $showType = isset($settings['show_animation_type']) ? (string) $settings['show_animation_type'] : 'fade';
+        $hideType = isset($settings['hide_animation_type']) ? (string) $settings['hide_animation_type'] : 'fade';
+
+        return $showType !== 'none' || $hideType !== 'none';
+    }
+
+    /**
      * Get animation duration
      *
      * @since 2.0.0
@@ -652,6 +669,10 @@ class AppearanceSettingsService
      */
     public function getAnimationDuration(array $settings): int
     {
+        if (!self::isAnimationDurationApplicable($settings)) {
+            return (int) (self::DEFAULT_SETTINGS['animation_duration'] ?? 300);
+        }
+
         return (int) ($settings['animation_duration'] ?? 300);
     }
 
@@ -808,7 +829,7 @@ class AppearanceSettingsService
             'animation' => [
                 'show_type' => $settings['show_animation_type'] ?? 'fade',
                 'hide_type' => $settings['hide_animation_type'] ?? 'fade',
-                'duration' => (int) ($settings['animation_duration'] ?? 300),
+                'duration' => $this->getAnimationDuration($settings),
             ],
             'z_index' => (int) ($settings['z_index'] ?? 9999),
             

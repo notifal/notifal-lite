@@ -4,7 +4,10 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Analytics;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
+use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Shared\Config\Paths;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\DatabaseRepository;
@@ -180,11 +183,34 @@ class OrderAttributionService
             return;
         }
 
-        // Enqueue icons and order attribution stylesheet (built via Vite)
+        // Enqueue shared modal styles, icons, attribution CSS, and popup script (built via Vite)
+        notifal_enqueue_style(
+            'notifal-shared-admin-css',
+            Paths::cssAdminBuildUrl() . 'SharedAdminStyle.css',
+            []
+        );
+
         notifal_enqueue_style(
             'notifal-order-attribution',
             Paths::cssAdminBuildUrl() . 'OrderAttributionStyle.css',
-            ['notifal-icons']
+            ['notifal-icons', 'notifal-shared-admin-css']
+        );
+
+        notifal_enqueue_script(
+            'notifal-order-attribution',
+            Paths::jsAdminBuildUrl() . 'OrderAttributionScript.js',
+            [],
+            [
+                'ajaxUrl' => UrlHelper::baseAjax(),
+                'nonce'   => NonceManager::create('notifal_order_attribution_nonce'),
+            ],
+            'NotifalOrderAttributionConfig'
+        );
+
+        wp_localize_script(
+            'notifal-order-attribution',
+            'NotifalOrderAttributionStrings',
+            LangLoader::load(__NAMESPACE__, 'order-attribution.php')
         );
     }
 
@@ -304,13 +330,44 @@ class OrderAttributionService
 
         $editUrl = $primaryId > 0 ? $this->urlService->getEditNotificationUrl($primaryId) : '';
 
-        $wrapperClass = 'notifal-order-list-attribution';
+        // Base wrapper class; pending orders get a distinct amber badge treatment
+        // "no-link" tells WooCommerce not to navigate to the order when this cell is clicked
+        $wrapperClass = 'notifal-order-list-attribution no-link';
 
         if ($isPendingOnly) {
             $wrapperClass .= ' notifal-order-list-attribution--pending';
         }
 
-        echo '<div class="' . esc_attr($wrapperClass) . '" title="' . esc_attr($tooltip) . '">';
+        // Short label shown inside the gradient pill badge
+        $badgeLabel = $isPendingOnly
+            ? __('Pending', 'notifal')
+            : __('Converted', 'notifal');
+
+        // Icon glyph for the emblem overlay (check = paid, clock = unpaid pending)
+        $overlayIconClass = $isPendingOnly ? 'notifal-icon-clock-history' : 'notifal-icon-check';
+
+        echo '<div class="' . esc_attr($wrapperClass) . '" data-order-id="' . esc_attr((string) $orderId) . '" title="' . esc_attr($tooltip) . '">';
+
+        // Eye-catching pill badge: Notifal logo + status overlay + label (opens details popup on click)
+        echo '<span class="notifal-order-list-attribution__badge" aria-label="'
+            . esc_attr(
+                sprintf(
+                    /* translators: %s: notification title */
+                    __('Notifal influenced this order - %s', 'notifal'),
+                    wp_strip_all_tags($rawTitle !== '' ? $rawTitle : __('(deleted notification)', 'notifal'))
+                )
+            )
+            . '">';
+
+        echo '<span class="notifal-order-list-attribution__emblem" aria-hidden="true">';
+        echo '<span class="notifal-icon notifal-icon-logo"></span>';
+        echo '<span class="notifal-order-list-attribution__overlay notifal-icon ' . esc_attr($overlayIconClass) . '"></span>';
+        echo '</span>';
+        echo '<span class="notifal-order-list-attribution__status">' . esc_html($badgeLabel) . '</span>';
+        echo '</span>';
+
+        // Compact notification reference below the badge
+        echo '<div class="notifal-order-list-attribution__details">';
 
         if ($editUrl !== '') {
             echo '<a href="' . esc_url($editUrl) . '" class="notifal-order-list-attribution__id" onclick="event.stopPropagation();">'
@@ -325,7 +382,7 @@ class OrderAttributionService
             echo ' <span class="notifal-order-list-attribution__more">+' . esc_html((string) $extraCount) . '</span>';
         }
 
-        echo '</span></div>';
+        echo '</span></div></div>';
     }
 
     /**
@@ -402,24 +459,69 @@ class OrderAttributionService
 
         self::$renderedOrderMetaBoxes[$metaBoxKey] = true;
 
+        echo $this->buildAttributionDetailsHtml($orderId);
+    }
+
+    /**
+     * Build attribution details HTML for the meta box and order list popup.
+     *
+     * @param int $orderId WooCommerce order ID or EDD payment ID
+     * @return string Attribution markup
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    public function buildAttributionDetailsHtml(int $orderId): string
+    {
         $attributionData = $this->getOrderAttributionData($orderId);
+
+        ob_start();
+
+        /**
+         * Fires before rendering order attribution details markup.
+         *
+         * @param int $orderId WooCommerce order ID or EDD payment ID.
+         * @since 2.3.5
+         */
+        do_action(ActionHooks::ORDER_ATTRIBUTION_BEFORE_RENDER, $orderId);
 
         if (empty($attributionData)) {
             echo '<p class="notifal-order-meta-no-attribution">'
                 . esc_html__('This order was not influenced by any Notifal notification.', 'notifal')
                 . '</p>';
-            return;
+        } else {
+            if ($this->isPendingAttributionOnly($attributionData)) {
+                echo '<p class="notifal-order-meta-pending-notice">'
+                    . esc_html__(
+                        'This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed.',
+                        'notifal'
+                    )
+                    . '</p>';
+            }
+
+            $this->renderAttributionRowsHtml($attributionData);
         }
 
-        if ($this->isPendingAttributionOnly($attributionData)) {
-            echo '<p class="notifal-order-meta-pending-notice">'
-                . esc_html__(
-                    'This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed.',
-                    'notifal'
-                )
-                . '</p>';
-        }
+        /**
+         * Fires after rendering order attribution details markup.
+         *
+         * @param int $orderId WooCommerce order ID or EDD payment ID.
+         * @since 2.3.5
+         */
+        do_action(ActionHooks::ORDER_ATTRIBUTION_AFTER_RENDER, $orderId);
 
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Render attribution rows shared by the meta box and order list popup.
+     *
+     * @param array $attributionData Enriched conversion rows for the order
+     * @return void
+     * @since 2.3.5
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function renderAttributionRowsHtml(array $attributionData): void
+    {
         echo '<div class="notifal-attribution-metabox">';
 
         foreach ($attributionData as $index => $row) {
@@ -735,8 +837,8 @@ class OrderAttributionService
             return $rows;
         }
 
-        // Skip pending data when conversion was already processed
-        if ($order->get_meta('_notifal_conversion_processed', true)) {
+        // Skip pending data only when paid conversions exist or were fully processed with rows
+        if ($order->get_meta('_notifal_conversion_processed', true) && !empty($rows)) {
             return $rows;
         }
 

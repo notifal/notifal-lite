@@ -180,8 +180,10 @@ class DeactivationReason
                 'label' => self::getReasonLabels()[self::OTHER],
                 'requiresInput' => true,
                 'inputType' => 'textarea',
-                'inputPlaceholder' => __('Please share the reason', 'notifal'),
+                'inputPlaceholder' => __('Tell us what we could do better (required)', 'notifal'),
                 'inputName' => 'additional_feedback',
+                // @since 2.3.5 Shows guidance text discouraging vague "Other" feedback without a clear reason.
+                'showHelpText' => true,
             ],
         ];
     }

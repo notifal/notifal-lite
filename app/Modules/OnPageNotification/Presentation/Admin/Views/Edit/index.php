@@ -108,6 +108,7 @@ if ( $is_edit && isset( $notification_data['timing_settings'] ) && is_array( $no
         <input type="hidden" name="content_source_settings" value="<?php echo esc_attr( $is_edit && isset( $notification_data['content_source_settings'] ) ? wp_json_encode( $notification_data['content_source_settings'] ) : '{}' ); ?>">
         <input type="hidden" name="display_rules_data" value="<?php echo esc_attr( $is_edit && isset( $notification_data['display_rules_data'] ) ? wp_json_encode( $notification_data['display_rules_data'] ) : '{}' ); ?>">
         <input type="hidden" name="rule_combination_logic" value="<?php echo esc_attr( $is_edit && isset( $notification_data['rule_combination_logic'] ) ? $notification_data['rule_combination_logic'] : 'OR' ); ?>">
+        <input type="hidden" name="display_rules_visibility_mode" value="<?php echo esc_attr( $is_edit && isset( $notification_data['display_rules_visibility_mode'] ) ? $notification_data['display_rules_visibility_mode'] : 'show_if' ); ?>">
         <input type="hidden" name="template_id" value="<?php echo esc_attr( $is_edit && isset( $notification_data['template_id'] ) ? $notification_data['template_id'] : '0' ); ?>">
         <input type="hidden" name="template_content" value="<?php echo esc_attr( $is_edit && isset( $notification_data['template_content'] ) ? $notification_data['template_content'] : '' ); ?>">
 

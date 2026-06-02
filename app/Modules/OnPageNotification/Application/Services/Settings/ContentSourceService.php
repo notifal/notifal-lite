@@ -11,6 +11,7 @@ use Notifal\Infrastructure\WordPress\Services\PageFetcher;
 use Notifal\Infrastructure\WordPress\Services\CustomPostTypeFetcher;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
+use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
 
@@ -148,15 +149,43 @@ class ContentSourceService
      * @param array $contentSourceSettings Content source settings
      * @return mixed|null Order data or null if no order found
      * @since 2.0.0
+     * @since 2.3.5 Updated to persist shown order sources per visitor session.
      */
     public function getRandomOrder(array $contentSourceSettings = [])
     {
-        $cacheKey = $this->buildOrderPoolCacheKey($contentSourceSettings);
+        $pool = $this->getOrderPool($contentSourceSettings);
 
-        return $this->getRandomFromPool($cacheKey, 'notifal_order_pools', function() use ($contentSourceSettings) {
-            $filters = $this->filterBuilder->buildOrderFilters($contentSourceSettings);
-            return $this->orderFetcher->getRandomPool(20, $filters);
-        });
+        if (empty($pool)) {
+            return null;
+        }
+
+        $order = $pool[ array_rand( $pool ) ];
+        $this->rememberShownSource('order', $order, $contentSourceSettings);
+
+        return $order;
+    }
+
+    /**
+     * Get order pool for deterministic selection and retrigger variants.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return array<int, mixed> Order DTO pool (may be empty).
+     * @since 2.3.5
+     */
+    public function getOrderPool(array $contentSourceSettings = []): array
+    {
+        $cacheKey = $this->buildOrderPoolCacheKey($contentSourceSettings);
+        $poolSize = (int) apply_filters(FilterHooks::ONPAGE_ORDER_POOL_SIZE, 18, $contentSourceSettings);
+
+        return $this->loadOrBuildPool(
+            $cacheKey,
+            'notifal_order_pools',
+            function () use ($contentSourceSettings, $poolSize) {
+                $filters = $this->filterBuilder->buildOrderFilters($contentSourceSettings);
+
+                return $this->orderFetcher->getRandomPool($poolSize, $filters);
+            }
+        );
     }
 
     /**
@@ -166,6 +195,7 @@ class ContentSourceService
      * @param array $contentSourceSettings Content source settings
      * @return mixed|null Product data or null if no product found
      * @since 2.0.0
+     * @since 2.3.5 Updated to persist shown product sources per visitor session.
      */
     public function getRandomProduct(array $contentSourceSettings = [])
     {
@@ -175,7 +205,10 @@ class ContentSourceService
             return null;
         }
 
-        return $pool[array_rand($pool)];
+        $product = $pool[array_rand($pool)];
+        $this->rememberShownSource('product', $product, $contentSourceSettings);
+
+        return $product;
     }
 
     /**
@@ -405,15 +438,42 @@ class ContentSourceService
      * @param array $contentSourceSettings Content source settings
      * @return \WP_Post|null Post data or null if no post found
      * @since 2.0.0
+     * @since 2.3.5 Updated to persist shown post sources per visitor session.
      */
     public function getRandomPost(array $contentSourceSettings = [])
     {
+        $pool = $this->getPostPool($contentSourceSettings);
+
+        if (empty($pool)) {
+            return null;
+        }
+
+        $post = $pool[ array_rand( $pool ) ];
+        $this->rememberShownSource('post', $post, $contentSourceSettings);
+
+        return $post;
+    }
+
+    /**
+     * Get post pool for deterministic selection and retrigger variants.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return array<int, \WP_Post> Post pool (may be empty).
+     * @since 2.3.5
+     */
+    public function getPostPool(array $contentSourceSettings = []): array
+    {
         $cacheKey = $this->buildPostPoolCacheKey($contentSourceSettings);
 
-        return $this->getRandomFromPool($cacheKey, 'notifal_post_pools', function() use ($contentSourceSettings) {
-            $filters = $this->filterBuilder->buildPostFilters($contentSourceSettings);
-            return $this->postFetcher->getRandomPool(20, $filters);
-        });
+        return $this->loadOrBuildPool(
+            $cacheKey,
+            'notifal_post_pools',
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildPostFilters($contentSourceSettings);
+
+                return $this->postFetcher->getRandomPool(20, $filters);
+            }
+        );
     }
 
     /**
@@ -423,15 +483,42 @@ class ContentSourceService
      * @param array $contentSourceSettings Content source settings
      * @return \WP_Post|null Page data or null if no page found
      * @since 2.0.0
+     * @since 2.3.5 Updated to persist shown page sources per visitor session.
      */
     public function getRandomPage(array $contentSourceSettings = [])
     {
+        $pool = $this->getPagePool($contentSourceSettings);
+
+        if (empty($pool)) {
+            return null;
+        }
+
+        $page = $pool[ array_rand( $pool ) ];
+        $this->rememberShownSource('page', $page, $contentSourceSettings);
+
+        return $page;
+    }
+
+    /**
+     * Get page pool for deterministic selection and retrigger variants.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return array<int, \WP_Post> Page pool (may be empty).
+     * @since 2.3.5
+     */
+    public function getPagePool(array $contentSourceSettings = []): array
+    {
         $cacheKey = $this->buildPagePoolCacheKey($contentSourceSettings);
 
-        return $this->getRandomFromPool($cacheKey, 'notifal_page_pools', function() use ($contentSourceSettings) {
-            $filters = $this->filterBuilder->buildPageFilters($contentSourceSettings);
-            return $this->pageFetcher->getRandomPool(20, $filters);
-        });
+        return $this->loadOrBuildPool(
+            $cacheKey,
+            'notifal_page_pools',
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildPageFilters($contentSourceSettings);
+
+                return $this->pageFetcher->getRandomPool(20, $filters);
+            }
+        );
     }
 
     /**
@@ -456,15 +543,71 @@ class ContentSourceService
      * @param array $contentSourceSettings Content source settings
      * @return \WP_Post|null Custom post type data or null if no post found
      * @since 2.0.0
+     * @since 2.3.5 Updated to persist shown custom post type sources per visitor session.
      */
     public function getRandomCustomPostType(string $postType, array $contentSourceSettings = [])
     {
+        $pool = $this->getCustomPostTypePool($postType, $contentSourceSettings);
+
+        if (empty($pool)) {
+            return null;
+        }
+
+        $item = $pool[ array_rand( $pool ) ];
+        $this->rememberShownSource('custom_posttype:' . $postType, $item, $contentSourceSettings);
+
+        return $item;
+    }
+
+    /**
+     * Get custom post type pool for deterministic selection and retrigger variants.
+     *
+     * @param string $postType Custom post type slug.
+     * @param array  $contentSourceSettings Content source settings.
+     * @return array<int, \WP_Post> Pool (may be empty).
+     * @since 2.3.5
+     */
+    public function getCustomPostTypePool(string $postType, array $contentSourceSettings = []): array
+    {
         $cacheKey = $this->buildCustomPostTypePoolCacheKey($postType, $contentSourceSettings);
 
-        return $this->getRandomFromPool($cacheKey, 'notifal_custom_posttype_pools', function() use ($postType, $contentSourceSettings) {
-            $filters = $this->filterBuilder->buildCustomPostTypeFilters($postType, $contentSourceSettings);
-            return $this->customPostTypeFetcher->getRandomPool($postType, 20, $filters);
-        });
+        return $this->loadOrBuildPool(
+            $cacheKey,
+            'notifal_custom_posttype_pools',
+            function () use ($postType, $contentSourceSettings) {
+                $filters = $this->filterBuilder->buildCustomPostTypeFilters($postType, $contentSourceSettings);
+
+                return $this->customPostTypeFetcher->getRandomPool($postType, 20, $filters);
+            }
+        );
+    }
+
+    /**
+     * Load a cached content pool or build and store it.
+     *
+     * @param string   $cacheKey Object cache key.
+     * @param string   $cacheGroup Object cache group.
+     * @param callable $fetcher Builds the pool when cache is empty.
+     * @return array<int, mixed> Pool items (may be empty).
+     * @since 2.3.5
+     */
+    private function loadOrBuildPool(string $cacheKey, string $cacheGroup, callable $fetcher): array
+    {
+        $cachedPool = wp_cache_get($cacheKey, $cacheGroup);
+
+        if (is_array($cachedPool)) {
+            return $cachedPool;
+        }
+
+        $pool = $fetcher();
+
+        if (!is_array($pool)) {
+            $pool = [];
+        }
+
+        wp_cache_set($cacheKey, $pool, $cacheGroup, HOUR_IN_SECONDS);
+
+        return $pool;
     }
 
 
@@ -475,7 +618,7 @@ class ContentSourceService
      * @return bool True if pro features are allowed
      * @since 2.0.0
      */
-    private function isProFeatureAllowed(): bool
+    protected function isProFeatureAllowed(): bool
     {
         return $this->checkProFeatureAllowed('notifal_pro_content_source_features');
     }
@@ -504,6 +647,7 @@ class ContentSourceService
      * @param array $formData Form data
      * @return array Parsed content source settings
      * @since 2.0.0
+     * @since 2.3.5 Updated to parse `allow_duplicate_source`.
      */
     public function parseSettings(array $formData): array
     {
@@ -511,6 +655,7 @@ class ContentSourceService
 
         // Content source type
         $settings['content_source_type'] = sanitize_text_field($formData['content_source_type'] ?? 'dynamic');
+        $settings['allow_duplicate_source'] = !empty($formData['allow_duplicate_source']);
 
         // Parse new multiple filters format
         $settings['product_filters'] = $this->isProFeatureAllowed() ? $this->filterBuilder->parseMultipleFilters($formData, 'product') : $this->getDefaultFilters('product');
@@ -560,6 +705,7 @@ class ContentSourceService
      * Sanitize content source settings.
      *
      * @since 2.0.0
+     * @since 2.3.5 Updated to sanitize `allow_duplicate_source`.
      * @param array $settings Raw settings data
      * @return array Sanitized settings
      */
@@ -569,6 +715,7 @@ class ContentSourceService
 
         // Content source type
         $sanitized['content_source_type'] = sanitize_text_field($settings['content_source_type'] ?? 'dynamic');
+        $sanitized['allow_duplicate_source'] = !empty($settings['allow_duplicate_source']);
 
         // Sanitize multiple filters
         $sanitized['product_filters'] = $this->filterBuilder->sanitizeMultipleFilters($settings['product_filters'] ?? []);
@@ -619,7 +766,7 @@ class ContentSourceService
      *
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for order pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildOrderPoolCacheKey(array $contentSourceSettings): string
     {
@@ -632,7 +779,7 @@ class ContentSourceService
      *
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for product pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildProductPoolCacheKey(array $contentSourceSettings): string
     {
@@ -645,7 +792,7 @@ class ContentSourceService
      *
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for user pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildUserPoolCacheKey(array $contentSourceSettings): string
     {
@@ -658,7 +805,7 @@ class ContentSourceService
      *
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for post pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildPostPoolCacheKey(array $contentSourceSettings): string
     {
@@ -671,7 +818,7 @@ class ContentSourceService
      *
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for page pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildPagePoolCacheKey(array $contentSourceSettings): string
     {
@@ -686,7 +833,7 @@ class ContentSourceService
      * @param string $postType The custom post type name
      * @param array $contentSourceSettings Content source settings
      * @return string Cache key for custom post type pool
-     * @since 2.0.0
+     * @since 2.3.5
      */
     private function buildCustomPostTypePoolCacheKey(string $postType, array $contentSourceSettings): string
     {
@@ -1016,5 +1163,174 @@ class ContentSourceService
             default:
                 return 'all';
         }
+    }
+
+    /**
+     * Exclude source items already shown in the current visitor session.
+     *
+     * When all items have been shown, the seen list is reset so rotation can restart.
+     *
+     * @param string $sourceType Source type key (e.g. product, order, custom_posttype:book).
+     * @param array  $pool Source pool.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @return array Filtered pool.
+     * @since 2.3.5
+     */
+    public function excludeSeenSourcesFromPool(string $sourceType, array $pool, array $contentSourceSettings): array
+    {
+        if (empty($pool) || $this->isDuplicateSourceAllowed($contentSourceSettings)) {
+            return $pool;
+        }
+
+        $seenIds = $this->getSeenSourceIds($sourceType, $contentSourceSettings);
+        if (empty($seenIds)) {
+            return $pool;
+        }
+
+        $filteredPool = array_values(array_filter($pool, function ($entity) use ($seenIds) {
+            $entityId = $this->extractEntityId($entity);
+
+            if ($entityId <= 0) {
+                return true;
+            }
+
+            return !in_array($entityId, $seenIds, true);
+        }));
+
+        if (!empty($filteredPool)) {
+            return $filteredPool;
+        }
+
+        $this->setSeenSourceIds($sourceType, $contentSourceSettings, []);
+
+        return $pool;
+    }
+
+    /**
+     * Remember a selected source item in the current visitor session.
+     *
+     * @param string $sourceType Source type key.
+     * @param mixed  $entity Selected entity.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @return void
+     * @since 2.3.5
+     */
+    public function rememberShownSource(string $sourceType, $entity, array $contentSourceSettings): void
+    {
+        if ($this->isDuplicateSourceAllowed($contentSourceSettings)) {
+            return;
+        }
+
+        $entityId = $this->extractEntityId($entity);
+        if ($entityId <= 0) {
+            return;
+        }
+
+        $seenIds = $this->getSeenSourceIds($sourceType, $contentSourceSettings);
+        if (in_array($entityId, $seenIds, true)) {
+            return;
+        }
+
+        $seenIds[] = $entityId;
+        if (count($seenIds) > 500) {
+            $seenIds = array_slice($seenIds, -500);
+        }
+
+        $this->setSeenSourceIds($sourceType, $contentSourceSettings, $seenIds);
+    }
+
+    /**
+     * Check whether duplicate source display is allowed.
+     *
+     * Default is false for backward compatibility.
+     *
+     * @param array $contentSourceSettings Notification content source settings.
+     * @return bool
+     * @since 2.3.5
+     */
+    private function isDuplicateSourceAllowed(array $contentSourceSettings): bool
+    {
+        return !empty($contentSourceSettings['allow_duplicate_source']);
+    }
+
+    /**
+     * Get seen source IDs for a visitor session and source scope.
+     *
+     * @param string $sourceType Source type key.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @return array<int, int>
+     * @since 2.3.5
+     */
+    private function getSeenSourceIds(string $sourceType, array $contentSourceSettings): array
+    {
+        $key = $this->buildSeenSourcesCacheKey($sourceType, $contentSourceSettings);
+        $seenIds = get_transient($key);
+
+        if (!is_array($seenIds)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_map('intval', $seenIds)));
+    }
+
+    /**
+     * Store seen source IDs for a visitor session and source scope.
+     *
+     * @param string $sourceType Source type key.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @param array  $seenIds Seen source IDs.
+     * @return void
+     * @since 2.3.5
+     */
+    private function setSeenSourceIds(string $sourceType, array $contentSourceSettings, array $seenIds): void
+    {
+        $key = $this->buildSeenSourcesCacheKey($sourceType, $contentSourceSettings);
+        set_transient($key, array_values(array_unique(array_map('intval', $seenIds))), DAY_IN_SECONDS);
+    }
+
+    /**
+     * Build transient key for seen sources scoped by visitor session and settings.
+     *
+     * @param string $sourceType Source type key.
+     * @param array  $contentSourceSettings Notification content source settings.
+     * @return string
+     * @since 2.3.5
+     */
+    private function buildSeenSourcesCacheKey(string $sourceType, array $contentSourceSettings): string
+    {
+        $sessionId = Helper::getSessionId();
+
+        // Do not include the toggle in scope hash to keep history stable when toggled.
+        $scopeSettings = $contentSourceSettings;
+        unset($scopeSettings['allow_duplicate_source']);
+
+        $scopeHash = md5(wp_json_encode($scopeSettings));
+        $sourceSlug = sanitize_key(str_replace(':', '_', $sourceType));
+
+        return 'notifal_seen_src_' . md5($sessionId . '|' . $sourceSlug . '|' . $scopeHash);
+    }
+
+    /**
+     * Extract entity ID from supported content source item types.
+     *
+     * @param mixed $entity Content source entity.
+     * @return int
+     * @since 2.3.5
+     */
+    private function extractEntityId($entity): int
+    {
+        if ($entity instanceof \WP_Post) {
+            return (int) $entity->ID;
+        }
+
+        if (is_object($entity) && method_exists($entity, 'getId')) {
+            return (int) $entity->getId();
+        }
+
+        if (is_array($entity) && isset($entity['id'])) {
+            return (int) $entity['id'];
+        }
+
+        return 0;
     }
 } 
