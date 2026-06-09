@@ -7,8 +7,12 @@ use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
 use Notifal\Infrastructure\WordPress\WooCommerce\Support\WooCommerceVariationScriptSupport;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextEnricher;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextHelper;
 use Notifal\Modules\OnPageNotification\Config\Paths as ModulePaths;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
 use Notifal\Shared\Config\Paths;
@@ -526,8 +530,8 @@ class FrontendAssetsRegistrar
      *
      * Provides REST API endpoints, nonces, and localized strings
      * to the frontend JavaScript for proper functionality.
-     * Immediate notifications are fetched asynchronously via the REST API
-     * to avoid blocking page generation with expensive template rendering.
+     * Immediate notifications are preloaded during page generation so they can
+     * render before the eligibility REST request completes.
      *
      * @return void
      * @since 2.0.0
@@ -549,7 +553,7 @@ class FrontendAssetsRegistrar
             'rtl' => is_rtl(),
             'strings' => self::getFrontendStrings(),
             'context' => $currentPageContext,
-            'immediateNotifications' => [],
+            'immediateNotifications' => self::getImmediateNotificationsForPreload($currentPageContext),
             'siteName' => get_bloginfo('name'),
             'analyticsTrackClickClass' => sanitize_html_class(
                 (string) apply_filters(FilterHooks::ONPAGE_ANALYTICS_TRACK_CLICK_CLASS, 'notifal-track-click')
@@ -569,11 +573,59 @@ class FrontendAssetsRegistrar
         if (PluginDetector::isWooCommerceActive()) {
             $config['ajaxAddToCartUrl'] = admin_url('admin-ajax.php');
             $config['ajaxAddToCartNonce'] = wp_create_nonce('notifal_ajax_add_to_cart');
-            // @since 2.3.5 REST endpoint to refresh cart snapshot after Ajax cart changes.
-            $config['cartContextEndpoint'] = rest_url('notifal/v1/onpage/cart-context');
+
+            // @since 2.3.7 Only expose cart REST refresh when an active notification uses cart display rules.
+            $requiresCartContext = CartDisplayRulesUsageChecker::anyActiveNotificationUsesCartRules();
+            $config['requiresCartContext'] = $requiresCartContext;
+
+            if ($requiresCartContext) {
+                // @since 2.3.5 REST endpoint to refresh cart snapshot after Ajax cart changes.
+                $config['cartContextEndpoint'] = rest_url('notifal/v1/onpage/cart-context');
+            }
         }
 
         wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', $config);
+    }
+
+    /**
+     * Preload eligible notifications configured for immediate display.
+     *
+     * @param array $context Current page context for eligibility checks.
+     * @return array Prepared notification payloads for instant frontend rendering.
+     * @since 2.3.7
+     */
+    private static function getImmediateNotificationsForPreload(array $context): array
+    {
+        if (self::isPreviewMode()) {
+            return [];
+        }
+
+        try {
+            $eligibilityService = notifal_app(EligibilityService::class);
+            $eligibleNotifications = $eligibilityService->getEligibleNotifications($context);
+            $immediateNotifications = [];
+
+            foreach ($eligibleNotifications as $notification) {
+                $showTiming = isset($notification['timing']['show_timing'])
+                    ? (string) $notification['timing']['show_timing']
+                    : '';
+
+                if ($showTiming !== 'immediate') {
+                    continue;
+                }
+
+                $immediateNotifications[] = $notification;
+            }
+
+
+            return $immediateNotifications;
+        } catch (\Throwable $exception) {
+            Helper::log(
+                '[Notifal OnPage] Failed to preload immediate notifications: ' . $exception->getMessage()
+            );
+
+            return [];
+        }
     }
 
     /**
@@ -678,6 +730,13 @@ class FrontendAssetsRegistrar
             // WooCommerce product tag archive
             $pageId = get_queried_object_id();
             $postType = 'product_tag';
+        } elseif (is_tax()) {
+            // Custom post type and other taxonomy archives.
+            $term = get_queried_object();
+            if ($term instanceof \WP_Term) {
+                $pageId = (int) $term->term_id;
+                $postType = sanitize_key($term->taxonomy);
+            }
         } elseif (is_archive()) {
             // Other archives
             $pageId = get_queried_object_id();
@@ -695,42 +754,44 @@ class FrontendAssetsRegistrar
             $deviceType = 'mobile';
         }
 
-        // Get taxonomies for categories rules
-        $categories = [];
-        $productCategories = [];
-        if ($pageId && $postType) {
-            if (in_array($postType, ['post', 'page'])) {
-                $terms = wp_get_post_terms($pageId, 'category', ['fields' => 'ids']);
-                $categories = is_array($terms) ? $terms : [];
-            }
-            if ($postType === 'product') {
-                $terms = wp_get_post_terms($pageId, 'product_cat', ['fields' => 'ids']);
-                $productCategories = is_array($terms) ? $terms : [];
-            }
-            // Handle category archive pages
-            if ($postType === 'category') {
-                $categories = [$pageId];
-            }
-            if ($postType === 'product_category') {
-                $productCategories = [$pageId];
+        // Build base context; taxonomy fields are enriched for all singular post types below.
+        $archiveTaxonomy = '';
+        if (function_exists('is_tax') && is_tax()) {
+            $term = get_queried_object();
+            if ($term instanceof \WP_Term) {
+                $archiveTaxonomy = sanitize_key($term->taxonomy);
             }
         }
 
-        // Build context array
         $context = [
             'page_id' => $pageId,
             'url' => $url,
             'post_type' => $postType,
+            'archive_taxonomy' => $archiveTaxonomy,
             'device_type' => $deviceType,
             'user_id' => get_current_user_id(),
             'is_logged_in' => is_user_logged_in(),
             'is_admin' => current_user_can('manage_options'),
             'timestamp' => current_time('timestamp'),
             'locale' => get_locale(),
-            'categories' => $categories,
-            'product_categories' => $productCategories,
+            'categories' => [],
+            'product_categories' => [],
             'user_roles' => is_user_logged_in() ? wp_get_current_user()->roles : [],
+            'is_front_page' => is_front_page(),
+            'is_posts_home' => is_home() && !is_front_page(),
+            'is_shop_page' => function_exists('is_shop') && is_shop(),
+            'is_cart_page' => function_exists('is_cart') && is_cart(),
+            'is_checkout_page' => function_exists('is_checkout') && is_checkout(),
+            'is_account_page' => function_exists('is_account_page') && is_account_page(),
+            'is_singular_query' => is_singular()
+                && !is_page()
+                && !is_front_page()
+                && !(is_home() && !is_front_page())
+                && !(function_exists('is_shop') && is_shop()),
         ];
+
+        $context = (new PageContextEnricher())->enrich($context);
+        $context = PageContextHelper::attachSmartTargetingViewFlags($context);
 
         /**
          * Filter the current page context data passed to frontend JavaScript.

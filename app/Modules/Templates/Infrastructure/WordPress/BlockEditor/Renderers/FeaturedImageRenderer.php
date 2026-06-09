@@ -265,15 +265,8 @@ class FeaturedImageRenderer {
         string $responsive_css,
         int $block_instance
     ): string {
-        // Resolve auto source based on template content in template preview mode.
-        $resolvedSource = $image_attrs['preview_image_source'];
-        if ($resolvedSource === 'auto' && self::isTemplatePreviewMode()) {
-            $templatePost = get_post(get_the_ID());
-            if ($templatePost instanceof \WP_Post) {
-                $templateContent = ContentExtractor::extractFromBlockTemplate($templatePost);
-                $resolvedSource = FeaturedImageAutoSourceResolver::resolve($templateContent);
-            }
-        }
+        // Resolve auto source from template tags (editor preview + live notification render).
+        $resolvedSource = self::resolvePreviewImageSource($image_attrs['preview_image_source']);
 
         // Start output buffering for clean HTML generation
         ob_start();
@@ -305,6 +298,69 @@ class FeaturedImageRenderer {
 
         // Return clean HTML output
         return ob_get_clean();
+    }
+
+    /**
+     * Resolve preview image source, expanding "auto" from template tag usage.
+     *
+     * Mirrors Elementor Product Image widget behavior so comment-only templates
+     * resolve to the comment source instead of unrelated post/product keys.
+     *
+     * @param string $previewSource Block attribute value ('auto', 'post', 'comment', etc.).
+     * @return string Effective source passed to FeaturedImageResolver.
+     * @since 2.0.0
+     */
+    private static function resolvePreviewImageSource(string $previewSource): string
+    {
+        // Keep explicit user-selected sources unchanged
+        if ($previewSource !== 'auto') {
+            return $previewSource;
+        }
+
+        // Read template content and map tags to an effective image source
+        $templateContent = self::getTemplateContentForAutoResolution();
+        if ($templateContent === '') {
+            return 'auto';
+        }
+
+        return FeaturedImageAutoSourceResolver::resolve($templateContent);
+    }
+
+    /**
+     * Load raw template content for auto featured-image source resolution.
+     *
+     * @return string Template content or empty string when unavailable.
+     * @since 2.3.7
+     */
+    private static function getTemplateContentForAutoResolution(): string
+    {
+        // During notification rendering, raw template content is already in widget context
+        if (WidgetContextProvider::isActive()) {
+            $context = WidgetContextProvider::getContext();
+
+            if (!empty($context['template_content']) && is_string($context['template_content'])) {
+                return $context['template_content'];
+            }
+
+            $templateId = isset($context['template_id']) ? absint($context['template_id']) : 0;
+            if ($templateId > 0) {
+                $templatePost = get_post($templateId);
+                if ($templatePost instanceof \WP_Post) {
+                    return ContentExtractor::extractFromBlockTemplate($templatePost);
+                }
+            }
+        }
+
+        // Editor / template preview: use the post currently being edited or previewed
+        $currentPostId = get_the_ID();
+        if ($currentPostId > 0) {
+            $templatePost = get_post($currentPostId);
+            if ($templatePost instanceof \WP_Post) {
+                return ContentExtractor::extractFromBlockTemplate($templatePost);
+            }
+        }
+
+        return '';
     }
 
     /**

@@ -42,6 +42,20 @@ trait SettingsServiceTrait
     }
 
     /**
+     * Sanitize signed integer value without min/max clamping.
+     *
+     * Used for position offset fields where negative values are valid.
+     *
+     * @since 2.3.7
+     * @param mixed $value Input value.
+     * @return int Sanitized integer.
+     */
+    protected function sanitizeSignedInteger($value): int
+    {
+        return (int) $value;
+    }
+
+    /**
      * Sanitize float value within range
      *
      * @since 2.0.0

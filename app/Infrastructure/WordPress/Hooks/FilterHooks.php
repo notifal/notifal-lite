@@ -345,6 +345,42 @@ class FilterHooks {
     public const ONPAGE_CONTENT_SOURCE_SANITIZED_SETTINGS = 'notifal/onpage/content_source/sanitized_settings';
 
     /**
+     * Filter entity-specific content source filters before pool queries run.
+     *
+     * @param array  $filters     Built filters for the entity type.
+     * @param string $entity_type Entity scope (product, order, post, page, comment, custom_posttype:{slug}).
+     * @param array  $settings    Notification content source settings.
+     * @param array  $page_context Current visitor page context.
+     * @return array Modified filters.
+     * @since 2.3.7
+     */
+    public const ONPAGE_CONTENT_SOURCE_ENTITY_FILTERS = 'notifal/onpage/content_source/entity_filters';
+
+    /**
+     * Extend content source pool cache keys (e.g. smart targeting page context).
+     *
+     * @param string $cache_key    Base cache key.
+     * @param string $entity_type  Entity scope key.
+     * @param array  $settings     Content source settings.
+     * @param array  $page_context Current visitor page context.
+     * @return string Modified cache key.
+     * @since 2.3.7
+     */
+    public const ONPAGE_CONTENT_SOURCE_POOL_CACHE_KEY = 'notifal/onpage/content_source/pool_cache_key';
+
+    /**
+     * Resolve a content source pool with optional multi-phase logic.
+     *
+     * Return an array to bypass default pool loading; return null to use core loader.
+     *
+     * @param array|null $pool    Pre-resolved pool when provided by a filter.
+     * @param array      $context Resolver context (entity_type, settings, cache_key, cache_group, fetcher, page_context).
+     * @return array|null Resolved pool or null to defer to core.
+     * @since 2.3.7
+     */
+    public const ONPAGE_CONTENT_SOURCE_RESOLVE_POOL = 'notifal/onpage/content_source/resolve_pool';
+
+    /**
      * Filter the size of the product pool for pool-based caching.
      *
      * Allows developers to modify the number of products fetched
@@ -417,6 +453,69 @@ class FilterHooks {
      * @since 2.0.0
      */
     public const ONPAGE_ORDER_POOL_TIMEOUT = 'notifal/onpage/order_pool/timeout';
+
+    /**
+     * Filter the cached order count used by the {order_counter} tag.
+     *
+     * @param int   $count Matching order count.
+     * @param array $content_source_settings Content source settings.
+     * @param array $filters Built order filters.
+     * @return int Modified order count.
+     * @since 2.3.7
+     */
+    public const ONPAGE_ORDER_COUNT = 'notifal/onpage/order_count';
+
+    /**
+     * Filter the cache timeout for filtered order counts.
+     *
+     * @param int   $timeout Cache timeout in seconds (default: 1 hour).
+     * @param array $content_source_settings Content source settings.
+     * @return int Modified timeout in seconds.
+     * @since 2.3.7
+     */
+    public const ONPAGE_ORDER_COUNT_CACHE_TIMEOUT = 'notifal/onpage/order_count/cache_timeout';
+
+    /**
+     * Filter the cached product count used by the {product_counter} tag.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_PRODUCT_COUNT = 'notifal/onpage/product_count';
+
+    /**
+     * Filter the cached post count used by the {post_counter} tag.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_POST_COUNT = 'notifal/onpage/post_count';
+
+    /**
+     * Filter the cached page count used by the {page_counter} tag.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_PAGE_COUNT = 'notifal/onpage/page_count';
+
+    /**
+     * Filter the cached comment count used by the {comment_counter} tag.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_COMMENT_COUNT = 'notifal/onpage/comment_count';
+
+    /**
+     * Filter the cached custom post type count used by {custom_posttype_counter_{post_type}}.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_CUSTOM_POSTTYPE_COUNT = 'notifal/onpage/custom_posttype_count';
+
+    /**
+     * Filter cache timeout for all content-source counter tags.
+     *
+     * @since 2.3.7
+     */
+    public const ONPAGE_CONTENT_SOURCE_COUNT_CACHE_TIMEOUT = 'notifal/onpage/content_source_count/cache_timeout';
 
     /**
      * Filter toast type before redirecting.
@@ -1478,6 +1577,39 @@ class FilterHooks {
     public const ONPAGE_FRONTEND_CONTEXT = 'notifal/onpage/frontend/context';
 
     /**
+     * Filters archive pseudo post_type slugs used in OnPage visitor context detection.
+     *
+     * @param string[] $postTypes Archive context post type slugs.
+     * @return string[]
+     * @since 2.3.7
+     */
+    public const ONPAGE_ARCHIVE_CONTEXT_POST_TYPES = 'notifal/onpage/archive_context_post_types';
+
+    /**
+     * Filters singular post type slugs excluded from OnPage smart targeting.
+     *
+     * The core `page` post type is excluded by default because WordPress pages are
+     * structural routes, not taxonomy-backed content queries.
+     *
+     * @param string[] $postTypes Excluded singular post type slugs.
+     * @return string[]
+     * @since 2.3.7
+     */
+    public const ONPAGE_SMART_TARGETING_EXCLUDED_SINGULAR_POST_TYPES = 'notifal/onpage/smart_targeting_excluded_singular_post_types';
+
+    /**
+     * Filters whether Smart Targeting admin UI should be visible for a notification.
+     *
+     * Pro uses this to hide settings when the selected template only contains page tags.
+     *
+     * @param bool                 $isVisible        Default visibility flag.
+     * @param array<string, mixed> $notificationData Notification edit payload.
+     * @return bool
+     * @since 2.3.7
+     */
+    public const ONPAGE_SMART_TARGETING_UI_VISIBLE = 'notifal/onpage/smart_targeting_ui_visible';
+
+    /**
      * Filters client-side user display rules attached to a notification frontend payload.
      *
      * Used for visit-history constraints (new / return / first session) evaluated in JS.
@@ -1511,6 +1643,18 @@ class FilterHooks {
      * @author Hossein <hossein@notifal.com>
      */
     public const ONPAGE_WOOCOMMERCE_CART_CONTEXT = 'notifal/onpage/woocommerce/cart_context';
+
+    /**
+     * Filters cart-derived product IDs before content source pool building.
+     *
+     * @param int[]                $productIds Resolved product IDs.
+     * @param array<string, mixed> $condition  Cart filter condition.
+     * @param array<string, mixed> $cart       Cart snapshot.
+     * @return int[]
+     * @since 2.3.9
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_CART_PRODUCT_POOL_IDS = 'notifal/onpage/content_source/cart_product_pool_ids';
 
     /**
      * Filters the dynamic tag context data for OnPage notifications.

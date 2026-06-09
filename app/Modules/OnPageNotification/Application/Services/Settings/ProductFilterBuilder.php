@@ -101,9 +101,38 @@ class ProductFilterBuilder extends BaseFilterBuilder
                     'start_date' => $data['start_date'] ?? '',
                     'end_date' => $data['end_date'] ?? ''
                 ];
+
+            case 'cart':
+                // Require at least one cart source toggle.
+                if (!self::hasEnabledCartToggle($data)) {
+                    return null;
+                }
+
+                return [
+                    'type' => 'cart',
+                    'cart_products' => !empty($data['cart_products']),
+                    'related_cart_products' => !empty($data['related_cart_products']),
+                    'upsell_cart_products' => !empty($data['upsell_cart_products']),
+                    'cross_sell_cart_products' => !empty($data['cross_sell_cart_products']),
+                ];
         }
 
         return null;
+    }
+
+    /**
+     * Determine whether a cart filter has at least one enabled source toggle.
+     *
+     * @param array<string, mixed> $data Cart filter condition data.
+     * @return bool
+     * @since 2.3.9
+     */
+    private static function hasEnabledCartToggle(array $data): bool
+    {
+        return !empty($data['cart_products'])
+            || !empty($data['related_cart_products'])
+            || !empty($data['upsell_cart_products'])
+            || !empty($data['cross_sell_cart_products']);
     }
 
     /**
@@ -185,6 +214,21 @@ class ProductFilterBuilder extends BaseFilterBuilder
             case 'custom_meta':
                 return [
                     'custom_filter' => $data['custom_filter'] ?? ''
+                ];
+
+            case 'cart':
+                return [
+                    'multiple_filters' => true,
+                    'logic' => 'AND',
+                    'conditions' => [
+                        [
+                            'type' => 'cart',
+                            'cart_products' => !empty($data['cart_products']),
+                            'related_cart_products' => !empty($data['related_cart_products']),
+                            'upsell_cart_products' => !empty($data['upsell_cart_products']),
+                            'cross_sell_cart_products' => !empty($data['cross_sell_cart_products']),
+                        ],
+                    ],
                 ];
 
             default:

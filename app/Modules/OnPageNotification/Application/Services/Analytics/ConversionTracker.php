@@ -222,15 +222,18 @@ class ConversionTracker
             ? ''
             : (string) $order->get_meta('_notifal_session_id', true);
 
+        // Include parent product IDs so variation line items match Post Link product clicks
+        $lookupProductIds = $this->expandProductIdsForClickLookup($productIds);
+
         // Find attributed clicks for all products in a single query
-        $attributedClicks = $this->findAttributedProductClicksBulk($productIds, (int) $order->get_user_id(), $guestSessionId);
+        $attributedClicks = $this->findAttributedProductClicksBulk($lookupProductIds, (int) $order->get_user_id(), $guestSessionId);
 
         // Track how many conversions were actually persisted for this order
         $conversionsRecorded = 0;
 
         // Process each product
         foreach ($productData as $productId => $data) {
-            $productClicks = $attributedClicks[$productId] ?? [];
+            $productClicks = $this->resolveAttributedClicksForOrderProductId((int) $productId, $attributedClicks);
 
             if (empty($productClicks)) {
                 // No specific product clicks found - try fallback attribution
@@ -756,15 +759,15 @@ class ConversionTracker
             $date = current_time('Y-m-d');
             $this->databaseRepository->updateDailyStats($conversionData['notification_id'], 'conversion', $date);
 
-            // Update clicked revenue only when we have a real product-click match.
-            // Fallback/cookie-based influence must not increase clicked revenue.
+            // Clicked revenue: line subtotal (price × qty) for the matched product click only.
             $revenue = (float)($conversionData['product_revenue'] ?? 0);
             $productClickId = (int) ($conversionData['product_click_id'] ?? 0);
             if ($revenue > 0 && $productClickId > 0) {
                 $this->updateDailyRevenue($conversionData['notification_id'], $revenue, $date);
             }
 
-            // Update daily influenced revenue (total order value) and influenced orders count (since 2.3.0)
+            // Influenced revenue: full order total whenever the order is attributed (clicked or influence-only).
+            // updateDailyInfluencedRevenue deduplicates so multi-line orders count the order total once.
             $totalOrderValue = (float)($conversionData['total_order_value'] ?? 0);
             $orderId         = (int)($conversionData['order_id'] ?? 0);
             if ($totalOrderValue > 0 && $orderId > 0) {
@@ -1272,12 +1275,37 @@ class ConversionTracker
             return null;
         }
 
+        $candidateIds = $this->expandProductIdsForClickLookup([$productId]);
+
+        foreach ($candidateIds as $candidateId) {
+            $row = $this->fetchStoredProductClickRow((int) $candidateId, $userId, $sessionId, $notificationId);
+
+            if (is_array($row)) {
+                return $row;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Fetch the latest stored product click row for a single product ID.
+     *
+     * @param int    $productId      Product ID stored on the click row
+     * @param int    $userId         WordPress user ID
+     * @param string $sessionId      Guest session ID from order meta
+     * @param int    $notificationId Notification ID
+     * @return array<string, mixed>|null
+     * @since 2.3.9
+     */
+    private function fetchStoredProductClickRow(int $productId, int $userId, string $sessionId, int $notificationId): ?array
+    {
         global $wpdb;
 
         $tables = $this->databaseRepository->getTableNames();
         $table  = $tables['product_clicks'] ?? '';
 
-        if (empty($table)) {
+        if ($productId <= 0 || $notificationId <= 0 || empty($table)) {
             return null;
         }
 
@@ -1380,21 +1408,24 @@ class ConversionTracker
         $productIds = array_values(array_unique(array_filter($productIds)));
 
         if (!empty($productIds)) {
-            // Match pending product clicks using the checkout session ID
+            // Match pending product clicks using the checkout session ID (includes parent product IDs)
+            $lookupProductIds = $this->expandProductIdsForClickLookup($productIds);
             $attributedClicks = $this->findAttributedProductClicksBulk(
-                $productIds,
+                $lookupProductIds,
                 (int) $order->get_user_id(),
                 $sessionId
             );
 
-            foreach ($attributedClicks as $productId => $clicks) {
+            foreach ($productIds as $orderProductId) {
+                $clicks = $this->resolveAttributedClicksForOrderProductId((int) $orderProductId, $attributedClicks);
+
                 if (empty($clicks[0])) {
                     continue;
                 }
 
                 $clickRow = $clicks[0];
                 $notificationId = (int) ($clickRow['notification_id'] ?? 0);
-                $dedupeKey = $notificationId . '_' . (int) $productId;
+                $dedupeKey = $notificationId . '_' . (int) $orderProductId;
 
                 if ($notificationId <= 0 || isset($seenKeys[$dedupeKey])) {
                     continue;
@@ -1403,7 +1434,7 @@ class ConversionTracker
                 $seenKeys[$dedupeKey] = true;
                 $pendingRows[] = [
                     'notification_id' => $notificationId,
-                    'product_id' => (int) $productId,
+                    'product_id' => (int) $orderProductId,
                     'product_revenue' => 0.0,
                     'total_order_value' => $this->resolveOrderTotalValue($order),
                     'attribution_type' => 'pending_product_click',
@@ -1441,6 +1472,20 @@ class ConversionTracker
                 : time();
 
             if (!$this->isWithinAttributionWindow((int) $clickTimestamp)) {
+                continue;
+            }
+
+            // Skip cookie influence when this notification already has a product click row
+            $hasProductClickForNotification = false;
+
+            foreach ($seenKeys as $seenKey => $seenValue) {
+                if (strpos((string) $seenKey, $notificationId . '_') === 0 && $seenKey !== $notificationId . '_0') {
+                    $hasProductClickForNotification = true;
+                    break;
+                }
+            }
+
+            if ($hasProductClickForNotification) {
                 continue;
             }
 
@@ -1577,6 +1622,87 @@ class ConversionTracker
          * @param string $status New status
          */
         do_action(ActionHooks::ONPAGE_CONVERSION_STATUS_UPDATED, $orderId, $status);
+    }
+
+    /**
+     * Expand order product IDs with parent IDs for variable products.
+     *
+     * Post Link clicks store the parent product ID while orders may contain variation IDs.
+     *
+     * @param array<int> $productIds Order line product IDs
+     * @return array<int> Unique product and parent IDs for click lookup
+     * @since 2.3.9
+     */
+    private function expandProductIdsForClickLookup(array $productIds): array
+    {
+        $expanded = [];
+
+        foreach ($productIds as $productId) {
+            $productId = (int) $productId;
+
+            if ($productId <= 0) {
+                continue;
+            }
+
+            $expanded[$productId] = $productId;
+
+            if (!function_exists('wc_get_product')) {
+                continue;
+            }
+
+            $product = wc_get_product($productId);
+
+            if (!$product || !$product->is_type('variation')) {
+                continue;
+            }
+
+            $parentId = (int) $product->get_parent_id();
+
+            if ($parentId > 0) {
+                $expanded[$parentId] = $parentId;
+            }
+        }
+
+        return array_values($expanded);
+    }
+
+    /**
+     * Resolve attributed product clicks for an order line item.
+     *
+     * Falls back to the parent product ID when the click was stored against a variable product parent.
+     *
+     * @param int   $orderProductId   Product or variation ID from the order line
+     * @param array $attributedClicks Clicks grouped by stored product_id
+     * @return array<int, array<string, mixed>> Matching click rows
+     * @since 2.3.9
+     */
+    private function resolveAttributedClicksForOrderProductId(int $orderProductId, array $attributedClicks): array
+    {
+        if ($orderProductId <= 0) {
+            return [];
+        }
+
+        if (!empty($attributedClicks[$orderProductId])) {
+            return $attributedClicks[$orderProductId];
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return [];
+        }
+
+        $product = wc_get_product($orderProductId);
+
+        if (!$product || !$product->is_type('variation')) {
+            return [];
+        }
+
+        $parentId = (int) $product->get_parent_id();
+
+        if ($parentId > 0 && !empty($attributedClicks[$parentId])) {
+            return $attributedClicks[$parentId];
+        }
+
+        return [];
     }
 
     /**

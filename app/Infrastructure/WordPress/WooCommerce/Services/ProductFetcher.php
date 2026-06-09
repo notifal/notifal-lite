@@ -6,6 +6,7 @@ use Notifal\Domain\Products\ProductFetcherInterface;
 use Notifal\Domain\Products\DTO\ProductDTO;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\CartProductPoolResolver;
 use Notifal\Shared\Utils\FilterHelper;
 use WP_Query;
 use WC_Product;
@@ -59,6 +60,17 @@ class ProductFetcher implements ProductFetcherInterface
         // Ensure we don't fetch too many products (performance limit)
         $count = max(1, min($count, 50));
 
+        // Resolve cart-aware filters directly from the live cart snapshot.
+        if ($this->filtersContainCartCondition($filters)) {
+            $productIds = $this->resolveProductIdsFromFilters($filters);
+
+            if (empty($productIds)) {
+                return [];
+            }
+
+            return $this->buildPoolFromIds($productIds, $count);
+        }
+
         $mustMatchLiveSale = $this->mustValidateSaleAgainstWooCommerce($filters);
         // Widen the SQL candidate set when we will drop rows that fail WC_Product::is_on_sale() (scheduled sale windows, etc.).
         $postsPerPage = $mustMatchLiveSale
@@ -106,6 +118,47 @@ class ProductFetcher implements ProductFetcherInterface
         }
 
         return $products;
+    }
+
+    /**
+     * Count products matching the provided filters.
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching product count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int
+    {
+        // Return zero when WooCommerce is unavailable.
+        if (!PluginDetector::isWooCommerceActive()) {
+            return 0;
+        }
+
+        // Count cart-derived pools without running a broad catalog query.
+        if ($this->filtersContainCartCondition($filters)) {
+            return count($this->resolveProductIdsFromFilters($filters));
+        }
+
+        // Query all matching product IDs.
+        $args = [
+            'post_type'      => 'product',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'post_status'    => 'publish',
+        ];
+
+        // Apply the same filters used by pool fetching.
+        $args = $this->applyFilters($args, $filters);
+
+        $query   = new \WP_Query($args);
+        $postIds = is_array($query->posts) ? $query->posts : [];
+
+        // Re-validate sale-only filters against live WooCommerce state.
+        if ($this->mustValidateSaleAgainstWooCommerce($filters)) {
+            $postIds = $this->filterPostIdsByLiveOnSale($postIds, PHP_INT_MAX);
+        }
+
+        return count($postIds);
     }
 
     /**
@@ -767,5 +820,156 @@ class ProductFetcher implements ProductFetcherInterface
         }
 
         return $dateQuery;
+    }
+
+    /**
+     * Determine whether filter conditions include a cart product source.
+     *
+     * @param array<string, mixed> $filters Product filter configuration.
+     * @return bool
+     * @since 2.3.9
+     */
+    private function filtersContainCartCondition(array $filters): bool
+    {
+        $conditions = $filters['conditions'] ?? [];
+
+        foreach ($conditions as $condition) {
+            if (!is_array($condition)) {
+                continue;
+            }
+
+            if (($condition['type'] ?? '') === 'cart') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Resolve product IDs for multi-filter configurations that include cart conditions.
+     *
+     * @param array<string, mixed> $filters Product filter configuration.
+     * @return int[]
+     * @since 2.3.9
+     */
+    private function resolveProductIdsFromFilters(array $filters): array
+    {
+        $conditions = $filters['conditions'] ?? [];
+        $logic = strtoupper((string) ($filters['logic'] ?? 'AND'));
+
+        if (empty($conditions)) {
+            return [];
+        }
+
+        $resultSets = [];
+
+        foreach ($conditions as $condition) {
+            if (!is_array($condition)) {
+                continue;
+            }
+
+            $resultSets[] = $this->resolveProductIdsForCondition($condition);
+        }
+
+        if (empty($resultSets)) {
+            return [];
+        }
+
+        if ($logic === 'OR') {
+            $merged = [];
+
+            foreach ($resultSets as $resultSet) {
+                $merged = array_merge($merged, $resultSet);
+            }
+
+            return array_values(array_unique(array_map('intval', $merged)));
+        }
+
+        $intersection = $resultSets[0];
+
+        for ($index = 1, $count = count($resultSets); $index < $count; $index++) {
+            if (empty($resultSets[$index])) {
+                return [];
+            }
+
+            $intersection = array_values(array_intersect($intersection, $resultSets[$index]));
+        }
+
+        return array_values(array_map('intval', $intersection));
+    }
+
+    /**
+     * Resolve product IDs for one filter condition.
+     *
+     * @param array<string, mixed> $condition Single filter condition.
+     * @return int[]
+     * @since 2.3.9
+     */
+    private function resolveProductIdsForCondition(array $condition): array
+    {
+        $type = (string) ($condition['type'] ?? '');
+
+        if ($type === 'cart') {
+            return CartProductPoolResolver::resolve($condition);
+        }
+
+        $singleFilters = [
+            'multiple_filters' => true,
+            'logic' => 'AND',
+            'conditions' => [$condition],
+        ];
+
+        $args = [
+            'post_type' => 'product',
+            'posts_per_page' => -1,
+            'fields' => 'ids',
+            'post_status' => 'publish',
+        ];
+
+        $args = $this->applyAndLogicFilters($args, $singleFilters);
+
+        if (isset($args['post__in']) && $args['post__in'] === [0]) {
+            return [];
+        }
+
+        $query = new WP_Query($args);
+        $postIds = is_array($query->posts) ? array_map('intval', $query->posts) : [];
+
+        if ($this->mustValidateSaleAgainstWooCommerce($singleFilters)) {
+            $postIds = $this->filterPostIdsByLiveOnSale($postIds, PHP_INT_MAX);
+        }
+
+        return $postIds;
+    }
+
+    /**
+     * Build a product DTO pool from explicit product IDs.
+     *
+     * @param int[] $productIds Resolved product IDs.
+     * @param int   $count      Maximum pool size.
+     * @return ProductDTO[]
+     * @since 2.3.9
+     */
+    private function buildPoolFromIds(array $productIds, int $count): array
+    {
+        if (empty($productIds)) {
+            return [];
+        }
+
+        shuffle($productIds);
+        $productIds = array_slice($productIds, 0, min($count, 50));
+
+        $products = [];
+
+        foreach ($productIds as $productId) {
+            $productDto = $this->buildProductDTO((int) $productId);
+
+            if ($productDto) {
+                $products[] = $productDto;
+            }
+        }
+
+        return $products;
     }
 }

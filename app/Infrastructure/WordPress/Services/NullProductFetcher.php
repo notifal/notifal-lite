@@ -81,4 +81,16 @@ class NullProductFetcher implements ProductFetcherInterface
     {
         return null;
     }
+
+    /**
+     * Always returns zero as no WooCommerce products are available.
+     *
+     * @param array $filters Optional filters to apply (ignored).
+     * @return int Always returns 0.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int
+    {
+        return 0;
+    }
 }

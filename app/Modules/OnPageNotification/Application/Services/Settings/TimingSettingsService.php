@@ -478,7 +478,12 @@ class TimingSettingsService
     {
         // Sanitize all settings first
         $sanitized = $this->sanitizeSettings($settings);
-        
+
+        // Immediate show must never carry a delay value into the frontend payload.
+        if (($sanitized['show_timing'] ?? '') === 'immediate') {
+            $sanitized['delay_seconds'] = 0;
+        }
+
         // Return flattened structure for frontend compatibility
         return $sanitized;
     }

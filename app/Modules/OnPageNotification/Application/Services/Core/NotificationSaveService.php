@@ -4,6 +4,7 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Shared\Utils\Helper;
@@ -124,6 +125,8 @@ class NotificationSaveService
             // Save meta data
             $this->saveMetaData($postId, $sanitizedData);
 
+            // @since 2.3.7 Invalidate cart rules usage cache when display rules may have changed.
+            CartDisplayRulesUsageChecker::clearCache();
 
             // Fire action hooks
             do_action(ActionHooks::ONPAGE_NOTIFICATION_SAVED, $postId, $sanitizedData);

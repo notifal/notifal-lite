@@ -70,31 +70,132 @@ class ApiRegistrar
             'methods'             => 'GET',
             'callback'            => [new OnPageNotificationApiController(), 'getEligibleNotifications'],
             'permission_callback' => '__return_true',
-            'args'                => [
-                'page_id' => [
-                    'required'          => false,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                    'validate_callback' => function ($param) {
-                        return $param > 0;
-                    },
-                ],
-                'url' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'sanitize_callback' => 'esc_url_raw',
-                ],
-                'user_id' => [
-                    'required'          => false,
-                    'type'              => 'integer',
-                    'sanitize_callback' => 'absint',
-                ],
-                'device_type' => [
-                    'required'          => false,
-                    'type'              => 'string',
-                    'enum'              => ['desktop', 'mobile', 'tablet'],
-                    'default'           => 'desktop',
-                ],
+            'args'                => self::getEligibleContextRouteArgs(),
+        ];
+    }
+
+    /**
+     * Shared REST args for visitor page context used by the eligible endpoint.
+     *
+     * WordPress REST ignores unregistered query params, so smart targeting fields
+     * such as post_type and categories must be declared here.
+     *
+     * @return array<string, array<string, mixed>>
+     * @since 2.3.7
+     */
+    private static function getEligibleContextRouteArgs(): array
+    {
+        return [
+            'page_id' => [
+                'required'          => false,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+                'validate_callback' => static function ($param) {
+                    return $param > 0;
+                },
+            ],
+            'url' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'esc_url_raw',
+            ],
+            'user_id' => [
+                'required'          => false,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+            ],
+            'device_type' => [
+                'required'          => false,
+                'type'              => 'string',
+                'enum'              => ['desktop', 'mobile', 'tablet'],
+                'default'           => 'desktop',
+            ],
+            'post_type' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'archive_taxonomy' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_key',
+            ],
+            'categories' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'product_categories' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'user_roles' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'cache_bust' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'refresh' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'refresh_notification_id' => [
+                'required'          => false,
+                'type'              => 'integer',
+                'sanitize_callback' => 'absint',
+            ],
+            'force_fresh_content' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'client_seen_sources' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => static function ($value) {
+                    return is_string($value) ? wp_unslash($value) : '';
+                },
+            ],
+            'is_front_page' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_posts_home' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_shop_page' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_cart_page' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_checkout_page' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_account_page' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
+            ],
+            'is_singular_query' => [
+                'required'          => false,
+                'type'              => 'string',
+                'sanitize_callback' => 'sanitize_text_field',
             ],
         ];
     }

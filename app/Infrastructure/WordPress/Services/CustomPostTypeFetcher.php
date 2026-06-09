@@ -47,6 +47,19 @@ class CustomPostTypeFetcher extends BaseContentFetcher
     }
 
     /**
+     * Count custom post type items matching the provided filters.
+     *
+     * @param string $postType The custom post type name.
+     * @param array  $filters Optional filters to apply.
+     * @return int Total matching item count.
+     * @since 2.3.7
+     */
+    public function count(string $postType, array $filters = []): int
+    {
+        return $this->countContent($postType, $filters);
+    }
+
+    /**
      * Find a custom post type item by its ID.
      *
      * @param int $id Post ID.

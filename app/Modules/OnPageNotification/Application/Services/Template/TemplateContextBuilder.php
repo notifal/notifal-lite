@@ -5,6 +5,8 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 use Notifal\Modules\Templates\Application\Services\PreviewDataResolver;
 use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Modules\OnPageNotification\Application\Services\Tag\FrontendTagContextBuilder;
+use Notifal\Modules\OnPageNotification\Application\Support\ContentSourceRequestContext;
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 
 defined('ABSPATH') || exit;
 
@@ -89,6 +91,13 @@ class TemplateContextBuilder
         if (isset($context['notifal_pool_variant_index']) && is_numeric($context['notifal_pool_variant_index'])) {
             $contextKeyParts['pool_variant_index'] = (int) $context['notifal_pool_variant_index'];
         }
+        // Pin a unique cache entry per pre-rendered retrigger variant and smart targeting phase.
+        if (!empty($context['notifal_pool_entity_id'])) {
+            $contextKeyParts['pool_entity_id'] = (int) $context['notifal_pool_entity_id'];
+        }
+        if (!empty($context['smart_targeting_forced_phase'])) {
+            $contextKeyParts['forced_phase'] = sanitize_key((string) $context['smart_targeting_forced_phase']);
+        }
         $cacheKey = 'notifal_context_' . md5(serialize($contextKeyParts));
 
         // Check if we already built context for this exact combination (request-scoped)
@@ -115,7 +124,22 @@ class TemplateContextBuilder
             'request_id' => $requestId
         ]);
 
-        $frontendContext = $this->contextBuilder->buildContext($contentSourceSettings, $pageContext);
+        /**
+         * Filter page context before content source resolution.
+         *
+         * @param array $pageContext Page context array.
+         * @since 2.3.7
+         */
+        $pageContext = apply_filters(FilterHooks::ONPAGE_FRONTEND_CONTEXT, $pageContext);
+
+        // Expose page context to content source services during this resolution pass.
+        ContentSourceRequestContext::setPageContext($pageContext);
+
+        try {
+            $frontendContext = $this->contextBuilder->buildContext($contentSourceSettings, $pageContext);
+        } finally {
+            ContentSourceRequestContext::reset();
+        }
 
         // Check if context indicates no matching data due to active filters
         if ($this->hasNoMatchingData($frontendContext)) {

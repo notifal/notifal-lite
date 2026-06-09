@@ -2,7 +2,11 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Tag;
 
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\CartProductPoolResolver;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceFilterBuilder;
+use Notifal\Modules\OnPageNotification\Application\Support\ContentSourceRequestContext;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextHelper;
 use Notifal\Infrastructure\WordPress\WooCommerce\Services\OrderFetcher;
 use Notifal\Infrastructure\WordPress\WooCommerce\Services\ProductFetcher;
 use Notifal\Infrastructure\WordPress\Services\UserFetcher;
@@ -97,6 +101,7 @@ class FrontendTagContextBuilder
      * @param array $pageContext Current page context (user, product, order)
      * @return array Context array for tag resolution
      * @since 2.0.0
+     * @since 2.3.7 Updated to include `content_source_settings` in the returned context for order counter tag resolution.
      */
     public function buildContext(array $contentSourceSettings, array $pageContext = []): array
     {
@@ -104,7 +109,8 @@ class FrontendTagContextBuilder
 
         $context = [
             'is_frontend' => true,
-            'content_source_type' => $contentSourceType
+            'content_source_type' => $contentSourceType,
+            'content_source_settings' => $contentSourceSettings,
         ];
 
         if ($contentSourceType === 'dynamic') {
@@ -206,15 +212,15 @@ class FrontendTagContextBuilder
         // AND ensure the product also matches product restrictions
         $orderItems = $order->getItems();
         if (!empty($orderItems)) {
-            // Get products from order that match product restrictions
-            $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
+            // Prefer the order-filter pinned product (content source or smart targeting).
+            $selectedItem = $this->selectOrderItemForProductContext(
+                $orderItems,
+                $contentSourceSettings,
+                (int) $order->getId()
+            );
 
-            if (!empty($validProducts)) {
-                // Select one product deterministically based on order ID
-                $orderIdSeed = $order->getId() % count($validProducts);
-                $selectedItem = array_values($validProducts)[$orderIdSeed];
-
-                // Store the selected order item for product name consistency with order
+            if ($selectedItem !== null) {
+                // Store the selected order item for product name consistency with order.
                 $context['selected_order_item'] = $selectedItem;
 
                 $product = $this->productFetcher->findById($selectedItem->getProductId());
@@ -222,8 +228,12 @@ class FrontendTagContextBuilder
                     $context['product'] = $product;
                 }
             }
-            // Note: Even if no valid products found, we still return the order
-            // (product tags will just be empty, but order tags will work)
+        }
+
+        // Product tags require a line item that satisfies smart targeting and product restrictions (AND).
+        $templateContent = (string) ($pageContext['template_content'] ?? '');
+        if (!isset($context['product']) && TagDetector::hasProductTags($templateContent)) {
+            return $this->buildFallbackContext($contentSourceSettings, $pageContext);
         }
 
         $context['user'] = $this->getUserForContext($contentSourceSettings, $pageContext, $order);
@@ -233,80 +243,109 @@ class FrontendTagContextBuilder
     }
 
     /**
-     * Find an order that matches order restrictions AND contains at least one product matching product restrictions.
+     * Find an order that matches order restrictions, smart targeting, and product restrictions (AND).
      *
-     * This method gets a pool of orders matching order filters, then iterates through them
-     * to find the first order that also contains products matching product restrictions.
-     * If the first pool doesn't contain valid orders, it tries additional pools.
+     * Uses the contextual order pool from {@see ContentSourceService::getOrderPool()} so smart targeting
+     * and order filters apply consistently, then keeps only orders with eligible line items.
      *
      * @param array $contentSourceSettings Content source settings
      * @param array $pageContext Page context; may include `notifal_pool_variant_index` for retrigger variants
      * @return mixed Order DTO or null if no valid order found
      * @since 2.0.0
      * @since 2.3.5 Added `$pageContext` and pool walk for retrigger variant index.
+     * @since 2.3.9 Resolves orders via contextual pool instead of raw settings filters.
      * @author Hossein <hossein@notifal.com>
      */
     private function findOrderWithValidProducts(array $contentSourceSettings, array $pageContext = [])
     {
-        // Retrigger variant: walk the cached order pool starting at the forced index.
+        // Use the same contextual pool as getConsistentRandomOrder (order + smart targeting filters).
+        $ordersPool = $this->contentSourceService->getOrderPool($contentSourceSettings);
+
+        if (empty($ordersPool)) {
+            return null;
+        }
+
+        // Retrigger variant: walk the cached pool starting at the forced index.
         if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
-            $ordersPool = $this->contentSourceService->getOrderPool($contentSourceSettings);
             $poolCount = count($ordersPool);
-            if ($poolCount > 0) {
-                $startIdx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
-                for ($offset = 0; $offset < $poolCount; $offset++) {
-                    $idx = ($startIdx + $offset) % $poolCount;
-                    $order = $ordersPool[ $idx ];
-                    $orderItems = $order->getItems();
-                    if (empty($orderItems)) {
-                        continue;
-                    }
-                    $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
-                    if (!empty($validProducts)) {
-                        return $order;
-                    }
-                }
-            }
-        }
+            $startIdx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
 
-        // Get a pool of orders matching order restrictions
-        $orderFilters = $contentSourceSettings['order_filters'] ?? [];
-        if (empty($orderFilters)) {
-            // Check legacy format
-            $orderFilters = $this->buildLegacyOrderFilters($contentSourceSettings);
-        }
+            for ($offset = 0; $offset < $poolCount; $offset++) {
+                $idx = ($startIdx + $offset) % $poolCount;
+                $order = $ordersPool[$idx];
 
-        // Adaptive pool strategy: Start small, increase if needed
-        // This balances performance (when matches are common) with consistency (when matches are rare)
-        $poolSizes = [30, 40, 50]; // Progressive pool sizes
-        
-        foreach ($poolSizes as $poolSize) {
-            $ordersPool = $this->orderFetcher->getRandomPool($poolSize, $orderFilters);
-
-            if (empty($ordersPool)) {
-                return null;
-            }
-
-            // Find the first order that contains at least one product matching product restrictions
-            foreach ($ordersPool as $order) {
-                $orderItems = $order->getItems();
-                if (empty($orderItems)) {
-                    continue;
-                }
-
-                $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
-                
-                if (!empty($validProducts)) {
-                    // Found an order with valid products!
+                if ($this->orderHasEligibleProductLineItems($order, $contentSourceSettings)) {
                     return $order;
                 }
             }
-            
-            // No valid order in this pool, try next larger pool
+
+            return null;
         }
 
-        // Tried multiple pools, no valid order found
-        return null;
+        // Keep only orders whose line items satisfy product restrictions and any pinned product scope.
+        $eligibleOrders = [];
+        foreach ($ordersPool as $order) {
+            if ($this->orderHasEligibleProductLineItems($order, $contentSourceSettings)) {
+                $eligibleOrders[] = $order;
+            }
+        }
+
+        if (empty($eligibleOrders)) {
+            return null;
+        }
+
+        // Deterministic selection aligned with getConsistentRandomOrder.
+        $templateId = $pageContext['template_id'] ?? 0;
+        if (!$templateId && isset($pageContext['notification_id'])) {
+            $templateId = $pageContext['notification_id'];
+        }
+
+        $requestId = $pageContext['request_id'] ?? ($_SERVER['REQUEST_TIME_FLOAT'] ?? $_SERVER['REQUEST_TIME'] ?? microtime(true));
+        $cacheKeyParts = $this->buildPoolSelectionCacheKeyParts($contentSourceSettings, $pageContext, $templateId, $requestId);
+        $cacheKey = 'notifal_order_context_' . md5(serialize($cacheKeyParts));
+
+        return $this->selectEntityFromPool($eligibleOrders, $cacheKey, $pageContext, 'order', $contentSourceSettings);
+    }
+
+    /**
+     * Check whether an order contains a line item that satisfies product restrictions and pinned scope.
+     *
+     * When order filters pin products (manual restriction or smart targeting), the line item must
+     * match that scope in addition to product content source restrictions (AND logic).
+     *
+     * @param mixed $order Order DTO.
+     * @param array $contentSourceSettings Content source settings.
+     * @return bool
+     * @since 2.3.9
+     */
+    private function orderHasEligibleProductLineItems($order, array $contentSourceSettings): bool
+    {
+        if (!is_object($order) || !method_exists($order, 'getItems')) {
+            return false;
+        }
+
+        $orderItems = $order->getItems();
+        if (empty($orderItems)) {
+            return false;
+        }
+
+        $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
+        if (empty($validProducts)) {
+            return false;
+        }
+
+        $pinnedProductIds = $this->extractOrderFilterProductIds($contentSourceSettings);
+        if (empty($pinnedProductIds)) {
+            return true;
+        }
+
+        foreach ($validProducts as $item) {
+            if ($this->orderItemMatchesPinnedProducts($item, $pinnedProductIds)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -399,8 +438,11 @@ class FrontendTagContextBuilder
             ($contentSourceSettings['order_filters']['multiple_filters'] ?? false)) {
             $conditions = $contentSourceSettings['order_filters']['conditions'] ?? [];
             foreach ($conditions as $condition) {
-                if (($condition['type'] ?? '') === 'products' && !empty($condition['data']['products'])) {
-                    return true;
+                if (($condition['type'] ?? '') === 'products') {
+                    $ids = $condition['products'] ?? ($condition['data']['products'] ?? []);
+                    if (!empty($ids)) {
+                        return true;
+                    }
                 }
             }
         }
@@ -430,8 +472,11 @@ class FrontendTagContextBuilder
             ($contentSourceSettings['order_filters']['multiple_filters'] ?? false)) {
             $conditions = $contentSourceSettings['order_filters']['conditions'] ?? [];
             foreach ($conditions as $condition) {
-                if (($condition['type'] ?? '') === 'products' && !empty($condition['data']['products'])) {
-                    $productIds = array_merge($productIds, $condition['data']['products']);
+                if (($condition['type'] ?? '') === 'products') {
+                    $ids = $condition['products'] ?? ($condition['data']['products'] ?? []);
+                    if (!empty($ids)) {
+                        $productIds = array_merge($productIds, (array) $ids);
+                    }
                 }
             }
         }
@@ -443,6 +488,115 @@ class FrontendTagContextBuilder
         }
 
         return array_unique($productIds);
+    }
+
+    /**
+     * Resolve product IDs pinned by order content source filters (including smart targeting).
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return array<int, int> Pinned WooCommerce product IDs.
+     * @since 2.3.7
+     */
+    private function extractOrderFilterProductIds(array $contentSourceSettings): array
+    {
+        // Start with saved settings (legacy "orders with products" restriction).
+        $productIds = $this->getFilteredProductIds($contentSourceSettings);
+
+        // Merge runtime-built order filters (includes smart targeting inject).
+        if (function_exists('notifal_app')) {
+            $filterBuilder = notifal_app(ContentSourceFilterBuilder::class);
+            $orderFilters = $filterBuilder->buildOrderFilters($contentSourceSettings);
+
+            if (!empty($orderFilters['products'])) {
+                $productIds = array_merge($productIds, (array) $orderFilters['products']);
+            }
+
+            if (!empty($orderFilters['multiple_filters']) && !empty($orderFilters['conditions'])) {
+                foreach ($orderFilters['conditions'] as $condition) {
+                    if (($condition['type'] ?? '') !== 'products') {
+                        continue;
+                    }
+
+                    $ids = $condition['products'] ?? ($condition['data']['products'] ?? []);
+                    if (!empty($ids)) {
+                        $productIds = array_merge($productIds, (array) $ids);
+                    }
+                }
+            }
+        }
+
+        return array_values(array_unique(array_map('intval', array_filter($productIds))));
+    }
+
+    /**
+     * Pick the order line item used for {product_name} and related product tags.
+     *
+     * When order filters pin specific products, use that product from the order.
+     * When a pinned scope exists but no line item matches, returns null (AND logic).
+     * Otherwise fall back to deterministic selection among valid order items.
+     *
+     * @param array $orderItems Order item DTOs.
+     * @param array $contentSourceSettings Content source settings.
+     * @param int   $orderId Parent order ID used for deterministic fallback.
+     * @return mixed|null Selected order item DTO or null.
+     * @since 2.3.7
+     */
+    private function selectOrderItemForProductContext(array $orderItems, array $contentSourceSettings, int $orderId)
+    {
+        // Keep only items whose products satisfy product content source restrictions.
+        $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
+        if (empty($validProducts)) {
+            return null;
+        }
+
+        // Prefer pinned product IDs from order filters (manual or smart targeting).
+        $pinnedProductIds = $this->extractOrderFilterProductIds($contentSourceSettings);
+        if (!empty($pinnedProductIds)) {
+            foreach ($validProducts as $item) {
+                if ($this->orderItemMatchesPinnedProducts($item, $pinnedProductIds)) {
+                    return $item;
+                }
+            }
+
+            // Pinned scope is active; do not fall back to unrelated products in the same order.
+            return null;
+        }
+
+        // No pinned scope: preserve stable pseudo-random selection per order id.
+        $orderIdSeed = $orderId % count($validProducts);
+        return array_values($validProducts)[$orderIdSeed];
+    }
+
+    /**
+     * Check whether an order item belongs to a pinned product scope.
+     *
+     * @param mixed $item Order item DTO.
+     * @param array<int, int> $pinnedProductIds Pinned product IDs.
+     * @return bool
+     * @since 2.3.7
+     */
+    private function orderItemMatchesPinnedProducts($item, array $pinnedProductIds): bool
+    {
+        if (!is_object($item) || !method_exists($item, 'getProductId')) {
+            return false;
+        }
+
+        $productId = (int) $item->getProductId();
+        if (in_array($productId, $pinnedProductIds, true)) {
+            return true;
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return false;
+        }
+
+        // Variation rows store the variation id on the DTO; also accept pinned parent ids.
+        $product = wc_get_product($productId);
+        if ($product && $product->is_type('variation')) {
+            return in_array((int) $product->get_parent_id(), $pinnedProductIds, true);
+        }
+
+        return false;
     }
 
     /**
@@ -655,15 +809,15 @@ class FrontendTagContextBuilder
             if (isset($context['order'])) {
                 $orderItems = $context['order']->getItems();
                 if (!empty($orderItems)) {
-                    $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
-                    
-                    if (!empty($validProducts)) {
-                        // Select one product deterministically based on order ID
-                        $orderIdSeed = $context['order']->getId() % count($validProducts);
-                        $selectedItem = array_values($validProducts)[$orderIdSeed];
-                        
+                    $selectedItem = $this->selectOrderItemForProductContext(
+                        $orderItems,
+                        $contentSourceSettings,
+                        (int) $context['order']->getId()
+                    );
+
+                    if ($selectedItem !== null) {
                         $context['selected_order_item'] = $selectedItem;
-                        
+
                         $product = $this->productFetcher->findById($selectedItem->getProductId());
                         if ($product) {
                             $context['product'] = $product;
@@ -703,14 +857,13 @@ class FrontendTagContextBuilder
                 if (!isset($context['product'])) {
                     $orderItems = $order->getItems();
                     if (!empty($orderItems)) {
-                        // Get products from order that match product restrictions
-                        $validProducts = $this->getValidProductsFromOrder($orderItems, $contentSourceSettings);
+                        $selectedItem = $this->selectOrderItemForProductContext(
+                            $orderItems,
+                            $contentSourceSettings,
+                            (int) $order->getId()
+                        );
 
-                        if (!empty($validProducts)) {
-                            // Select one product deterministically based on order ID
-                            $orderIdSeed = $order->getId() % count($validProducts);
-                            $selectedItem = array_values($validProducts)[$orderIdSeed];
-
+                        if ($selectedItem !== null) {
                             $context['selected_order_item'] = $selectedItem;
 
                             $product = $this->productFetcher->findById($selectedItem->getProductId());
@@ -921,6 +1074,20 @@ class FrontendTagContextBuilder
      */
     private function buildFallbackContext(array $contentSourceSettings, array $pageContext): array
     {
+        $smartTargetingEnabled = !empty($contentSourceSettings['smart_targeting_enabled']);
+        $smartTargetingFallbackOff = $smartTargetingEnabled
+            && empty($contentSourceSettings['smart_targeting_fallback'])
+            && PageContextHelper::isSmartTargetingApplicableContext($pageContext);
+
+        if ($smartTargetingFallbackOff) {
+            return [
+                'no_matching_data' => true,
+                'applied_filters' => [
+                    'smart_targeting' => true,
+                ],
+            ];
+        }
+
         $hasOrderFilters = !empty($contentSourceSettings['order_filters']) &&
                           !empty($contentSourceSettings['order_filters']['conditions']);
         $hasProductFilters = !empty($contentSourceSettings['product_filters']) &&
@@ -1298,7 +1465,19 @@ class FrontendTagContextBuilder
             return null;
         }
 
+        // Retrigger variants pin a specific contextual pool member by ID.
+        if (!empty($pageContext['notifal_pool_entity_id'])) {
+            $pinnedEntity = $this->findPoolEntityById($pool, (int) $pageContext['notifal_pool_entity_id']);
+            if ($pinnedEntity !== null) {
+                $this->trackShownSourceIfAllowed($pageContext, $sourceType, $pinnedEntity, $contentSourceSettings);
+                $this->rememberSelectedPoolEntity($pinnedEntity);
+
+                return $pinnedEntity;
+            }
+        }
+
         $pool = $this->contentSourceService->excludeSeenSourcesFromPool($sourceType, $pool, $contentSourceSettings);
+        $pool = $this->excludeCurrentSingularEntityFromRetriggerPool($pool, $pageContext);
         if (empty($pool)) {
             return null;
         }
@@ -1309,16 +1488,154 @@ class FrontendTagContextBuilder
             $idx = (int) $pageContext['notifal_pool_variant_index'] % $poolCount;
 
             $entity = $pool[ $idx ];
-            $this->contentSourceService->rememberShownSource($sourceType, $entity, $contentSourceSettings);
+            $this->trackShownSourceIfAllowed($pageContext, $sourceType, $entity, $contentSourceSettings);
+            $this->rememberSelectedPoolEntity($entity);
 
             return $entity;
         }
 
         $deterministicIndex = crc32($cacheKey) % $poolCount;
         $entity = $pool[ $deterministicIndex ];
-        $this->contentSourceService->rememberShownSource($sourceType, $entity, $contentSourceSettings);
+        $this->trackShownSourceIfAllowed($pageContext, $sourceType, $entity, $contentSourceSettings);
+        $this->rememberSelectedPoolEntity($entity);
 
         return $entity;
+    }
+
+    /**
+     * Remember a selected pool entity unless pre-render tracking is explicitly skipped.
+     *
+     * Retrigger variant HTML is pre-rendered server-side before the visitor sees it.
+     * Marking those entities as "shown" too early exhausts the pool and can repeat sources.
+     *
+     * @param array<string, mixed> $pageContext Page context.
+     * @param string               $sourceType Source type key.
+     * @param mixed                $entity Selected entity.
+     * @param array<string, mixed> $contentSourceSettings Content source settings.
+     * @return void
+     * @since 2.3.7
+     */
+    private function trackShownSourceIfAllowed(array $pageContext, string $sourceType, $entity, array $contentSourceSettings): void
+    {
+        if (!empty($pageContext['notifal_skip_seen_source_tracking'])) {
+            return;
+        }
+
+        $this->contentSourceService->rememberShownSource($sourceType, $entity, $contentSourceSettings);
+    }
+
+    /**
+     * Drop the current singular page entity from contextual retrigger pools.
+     *
+     * @param array<int, mixed>  $pool Content pool.
+     * @param array<string,mixed> $pageContext Page context.
+     * @return array<int, mixed>
+     * @since 2.3.7
+     */
+    private function excludeCurrentSingularEntityFromRetriggerPool(array $pool, array $pageContext): array
+    {
+        if (empty($pageContext['force_fresh_content'])) {
+            return $pool;
+        }
+
+        $forcedPhase = sanitize_key((string) ($pageContext['smart_targeting_forced_phase'] ?? ''));
+        if ($forcedPhase !== 'context') {
+            return $pool;
+        }
+
+        $pageId = (int) ($pageContext['page_id'] ?? 0);
+        if ($pageId <= 0) {
+            return $pool;
+        }
+
+        $filtered = array_values(array_filter($pool, static function ($entity) use ($pageId) {
+            if ($entity instanceof \WP_Post) {
+                return (int) $entity->ID !== $pageId;
+            }
+
+            if (is_object($entity) && method_exists($entity, 'getId')) {
+                return (int) $entity->getId() !== $pageId;
+            }
+
+            if (is_object($entity) && method_exists($entity, 'get_id')) {
+                return (int) $entity->get_id() !== $pageId;
+            }
+
+            return true;
+        }));
+
+        return !empty($filtered) ? $filtered : $pool;
+    }
+
+    /**
+     * Persist the selected pool entity ID for frontend duplicate-source tracking.
+     *
+     * @param mixed $entity Selected pool entity.
+     * @return void
+     * @since 2.3.7
+     */
+    private function rememberSelectedPoolEntity($entity): void
+    {
+        $pageContext = ContentSourceRequestContext::getPageContext();
+
+        // Variant pre-renders must not overwrite the first-paint pool entity marker.
+        if (!empty($pageContext['notifal_skip_seen_source_tracking'])) {
+            return;
+        }
+
+        if ($entity instanceof \WP_Post) {
+            ContentSourceRequestContext::setLastSelectedPoolEntityId((int) $entity->ID);
+            return;
+        }
+
+        if ($entity instanceof \WP_Comment) {
+            ContentSourceRequestContext::setLastSelectedPoolEntityId((int) $entity->comment_ID);
+            return;
+        }
+
+        if (is_object($entity) && method_exists($entity, 'getId')) {
+            ContentSourceRequestContext::setLastSelectedPoolEntityId((int) $entity->getId());
+            return;
+        }
+
+        if (is_object($entity) && method_exists($entity, 'get_id')) {
+            ContentSourceRequestContext::setLastSelectedPoolEntityId((int) $entity->get_id());
+        }
+    }
+
+    /**
+     * Find a pool item by its entity ID.
+     *
+     * @param array $pool Content pool.
+     * @param int   $entityId Target entity ID.
+     * @return mixed|null
+     * @since 2.3.7
+     */
+    private function findPoolEntityById(array $pool, int $entityId)
+    {
+        if ($entityId <= 0) {
+            return null;
+        }
+
+        foreach ($pool as $entity) {
+            if ($entity instanceof \WP_Post && (int) $entity->ID === $entityId) {
+                return $entity;
+            }
+
+            if ($entity instanceof \WP_Comment && (int) $entity->comment_ID === $entityId) {
+                return $entity;
+            }
+
+            if (is_object($entity) && method_exists($entity, 'getId') && (int) $entity->getId() === $entityId) {
+                return $entity;
+            }
+
+            if (is_object($entity) && method_exists($entity, 'get_id') && (int) $entity->get_id() === $entityId) {
+                return $entity;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1336,6 +1653,10 @@ class FrontendTagContextBuilder
 
         if (strpos($cacheKeyPrefix, 'notifal_page_context_') === 0) {
             return 'page';
+        }
+
+        if (strpos($cacheKeyPrefix, 'notifal_comment_context_') === 0) {
+            return 'comment';
         }
 
         if (strpos($cacheKeyPrefix, 'notifal_cpt_') === 0) {
@@ -1369,6 +1690,15 @@ class FrontendTagContextBuilder
 
         if (isset($pageContext['notifal_pool_variant_index']) && is_numeric($pageContext['notifal_pool_variant_index'])) {
             $cacheKeyParts['pool_variant_index'] = (int) $pageContext['notifal_pool_variant_index'];
+        }
+
+        if (!empty($pageContext['notifal_pool_entity_id'])) {
+            $cacheKeyParts['pool_entity_id'] = (int) $pageContext['notifal_pool_entity_id'];
+        }
+
+        if (!empty($contentSourceSettings['smart_targeting_enabled'])) {
+            $cacheKeyParts['page_id'] = (int) ($pageContext['page_id'] ?? 0);
+            $cacheKeyParts['post_type'] = sanitize_key((string) ($pageContext['post_type'] ?? ''));
         }
 
         if (!empty($pageContext['force_fresh_content'])) {
@@ -1577,6 +1907,12 @@ class FrontendTagContextBuilder
 
             case 'custom_meta':
                 return $this->validateProductCustomMeta($wcProduct, $data);
+
+            case 'cart':
+                $resolvedIds = CartProductPoolResolver::resolve($condition);
+
+                return in_array($wcProduct->get_id(), $resolvedIds, true)
+                    || ($wcProduct->get_parent_id() > 0 && in_array($wcProduct->get_parent_id(), $resolvedIds, true));
 
             default:
                 return true;

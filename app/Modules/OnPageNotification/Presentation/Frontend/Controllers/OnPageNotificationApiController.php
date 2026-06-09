@@ -5,6 +5,9 @@ namespace Notifal\Modules\OnPageNotification\Presentation\Frontend\Controllers;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\CacheManager;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextEnricher;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextHelper;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationDataPreparer;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
@@ -113,6 +116,31 @@ class OnPageNotificationApiController
                 if ($forceFreshNotificationId) {
                     $context['force_fresh_notification_id'] = $forceFreshNotificationId;
                     $context['force_fresh_content'] = true;
+                }
+
+                // Load notification settings so smart targeting level 0 can block contextual retrigger widening.
+                $retriggerContentSourceSettings = [];
+                if ($forceFreshNotificationId) {
+                    $retriggerContentSourceSettings = $this->loadContentSourceSettingsForNotification(
+                        absint($forceFreshNotificationId)
+                    );
+                }
+
+                // On singular pages only, retrigger rotates within the contextual taxonomy pool when level > 0.
+                if (
+                    !empty($context['force_fresh_content'])
+                    && PageContextHelper::shouldUseContextPoolForRetrigger($context, $retriggerContentSourceSettings)
+                    && !PageContextHelper::isArchiveContext($context)
+                ) {
+                    $context['smart_targeting_forced_phase'] = 'context';
+                }
+
+                // Archive retriggers must stay inside the contextual taxonomy pool and bypass stale entity caches.
+                if (
+                    !empty($context['force_fresh_content'])
+                    && PageContextHelper::isArchiveContext($context)
+                ) {
+                    $context['smart_targeting_forced_phase'] = 'context';
                 }
 
                 // Rotation seed so API retrigger picks a different pool member than the first paint.
@@ -561,6 +589,26 @@ class OnPageNotificationApiController
     }
 
     /**
+     * Load stored content source settings for a notification post.
+     *
+     * @param int $notificationId Notification post ID.
+     * @return array<string, mixed>
+     * @since 2.3.7
+     */
+    private function loadContentSourceSettingsForNotification(int $notificationId): array
+    {
+        // Bail when the notification ID is invalid.
+        if ($notificationId <= 0) {
+            return [];
+        }
+
+        // Read persisted content source settings from notification meta.
+        $settings = get_post_meta($notificationId, '_notifal_content_source_settings', true);
+
+        return is_array($settings) ? $settings : [];
+    }
+
+    /**
      * Build context from request parameters.
      *
      * Constructs a context array containing page, user, and device information
@@ -584,9 +632,13 @@ class OnPageNotificationApiController
             $context['page_id'] = get_queried_object_id();
         }
 
-        // If no URL provided, use current URL
+        // If no URL provided, use current URL (never the REST endpoint path).
         if (empty($context['url'])) {
-            $context['url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+            $requestUri = isset($_SERVER['REQUEST_URI']) ? (string) wp_unslash($_SERVER['REQUEST_URI']) : '';
+            if ($requestUri !== '' && strpos($requestUri, '/wp-json/') === false) {
+                $context['url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
+                    . '://' . $_SERVER['HTTP_HOST'] . $requestUri;
+            }
         }
 
         // Parse URL query parameters for UTM/query-parameter display rules
@@ -605,6 +657,10 @@ class OnPageNotificationApiController
         // Parse additional context parameters for display rules
         if (!empty($request->get_param('post_type'))) {
             $context['post_type'] = Helper::sanitizeInput($request->get_param('post_type'), 'text');
+        }
+
+        if (!empty($request->get_param('archive_taxonomy'))) {
+            $context['archive_taxonomy'] = sanitize_key((string) $request->get_param('archive_taxonomy'));
         }
 
         // Parse categories for category-based rules
@@ -634,11 +690,125 @@ class OnPageNotificationApiController
         $context['is_logged_in'] = is_user_logged_in();
 
         // @since 2.3.5 Attach WooCommerce cart snapshot for cart display rules.
-        if (PluginDetector::isWooCommerceActive()) {
+        if (PluginDetector::isWooCommerceActive() && CartDisplayRulesUsageChecker::anyActiveNotificationUsesCartRules()) {
             $context = WooCommerceCartContextBuilder::mergeIntoContext($context);
         }
 
+        // @since 2.3.7 Merge browser session seen sources so pool selection skips client-only retriggers.
+        $clientSeenSources = $this->parseClientSeenSourcesFromRequest($request);
+        if (!empty($clientSeenSources)) {
+            $context['client_seen_sources'] = $clientSeenSources;
+        }
+
+        $context = $this->applySmartTargetingViewFlagsFromRequest($context, $request);
+
+        return (new PageContextEnricher())->enrich($context);
+    }
+
+    /**
+     * Parse a boolean smart targeting view flag from the eligibility API request.
+     *
+     * @param WP_REST_Request $request REST request.
+     * @param string          $param   Query parameter name.
+     * @return bool
+     * @since 2.3.7
+     */
+    private function parseContextBooleanFlag(WP_REST_Request $request, string $param): bool
+    {
+        $value = $request->get_param($param);
+
+        return $value === true || $value === 1 || $value === '1';
+    }
+
+    /**
+     * Apply smart targeting view flags supplied by the frontend visitor context.
+     *
+     * @param array<string, mixed> $context Request context.
+     * @param WP_REST_Request      $request REST request.
+     * @return array<string, mixed>
+     * @since 2.3.7
+     */
+    private function applySmartTargetingViewFlagsFromRequest(array $context, WP_REST_Request $request): array
+    {
+        foreach ([
+            'is_front_page',
+            'is_posts_home',
+            'is_shop_page',
+            'is_cart_page',
+            'is_checkout_page',
+            'is_account_page',
+            'is_singular_query',
+        ] as $flag) {
+            if ($request->get_param($flag) !== null) {
+                $context[$flag] = $this->parseContextBooleanFlag($request, $flag);
+            }
+        }
+
         return $context;
+    }
+
+    /**
+     * Parse client-side shown source map from the eligibility request.
+     *
+     * @param WP_REST_Request $request REST request.
+     * @return array<int, array{entityIds: array<int, int>}> Map keyed by notification ID.
+     * @since 2.3.7
+     */
+    private function parseClientSeenSourcesFromRequest(WP_REST_Request $request): array
+    {
+        // Read raw JSON payload from the query string.
+        $raw = $request->get_param('client_seen_sources');
+        if ($raw === null || $raw === '') {
+            return [];
+        }
+
+        // Accept pre-decoded arrays when WordPress passes structured input.
+        if (is_array($raw)) {
+            return $this->sanitizeClientSeenSourcesMap($raw);
+        }
+
+        // Decode JSON string sent by the frontend sessionStorage sync.
+        $decoded = json_decode(wp_unslash((string) $raw), true);
+        if (!is_array($decoded)) {
+            return [];
+        }
+
+        return $this->sanitizeClientSeenSourcesMap($decoded);
+    }
+
+    /**
+     * Sanitize client seen source map entries.
+     *
+     * @param array $raw Raw decoded map.
+     * @return array<int, array{entityIds: array<int, int>}>
+     * @since 2.3.7
+     */
+    private function sanitizeClientSeenSourcesMap(array $raw): array
+    {
+        $sanitized = [];
+
+        foreach ($raw as $notificationId => $entry) {
+            // Normalize notification ID keys from string or integer input.
+            $id = absint($notificationId);
+            if ($id <= 0 || !is_array($entry)) {
+                continue;
+            }
+
+            $entityIds = $entry['entityIds'] ?? [];
+            if (!is_array($entityIds)) {
+                continue;
+            }
+
+            // Keep only positive integer entity IDs.
+            $entityIds = array_values(array_unique(array_filter(array_map('intval', $entityIds))));
+            if (empty($entityIds)) {
+                continue;
+            }
+
+            $sanitized[$id] = ['entityIds' => $entityIds];
+        }
+
+        return $sanitized;
     }
 
     /**

@@ -664,6 +664,15 @@ class ActionButtonWidget extends BaseWidget
             'aria-label' => esc_attr__('Notification Action Button', 'notifal'),
         ];
 
+        // Expose context type so frontend can distinguish product Post Link clicks for clicked revenue
+        if (!empty($contextData['context_type'])) {
+            $button_attrs['data-context-type'] = esc_attr((string) $contextData['context_type']);
+
+            if ($contextData['context_type'] === 'product') {
+                $button_attrs['data-is-product-context'] = 'true';
+            }
+        }
+
         // Handle different link types
         switch ($settings['link_type']) {
             case 'custom':
@@ -720,9 +729,12 @@ class ActionButtonWidget extends BaseWidget
                 break;
 
             case 'ajax-add-to-cart':
-                // WooCommerce AJAX add to cart (product from notification context)
+                // WooCommerce AJAX add to cart (always a product-context clicked revenue action)
                 $button_attrs['href'] = '#';
                 $button_attrs['data-action'] = 'ajax-add-to-cart';
+                if (($contextData['context_type'] ?? '') === 'product') {
+                    $button_attrs['data-is-product-context'] = 'true';
+                }
                 $button_attrs['data-add-to-cart-quantity'] = max(1, min(99, (int) ($settings['add_to_cart_quantity'] ?? 1)));
                 $button_attrs['data-add-to-cart-redirect'] = in_array($settings['add_to_cart_redirect'] ?? 'none', ['cart', 'checkout'], true)
                     ? sanitize_text_field($settings['add_to_cart_redirect'])

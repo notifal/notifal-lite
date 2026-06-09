@@ -8,6 +8,7 @@ return [
     'generic_error'           => __( 'Something went wrong. Please try again.', 'notifal' ),
     'unexpected_response'     => __( 'Unexpected response from server.', 'notifal' ),
     'loading'                 => __( 'Loading...', 'notifal' ),
+    'loading_templates'       => __( 'Loading templates...', 'notifal' ),
     'analyzing_template'      => __( 'Analyzing Template...', 'notifal' ),
     'please_wait'            => __( 'Please wait while we analyze the template content.', 'notifal' ),
     'filtering_templates'     => __( 'Filtering templates...', 'notifal' ),
