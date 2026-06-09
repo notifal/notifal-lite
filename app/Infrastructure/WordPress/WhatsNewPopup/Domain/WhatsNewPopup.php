@@ -121,7 +121,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.5';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.7';
     }
 
     /**
@@ -194,6 +194,20 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.3.9' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.9'),
+                'content' => $this->getVersion239Content(),
+                'action_buttons' => [],
+            ],
+            '2.3.7' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.7'),
+                'content' => $this->getVersion237Content(),
+                'action_buttons' => [],
+            ],
             '2.3.5' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -747,6 +761,111 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.9
+     *
+     * @return string HTML content for version 2.3.9
+     * @since 2.3.9
+     */
+    private function getVersion239Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.9", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Cart Products content source', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('A new Cart Products filter in Product Restrictions (WooCommerce only) lets dynamic notifications pull product content from the visitor\'s live cart instead of a static catalog pool.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔗</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Cart, related, upsell, and cross-sell sources', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Choose which cart-derived products feed your notification: cart line items, related products, upsells, or cross-sells. Toggles inside one Cart Products filter combine with OR logic and still respect your existing Product Restriction AND/OR rules.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⚡</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Live cart updates on the storefront', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When visitors add or remove items via Ajax, the cart product pool refreshes automatically so on-page notifications can show updated cart-based products without a full page reload.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">💰</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Clearer clicked and influenced revenue', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Post Link and Ajax Add to Cart now attribute clicked revenue from the matched product line subtotal while influenced revenue reflects the full order total on the same conversion. Post Link redirects store attribution before navigation, variable products match parent clicks, and the attribution window is 24 hours.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.7
+     *
+     * @return string HTML content for version 2.3.7
+     * @since 2.3.7
+     */
+    private function getVersion237Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.7", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧠</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smart Targeting [PRO]', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('A new Smart Targeting section in Content Source settings scopes dynamic content to the page your visitor is viewing, the current product, post, page, or archive, so notifications stay context-aware instead of pulling unrelated items from your catalog.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔢</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Content source counter tags', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Use counter tags that respect your content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (Pro), and {custom_posttype_counter_{post_type}}. Counts follow the same filters as your dynamic content pools (date range, status, categories, products, AND/OR rules, and more). Order counting is HPOS-safe and legacy-compatible.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📊</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Clearer order attribution summary', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('WooCommerce and EDD order details and the orders list popup now show a compact attribution summary: notifications influenced on the order, linkable clicked products (each on its own row), total clicked revenue, and total influenced revenue shown once. Expand Show details for per-notification breakdown. Duplicate "(unknown product)" rows are removed when a real product click already exists.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔔</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smoother notification timing and display', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('"Always Show" frequency now re-triggers on page refresh and navigation. Delay-triggered notifications with Prevent Multiple Instances wait for their configured delay after a blocking notification closes. Popup modals now render above the dimmed backdrop with correct z-index layering.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📐</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('More flexible placement controls', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so you can use negative values for precise notification placement.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

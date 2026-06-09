@@ -2,7 +2,9 @@
 
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Views\Edit\partials;
 
+use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Traits\RestrictionCardRendererTrait;
@@ -68,6 +70,9 @@ class ContentSourceSettingsRenderer
             // Set global Pro status for JavaScript
             window.NotifalContentSourceProStatus = <?php echo PluginDetector::isNotifalProActive() ? 'true' : 'false'; ?>;
 
+            // Expose WooCommerce availability for cart product content source filters.
+            window.NotifalWooCommerceActive = <?php echo PluginDetector::isWooCommerceActive() ? 'true' : 'false'; ?>;
+
             // Set available comment statuses for dynamic filtering
             window.NotifalCommentStatuses = <?php echo wp_json_encode(get_comment_statuses()); ?>;
         </script>
@@ -120,6 +125,12 @@ class ContentSourceSettingsRenderer
         <!-- Dynamic Content Restrictions -->
         <div class="notifal-dynamic-restrictions notifal-hidden" id="notifal-dynamic-restrictions">
             <?php
+            do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_BEFORE, 'content_source', 'smart_targeting'));
+
+            if (!PluginDetector::isNotifalProActive()) {
+                $this->renderSmartTargetingProPlaceholder();
+            }
+
             FieldRenderer::toggle(
                 'allow_duplicate_source',
                 false,
@@ -171,15 +182,17 @@ class ContentSourceSettingsRenderer
             'empty_message' => sprintf( __( 'No filters configured. Click %s to create a condition.', 'notifal' ), '"' . __( 'Add Filter', 'notifal' ) . '"' )
         ]);
 
-        // Product restrictions
-        $this->renderRestrictionCard([
-            'id' => 'notifal-product-restrictions',
-            'title' => __('Product Restrictions', 'notifal'),
-            'tooltip' => 'Control which products are used for dynamic content like {product_name}, {product_link}, etc.',
-            'filter_type' => 'product',
-            'is_pro_only' => false,
-            'empty_message' => sprintf( __( 'No filters configured. Click %s to create a condition.', 'notifal' ), '"' . __( 'Add Filter', 'notifal' ) . '"' )
-        ]);
+        // Product restrictions are WooCommerce-only because they target product entities.
+        if (PluginDetector::isWooCommerceActive()) {
+            $this->renderRestrictionCard([
+                'id' => 'notifal-product-restrictions',
+                'title' => __('Product Restrictions', 'notifal'),
+                'tooltip' => 'Control which products are used for dynamic content like {product_name}, {product_link}, etc.',
+                'filter_type' => 'product',
+                'is_pro_only' => false,
+                'empty_message' => sprintf( __( 'No filters configured. Click %s to create a condition.', 'notifal' ), '"' . __( 'Add Filter', 'notifal' ) . '"' )
+            ]);
+        }
 
         // User tags information
         $this->renderInformationCard([
@@ -235,6 +248,41 @@ class ContentSourceSettingsRenderer
             'is_pro_only' => false,
             'empty_message' => sprintf( __( 'No filters configured. Click %s to create a condition.', 'notifal' ), '"' . __( 'Add Filter', 'notifal' ) . '"' )
         ]);
+    }
+
+    /**
+     * Render disabled Smart Targeting placeholder for Lite users without Pro.
+     *
+     * @return void
+     *
+     * @since 2.3.7
+     */
+    private function renderSmartTargetingProPlaceholder(): void
+    {
+        global $notification_data;
+
+        // Resolve notification payload for Smart Targeting UI visibility filter.
+        $notificationData = is_array($notification_data ?? null) ? $notification_data : [];
+        $isUiVisible = (bool) apply_filters(FilterHooks::ONPAGE_SMART_TARGETING_UI_VISIBLE, true, $notificationData);
+        $hideSectionClass = $isUiVisible ? '' : 'notifal-hidden';
+        ?>
+        <div class="notifal-field-group <?php echo esc_attr($hideSectionClass); ?>" id="notifal-smart-targeting-lite-placeholder">
+            <h3>
+                <?php esc_html_e('Smart Targeting', 'notifal'); ?>
+                <span class="notifal-pro-badge notifal-pro-badge-inline"><?php esc_html_e('PRO', 'notifal'); ?></span>
+            </h3>
+
+            <div class="notifal-pro-upsell-section">
+                <h4 class="notifal-text-center"><?php esc_html_e('Context-Aware Content Source', 'notifal'); ?></h4>
+                <p class="notifal-text-description">
+                    <?php esc_html_e('Show notification content related to the page the visitor is viewing. Target products, posts, pages, and archives by category depth with optional fallback.', 'notifal'); ?>
+                </p>
+                <a href="<?php echo esc_url(Urls::withCustomUtm(Urls::getPricingUrl(parse_url(home_url(), PHP_URL_HOST)), ['utm_medium' => 'content_source_settings', 'utm_campaign' => 'notifal_pro_upgrade', 'utm_content' => 'upgrade_button_smart_targeting'])); ?>" class="notifal-button notifal-button-primary" target="_blank" rel="noopener noreferrer">
+                    <?php esc_html_e('Upgrade to Pro', 'notifal'); ?>
+                </a>
+            </div>
+        </div>
+        <?php
     }
 }
 

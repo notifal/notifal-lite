@@ -72,8 +72,16 @@ abstract class BaseFilterBuilder
                 $legacyFilters = $this->convertSingleFilterToLegacy($singleCondition);
                 return $legacyFilters;
             } elseif (count($processedConditions) === 1) {
-                // Single condition - convert to legacy format for non-Pro users
+                // Single condition - convert to legacy format for non-Pro users.
                 $singleCondition = $filterConfig['conditions'][0];
+
+                // Cart filters must keep the multi-condition shape (runtime cart resolution).
+                if (($singleCondition['type'] ?? '') === 'cart') {
+                    $filters['conditions'] = $processedConditions;
+                    $filters['multiple_filters'] = true;
+                    return $filters;
+                }
+
                 $legacyFilters = $this->convertSingleFilterToLegacy($singleCondition);
                 return $legacyFilters;
             } else {

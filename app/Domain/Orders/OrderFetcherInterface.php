@@ -45,4 +45,16 @@ interface OrderFetcherInterface
      * @since 2.0.0
      */
     public function findById(int $id): ?OrderDTO;
+
+    /**
+     * Count orders matching the provided filters.
+     *
+     * Applies the same content-source order filters used for pool fetching
+     * (date range, status, products, custom meta, etc.).
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching order count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int;
 }

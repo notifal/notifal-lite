@@ -137,6 +137,7 @@ class AppearanceSettingsService
      * Sanitize individual setting value
      *
      * @since 2.0.0
+     * @since 2.3.7 Position distance fields accept negative values via sanitizeSignedInteger().
      * @param string $key Setting key
      * @param mixed $value Setting value
      * @param mixed $default Default value
@@ -156,15 +157,11 @@ class AppearanceSettingsService
             case 'desktop_bottom_distance':
             case 'desktop_left_distance':
             case 'desktop_right_distance':
-                return $this->sanitizeDistance($value, 0, 500);
-
             case 'desktop_bar_distance':
             case 'mobile_bar_distance':
-                return $this->sanitizeDistance($value, 0, 200);
-
             case 'mobile_top_distance':
             case 'mobile_bottom_distance':
-                return $this->sanitizeDistance($value, 0, 200);
+                return $this->sanitizeSignedInteger($value);
             
             case 'animation_duration':
                 return $this->sanitizeDistance($value, 0, 2000);

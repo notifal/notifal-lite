@@ -114,6 +114,17 @@ class EligibilityService
 
                     return $eligibleNotifications;
                 }
+
+                // No contextual match for retrigger — do not fall through to the normal eligibility path.
+                $eligibleNotifications = [];
+                $eligibleNotifications = apply_filters(
+                    FilterHooks::ONPAGE_ELIGIBILITY_DATA,
+                    $eligibleNotifications,
+                    $context
+                );
+                do_action(ActionHooks::ONPAGE_ELIGIBILITY_AFTER_PROCESS, $eligibleNotifications, $context);
+
+                return $eligibleNotifications;
             }
         }
 

@@ -42,6 +42,11 @@ class WooCommerceCartContextBuilder
             return $context;
         }
 
+        // Skip cart snapshot work when no active notification evaluates cart display rules.
+        if (!CartDisplayRulesUsageChecker::anyActiveNotificationUsesCartRules()) {
+            return $context;
+        }
+
         // Attach normalized cart snapshot for rule matchers.
         $context['cart'] = self::build();
 

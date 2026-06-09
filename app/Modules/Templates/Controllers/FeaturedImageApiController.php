@@ -95,13 +95,14 @@ class FeaturedImageApiController
     private function buildContext(): array
     {
         $context = [
-            'post' => $this->getSamplePost(),
-            'page' => $this->getSamplePage(),
+            'post'    => $this->getSamplePost(),
+            'page'    => $this->getSamplePage(),
+            'comment' => $this->getSampleComment(),
         ];
 
         if (PluginDetector::isWooCommerceActive()) {
             $context['product'] = $this->getSampleProduct();
-            $context['order'] = $this->getSampleOrder();
+            $context['order']   = $this->getSampleOrder();
         }
 
         return $context;
@@ -182,7 +183,7 @@ class FeaturedImageApiController
      */
     private function findThumbnailId(array $context, string $requestedSource = 'auto'): ?int
     {
-        $sources = ['product', 'post', 'page', 'order'];
+        $sources = ['comment', 'product', 'post', 'page', 'order'];
 
         if ($requestedSource !== 'auto' && isset($context[$requestedSource]) && $context[$requestedSource]) {
             $id = $this->getThumbnailIdForEntity($context[$requestedSource], $requestedSource);
@@ -216,7 +217,7 @@ class FeaturedImageApiController
      */
     private function determineContentInfo(array $context, string $requestedSource = 'auto'): array
     {
-        $sources = ['product', 'post', 'page', 'order'];
+        $sources = ['comment', 'product', 'post', 'page', 'order'];
 
         if ($requestedSource !== 'auto' && isset($context[$requestedSource]) && $context[$requestedSource]) {
             return $this->getContentInfoForEntity($context[$requestedSource], $requestedSource);
@@ -261,6 +262,17 @@ class FeaturedImageApiController
             return null;
         }
 
+        if ($type === 'comment') {
+            $postId = 0;
+            if (is_object($entity) && isset($entity->comment_post_ID)) {
+                $postId = (int) $entity->comment_post_ID;
+            } elseif (is_array($entity) && isset($entity['comment_post_ID'])) {
+                $postId = (int) $entity['comment_post_ID'];
+            }
+
+            return $postId > 0 ? get_post_thumbnail_id($postId) : null;
+        }
+
         if (isset($entity->ID)) {
             return get_post_thumbnail_id($entity->ID);
         }
@@ -299,6 +311,22 @@ class FeaturedImageApiController
                     'id'   => $entity->ID ?? null,
                     'name' => $entity->post_title ?? __('Content', 'notifal'),
                     'type' => $type
+                ];
+
+            case 'comment':
+                $parentPostId = 0;
+                if (is_object($entity) && isset($entity->comment_post_ID)) {
+                    $parentPostId = (int) $entity->comment_post_ID;
+                } elseif (is_array($entity) && isset($entity['comment_post_ID'])) {
+                    $parentPostId = (int) $entity['comment_post_ID'];
+                }
+
+                $parentPost = $parentPostId > 0 ? get_post($parentPostId) : null;
+
+                return [
+                    'id'   => $parentPost ? $parentPost->ID : null,
+                    'name' => $parentPost ? $parentPost->post_title : __('Comment', 'notifal'),
+                    'type' => 'comment',
                 ];
 
             default:
@@ -386,6 +414,23 @@ class FeaturedImageApiController
         ]);
 
         return !empty($pages) ? $pages[0] : null;
+    }
+
+    /**
+     * Get sample comment for preview context.
+     *
+     * @return \WP_Comment|null Sample comment or null if none found.
+     * @since 2.3.7
+     */
+    private function getSampleComment(): ?\WP_Comment
+    {
+        $comments = get_comments([
+            'number'  => 1,
+            'status'  => 'approve',
+            'orderby' => 'rand',
+        ]);
+
+        return !empty($comments) ? $comments[0] : null;
     }
 
     /**

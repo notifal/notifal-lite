@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Notifal\n"
 "Report-Msgid-Bugs-To: https://notifal.com\n"
-"POT-Creation-Date: 2026-06-02 20:32+0000\n"
+"POT-Creation-Date: 2026-06-09 12:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,8 +28,12 @@ msgstr ""
 msgid " Only %1$d %2$s"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:861
+msgid "\"Always Show\" frequency now re-triggers on page refresh and navigation. Delay-triggered notifications with Prevent Multiple Instances wait for their configured delay after a blocking notification closes. Popup modals now render above the dimmed backdrop with correct z-index layering."
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:238
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:437
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:456
 msgid "%1$d influenced order (%2$d paid, counted in revenue)"
 msgstr ""
 
@@ -61,9 +65,9 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:319
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:357
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:533
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:652
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:952
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:788
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:1185
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:1379
 msgid "(deleted notification)"
 msgstr ""
 
@@ -71,17 +75,23 @@ msgstr ""
 msgid "(no title)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:534
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:653
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:787
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:791
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:793
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:670
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:738
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:798
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:1008
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:1012
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:1014
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:655
 msgid "(unknown product)"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/RestrictionCardRendererTrait.php:210
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:652
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:671
 msgid "30-day money-back guarantee"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:138
+msgid "<strong>Cached snapshot.</strong> All metrics, charts, and tables were last processed on %1$s (%2$s). Auto-refresh in %3$s, use <strong>Refresh</strong> above to load the latest data now."
 msgstr ""
 
 #: app/Shared/Utils/FileUploadValidator.php:47
@@ -92,35 +102,43 @@ msgstr ""
 msgid "A campaign controls when this notification may run. Enable schedule stays off here on purpose."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:52
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:53
 msgid "A floating element (usually circular) that stays in a fixed position. Perfect for chat widgets, help buttons, or quick action buttons. Always visible and accessible."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:45
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:46
 msgid "A full-width banner that slides down from the top of the page. Great for site-wide announcements, promotions, or important alerts. Highly visible but can be dismissed."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:37
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:38
 msgid "A modal dialog that appears in the center of the screen with a backdrop. Ideal for important messages, forms, or detailed information. Requires user interaction to dismiss."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:910
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1029
 msgid "A new All Time range lets you view analytics from the earliest available records through today. Influenced orders now show total influenced count with a paid-and-counted breakdown for clearer reporting."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:861
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:791
+msgid "A new Cart Products filter in Product Restrictions (WooCommerce only) lets dynamic notifications pull product content from the visitor's live cart instead of a static catalog pool."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:840
+msgid "A new Smart Targeting section in Content Source settings scopes dynamic content to the page your visitor is viewing, the current product, post, page, or archive, so notifications stay context-aware instead of pulling unrelated items from your catalog."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:980
 msgid "A reported issue has been fixed to improve stability."
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:974
+#: app/Domain/Tags/RegisterTags.php:979
 msgid "A sample user description for preview purposes."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:66
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:67
 msgid "A small badge or indicator that appears in the corner of the screen. Ideal for notifications count, alerts, or status indicators. Minimal visual impact but highly noticeable."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:30
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:31
 msgid "A small notification that slides in from the side (usually top-right). Perfect for quick messages, success confirmations, or alerts. Users can dismiss it or it auto-hides after a few seconds."
 msgstr ""
 
@@ -143,7 +161,7 @@ msgstr ""
 msgid "API request failed with status %d"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:321
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:322
 msgid "Above header (first element)"
 msgstr ""
 
@@ -151,7 +169,7 @@ msgstr ""
 msgid "Access to all Pro features and settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:640
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:659
 msgid "Access to many Pro settings"
 msgstr ""
 
@@ -189,12 +207,12 @@ msgid "Active Rules"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/RestrictionCardRendererTrait.php:100
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:171
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:181
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:206
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:216
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:226
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:236
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:182
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:193
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:219
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:229
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:239
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:249
 msgid "Add Filter"
 msgstr ""
 
@@ -247,7 +265,7 @@ msgstr ""
 msgid "Add Your First Rule"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:529
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:530
 msgid "Add custom CSS styles to your notifications. Available in Notifal Pro."
 msgstr ""
 
@@ -264,7 +282,7 @@ msgid "Add unlimited filters per restriction type"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:309
-#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:730
+#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:742
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:181
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:182
 msgid "Added!"
@@ -282,21 +300,25 @@ msgstr ""
 msgid "Additional delay after the custom trigger occurs before showing the notification."
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1004
-#: app/Domain/Tags/RegisterTags.php:1026
+#: app/Domain/Tags/RegisterTags.php:1009
+#: app/Domain/Tags/RegisterTags.php:1031
 msgid "Address 1"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1006
-#: app/Domain/Tags/RegisterTags.php:1028
+#: app/Domain/Tags/RegisterTags.php:1011
+#: app/Domain/Tags/RegisterTags.php:1033
 msgid "Address 2"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:126
+msgid "Administrator"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:111
 msgid "Advanced Behavior"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:487
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:488
 msgid "Advanced Styling"
 msgstr ""
 
@@ -304,7 +326,7 @@ msgstr ""
 msgid "Advanced Tag Generation"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:455
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:469
 msgid "Advanced Template Builder"
 msgstr ""
 
@@ -320,15 +342,15 @@ msgstr ""
 msgid "Advanced User Interaction"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:263
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:266
 msgid "Advanced content source features require Notifal Pro."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:638
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:657
 msgid "Advanced conversion analytics"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:440
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:454
 msgid "Advanced customization options and smart targeting to maximize engagement."
 msgstr ""
 
@@ -344,7 +366,7 @@ msgstr ""
 msgid "After Delay"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:235
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:238
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:174
 msgid "After User Idle"
 msgstr ""
@@ -353,7 +375,7 @@ msgstr ""
 msgid "Ajax Add to Cart"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:552
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:566
 msgid "Ajax Add to Cart (WooCommerce)"
 msgstr ""
 
@@ -373,12 +395,16 @@ msgstr ""
 msgid "All"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:162
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:181
 msgid "All Campaigns"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:48
 msgid "All Categories"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:73
+msgid "All Comments"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:655
@@ -387,6 +413,7 @@ msgid "All Except"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:272
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:79
 msgid "All Items"
 msgstr ""
 
@@ -399,12 +426,20 @@ msgid "All Labels"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/FilterRendererTrait.php:141
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:178
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:197
 msgid "All Notifications"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:766
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:785
 msgid "All Notifications Analytics"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:49
+msgid "All Orders"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:66
+msgid "All Pages"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:173
@@ -425,29 +460,69 @@ msgstr ""
 msgid "All Post Types Except %1$d %2$s"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:61
+msgid "All Posts"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:196
 msgid "All Posts Except"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:39
+msgid "All Products"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:220
 msgid "All Products Except"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:194
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:213
 msgid "All Statuses"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:153
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:154
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:173
 msgid "All Time"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:909
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1028
 msgid "All Time range in OnPage analytics"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:55
+msgid "All Users"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:41
 msgid "All changes have been saved."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:157
+msgid "All comments will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:172
+msgid "All custom post type items will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:109
+msgid "All orders will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:146
+msgid "All pages will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:137
+msgid "All posts will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:90
+msgid "All products will be included."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:122
+msgid "All users will be included."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:48
@@ -524,14 +599,14 @@ msgstr ""
 #: app/Modules/Campaign/Presentation/Admin/Controllers/Ajax/CampaignAjaxController.php:119
 #: app/Modules/Campaign/Presentation/Admin/Controllers/Ajax/CampaignAjaxController.php:139
 #: app/Modules/Campaign/Presentation/Admin/Controllers/Ajax/CampaignAjaxController.php:166
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:137
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:140
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/GetFilteredTemplatesController.php:135
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/GetTemplateContentController.php:85
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/LoadMoreTemplatesController.php:118
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:79
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:118
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/ToggleStatusController.php:119
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:24
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:25
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:28
 msgid "An unexpected error occurred. Please try again."
 msgstr ""
@@ -548,7 +623,7 @@ msgstr ""
 msgid "Analytics data has been exported successfully"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:644
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:658
 msgid "Analytics now counts a close only when a visitor actually dismisses the notification — not when it hides on its own, after a form, or from an automatic close."
 msgstr ""
 
@@ -564,7 +639,7 @@ msgstr ""
 msgid "Analytics refreshed successfully"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:965
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1084
 msgid "Analytics revenue in your store currency"
 msgstr ""
 
@@ -572,19 +647,19 @@ msgstr ""
 msgid "Analytics updated. {count} events processed."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:11
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:12
 msgid "Analyzing Template..."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:373
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:374
 msgid "Animation Duration (ms)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:346
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:347
 msgid "Animation Settings"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:867
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:986
 msgid "Animation duration settings"
 msgstr ""
 
@@ -608,8 +683,12 @@ msgstr ""
 msgid "Appearance Settings"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:510
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:524
 msgid "Appearance improvements"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:868
+msgid "Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so you can use negative values for precise notification placement."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:64
@@ -620,12 +699,16 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:204
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:223
 msgid "Apply Filters"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:127
 msgid "Apply blur effect to the backdrop behind the popup (0 = no blur)"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:165
+msgid "Approved"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsAjaxController.php:442
@@ -673,26 +756,38 @@ msgstr ""
 msgid "Assign this notification to a campaign to override its schedule."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:184
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:187
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:22
 msgid "At least one notification label must be selected."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:431
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:432
 msgid "Audio Preview"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1049
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:384
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1168
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:385
 msgid "Audio Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:407
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:408
 msgid "Audio Type"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:459
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:460
 msgid "Audio Volume"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:128
+msgid "Author"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:158
+msgid "Author name, email, or multiple separated by comma"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:82
+msgid "Authors"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:113
@@ -747,7 +842,7 @@ msgstr ""
 msgid "Auto-update Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:587
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:601
 msgid "Automatic cache clearing for on-page notifications"
 msgstr ""
 
@@ -779,15 +874,43 @@ msgstr ""
 msgid "Automatically use the product sale end date from notification context. Falls back to the due date above if no product or sale date is available."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:161
+msgid "Available Comment Meta Fields"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:175
+msgid "Available Custom Post Type Meta Fields"
+msgstr ""
+
 #: app/Modules/Templates/Resources/Lang/js/translations.php:28
 msgid "Available Keys"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:111
+msgid "Available Order Meta Fields"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:149
+msgid "Available Page Meta Fields"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:139
+msgid "Available Post Meta Fields"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:92
+msgid "Available Product Meta Fields"
 msgstr ""
 
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:74
 msgid "Available Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:623
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:125
+msgid "Available User Meta Fields"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:637
 msgid "Available in Notifal Pro v2.1.0: see analytics (impressions, clicks, close rate, conversions, users) per campaign using event attribution for campaigns."
 msgstr ""
 
@@ -831,7 +954,7 @@ msgstr ""
 msgid "Banner"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:324
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:325
 msgid "Bar position"
 msgstr ""
 
@@ -852,7 +975,7 @@ msgstr ""
 msgid "Behavior Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:248
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:251
 msgid "Behavior feature \"%s\" requires Notifal Pro."
 msgstr ""
 
@@ -860,11 +983,11 @@ msgstr ""
 msgid "Behavior settings contain invalid data."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:741
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:755
 msgid "Better SEO for templates"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:464
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:478
 msgid "Better organization and smarter notification targeting."
 msgstr ""
 
@@ -896,26 +1019,26 @@ msgstr ""
 msgid "Border Radius"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:962
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:216
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:291
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:959
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:217
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:292
 msgid "Bottom"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:943
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:940
 msgid "Bottom Center"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:944
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:941
 msgid "Bottom Left"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:942
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:939
 msgid "Bottom Right"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:985
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1010
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:982
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1007
 msgid "Bounce"
 msgstr ""
 
@@ -973,23 +1096,23 @@ msgstr ""
 msgid "CTR"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1084
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1203
 msgid "Cache Refresh Countdown"
 msgstr ""
 
 #: app/Modules/Campaign/Infrastructure/WordPress/Registration/PostTypeRegistrar.php:49
 #: app/Modules/Campaign/Presentation/Admin/Menu/MenuController.php:57
 #: app/Modules/Campaign/Presentation/Admin/Menu/MenuController.php:58
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:160
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:179
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/general-settings.php:103
 msgid "Campaign"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:622
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:636
 msgid "Campaign Analytics Filters (Pro)"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:615
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:629
 msgid "Campaign Manager"
 msgstr ""
 
@@ -1040,6 +1163,10 @@ msgstr ""
 msgid "Cancel Edit"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:116
+msgid "Cancelled"
+msgstr ""
+
 #: app/Modules/OnPageNotification/ServiceProvider.php:341
 msgid "Cannot activate notification: Only one active notification is allowed in the free version."
 msgstr ""
@@ -1058,6 +1185,14 @@ msgstr ""
 
 #: app/Domain/Tags/RegisterWooCommerceCartTags.php:70
 msgid "Cart Item Count"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:46
+msgid "Cart Products"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:790
+msgid "Cart Products content source"
 msgstr ""
 
 #: app/Domain/Tags/RegisterWooCommerceCartTags.php:50
@@ -1096,10 +1231,19 @@ msgstr ""
 msgid "Cart item count comparison"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:95
+msgid "Cart products"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Application/Services/Settings/WooCommerceCartDisplayRulesService.php:90
 msgid "Cart total comparison"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:797
+msgid "Cart, related, upsell, and cross-sell sources"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:83
 #: app/Modules/Templates/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:53
 msgid "Categories"
 msgstr ""
@@ -1108,14 +1252,14 @@ msgstr ""
 msgid "Category"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:963
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:960
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:198
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:99
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:164
 msgid "Center"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:945
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:942
 msgid "Center Screen"
 msgstr ""
 
@@ -1142,7 +1286,7 @@ msgstr ""
 msgid "Choose a target type, configure conditions, then save. You can add multiple rules of the same type with Notifal Pro."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:408
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:409
 msgid "Choose between default sounds or upload your own audio file"
 msgstr ""
 
@@ -1198,12 +1342,16 @@ msgstr ""
 msgid "Choose whether to show the notification on all products except selected ones, or only on specific products."
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1008
-#: app/Domain/Tags/RegisterTags.php:1030
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:798
+msgid "Choose which cart-derived products feed your notification: cart line items, related products, upsells, or cross-sells. Toggles inside one Cart Products filter combine with OR logic and still respect your existing Product Restriction AND/OR rules."
+msgstr ""
+
+#: app/Domain/Tags/RegisterTags.php:1013
+#: app/Domain/Tags/RegisterTags.php:1035
 msgid "City"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:42
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:43
 msgid "Claim Now"
 msgstr ""
 
@@ -1224,8 +1372,16 @@ msgstr ""
 msgid "Clear session counters when the user logs out."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:643
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:811
+msgid "Clearer clicked and influenced revenue"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:657
 msgid "Clearer close numbers (Pro)"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:853
+msgid "Clearer order attribution summary"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:236
@@ -1244,7 +1400,7 @@ msgstr ""
 msgid "Click a rule to edit it. To add another rule, fill the form below and click Save Rule without selecting a rule first."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:432
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:433
 msgid "Click the play button to preview the selected audio sound"
 msgstr ""
 
@@ -1264,7 +1420,7 @@ msgstr ""
 msgid "Click to edit"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:439
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:440
 msgid "Click to preview the selected audio sound"
 msgstr ""
 
@@ -1272,18 +1428,18 @@ msgstr ""
 msgid "Click tracked successfully"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:463
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:482
 msgid "Click-Through Rate"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:218
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:375
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:394
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:859
 msgid "Clicked Revenue"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:558
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:674
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:651
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:822
 msgid "Clicked product"
 msgstr ""
 
@@ -1291,14 +1447,13 @@ msgstr ""
 msgid "Clicked products revenue"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:566
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:682
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:836
 msgid "Clicked revenue"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:287
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:327
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:679
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:698
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:835
 msgid "Clicks"
 msgstr ""
@@ -1340,12 +1495,12 @@ msgstr ""
 msgid "Close Notification"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:575
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:594
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:871
 msgid "Close Rate"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:636
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:650
 msgid "Close after an action button"
 msgstr ""
 
@@ -1402,12 +1557,31 @@ msgstr ""
 msgid "Comma-separated CSS selectors to show when button is clicked (e.g. #test,.className)"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:35
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:328
+msgid "Comment"
+msgstr ""
+
 #: app/Infrastructure/WordPress/Hooks/ActionHooks.php:1065
 msgid "Comment Author Name"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:222
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:76
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:156
+msgid "Comment Authors"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:75
+msgid "Comment Counter"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:235
 msgid "Comment Restrictions"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:74
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:155
+msgid "Comment Status"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:170
@@ -1427,8 +1601,8 @@ msgstr ""
 msgid "Community"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:996
-#: app/Domain/Tags/RegisterTags.php:1018
+#: app/Domain/Tags/RegisterTags.php:1001
+#: app/Domain/Tags/RegisterTags.php:1023
 msgid "Company"
 msgstr ""
 
@@ -1444,11 +1618,15 @@ msgstr ""
 msgid "Complete tag generation first!"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:112
+msgid "Completed"
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:45
 msgid "Configure Notifal plugin settings and preferences"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:142
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:153
 msgid "Configure restrictions to control which data is used for dynamic content. You can add multiple filters with AND/OR logic for complex filtering conditions."
 msgstr ""
 
@@ -1472,12 +1650,12 @@ msgstr ""
 msgid "Contain"
 msgstr ""
 
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:300
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:312
 msgid "Content"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/index.php:124
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:57
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:59
 msgid "Content Source"
 msgstr ""
 
@@ -1485,25 +1663,37 @@ msgstr ""
 msgid "Content Source Type"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:34
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:35
 msgid "Content area"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:846
+msgid "Content source counter tags"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:67
 msgid "Content source settings contain invalid data."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:58
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:59
 msgid "Content that appears within the page flow, like a banner or alert box. Integrates naturally with your content and doesn't overlay other elements. Good for contextual information or announcements."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:915
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:59
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:912
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:60
 msgid "Content within page flow like banners. Integrates naturally with your content."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:276
+msgid "Context-Aware Content Source"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:32
 msgid "Continue"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:129
+msgid "Contributor"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:77
@@ -1514,7 +1704,7 @@ msgstr ""
 msgid "Control notification display order when multiple notifications have \"Prevent Multiple Instances\" enabled. When disabled, the system automatically prioritizes based on content type and features."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:630
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:644
 msgid "Control when a notification becomes active and when it stops showing by using Start and End date/time fields. When a notification is not assigned to a campaign, these settings drive visibility."
 msgstr ""
 
@@ -1523,21 +1713,21 @@ msgstr ""
 msgid "Control which tag categories are available in tag selectors throughout Notifal. Disabled categories will not appear in Elementor or Block Editor tags section."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:518
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:537
 msgid "Conversion Rate"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:479
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:482
 msgid "Conversion tracked successfully"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:400
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:414
 msgid "Conversion-focused alerts that drive sales"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:298
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:335
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:680
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:699
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:851
 msgid "Conversions"
 msgstr ""
@@ -1583,8 +1773,8 @@ msgstr ""
 msgid "Count & Alert Modes"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1002
-#: app/Domain/Tags/RegisterTags.php:1024
+#: app/Domain/Tags/RegisterTags.php:1007
+#: app/Domain/Tags/RegisterTags.php:1029
 msgid "Country"
 msgstr ""
 
@@ -1618,7 +1808,7 @@ msgstr ""
 msgid "Create Your First Template"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:616
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:630
 msgid "Create campaigns with their own start and end dates, assign on-page notifications to a campaign, and let one schedule keep every related message aligned — no need to duplicate dates on each notification."
 msgstr ""
 
@@ -1626,7 +1816,7 @@ msgstr ""
 msgid "Create one"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:456
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:470
 msgid "Create stunning notifications with our drag-and-drop builder."
 msgstr ""
 
@@ -1650,6 +1840,10 @@ msgstr ""
 msgid "Cron processing executed successfully"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:101
+msgid "Cross-sell cart products"
+msgstr ""
+
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:168
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:101
 msgid "Current site time: %1$s (%2$s)"
@@ -1659,7 +1853,7 @@ msgstr ""
 msgid "Custom"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:451
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:452
 msgid "Custom Audio File"
 msgstr ""
 
@@ -1667,8 +1861,8 @@ msgstr ""
 msgid "Custom Badge Styling"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:522
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:528
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:523
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:529
 msgid "Custom CSS"
 msgstr ""
 
@@ -1676,20 +1870,24 @@ msgstr ""
 msgid "Custom CSS & Advanced Styling"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:514
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:515
 msgid "Custom CSS can use either \"#notifal-onpage-notification-%s\" (ID selector) or \".notifal-onpage-notification-%s\" (class selector). Both will work and target the same notification element. For security, only selectors starting with these prefixes are allowed."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:371
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:368
 msgid "Custom CSS must start with either \"#notifal-onpage-notification-{ID}\" (ID selector) or \".notifal-onpage-notification-{ID}\" (class selector) to ensure styles only apply to this specific notification. Any selectors that don't start with these prefixes will be ignored for security reasons."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:256
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:259
 msgid "Custom CSS requires Notifal Pro."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:223
 msgid "Custom Condition"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:52
+msgid "Custom Filter"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:287
@@ -1705,11 +1903,27 @@ msgstr ""
 msgid "Custom Link"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:232
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:45
+msgid "Custom Meta"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:25
+msgid "Custom Meta Filter"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:86
+msgid "Custom Post Type Counter"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:245
 msgid "Custom Post Type Restrictions"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:236
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:24
+msgid "Custom Range"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:239
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:180
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:94
 msgid "Custom Trigger"
@@ -1719,20 +1933,28 @@ msgstr ""
 msgid "Custom Trigger Type"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:404
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:405
 msgid "Custom Upload"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:188
+msgid "Custom filter value cannot be empty."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:52
 msgid "Custom frequency days is required when \"Custom Frequency\" is selected"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:412
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:426
 msgid "Custom notification recommendations for your business"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:401
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:415
 msgid "Custom notifications tailored to your business needs"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:36
+msgid "Custom post type"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:54
@@ -1741,6 +1963,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:336
 msgid "Custom triggers allow you to show notifications based on specific user interactions or page conditions. Use CSS selectors to target elements and JavaScript events or conditions to define when the notification should appear."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:131
+msgid "Customer"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:354
@@ -1761,8 +1987,14 @@ msgstr ""
 msgid "Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:147
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:166
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:15
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:44
 msgid "Date Range"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:14
+msgid "Date Type"
 msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:180
@@ -1777,19 +2009,23 @@ msgstr ""
 msgid "Deactivating..."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:448
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:462
 msgid "Deep insights into notification performance and visitor behavior."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:424
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:425
 msgid "Default Audio File"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:403
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:404
 msgid "Default Sounds"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1050
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:150
+msgid "Default Template"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1169
 msgid "Default notification sounds in Appearance settings now work correctly."
 msgstr ""
 
@@ -1841,7 +2077,7 @@ msgstr ""
 msgid "Desktop"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:208
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:209
 msgid "Desktop & tablet Bar Position Settings"
 msgstr ""
 
@@ -1849,7 +2085,7 @@ msgstr ""
 msgid "Desktop & tablet Position Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:221
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:222
 msgid "Desktop Bar Position"
 msgstr ""
 
@@ -1862,11 +2098,11 @@ msgstr ""
 msgid "Desktop Preview"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:637
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:656
 msgid "Detailed impressions & click tracking"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:99
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:104
 msgid "Detected Dynamic Tags"
 msgstr ""
 
@@ -1960,7 +2196,7 @@ msgstr ""
 msgid "Display rules contain invalid data."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:825
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:944
 msgid "Display rules overhaul"
 msgstr ""
 
@@ -2144,6 +2380,30 @@ msgstr ""
 msgid "Displays the title of the post."
 msgstr ""
 
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:80
+msgid "Displays the total number of comments matching the notification content source comment restrictions. Requires Notifal Pro."
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:94
+msgid "Displays the total number of items for a custom post type matching content source restrictions. Example: {custom_posttype_counter_book}"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:36
+msgid "Displays the total number of orders matching the notification content source order restrictions (all orders, date range, status, products, custom meta, etc.)."
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:69
+msgid "Displays the total number of pages matching the notification content source page restrictions (all pages, templates, author, date range, etc.)."
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:58
+msgid "Displays the total number of posts matching the notification content source post restrictions (all posts, categories, tags, author, date range, etc.)."
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:47
+msgid "Displays the total number of products matching the notification content source product restrictions (all products, categories, sale, featured, date range, etc.)."
+msgstr ""
+
 #: app/Domain/Tags/RegisterWooCommerceCartTags.php:75
 msgid "Displays the total quantity of items in the cart."
 msgstr ""
@@ -2180,59 +2440,59 @@ msgstr ""
 msgid "Displays the website URL of the user."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:169
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:270
-msgid "Distance from Bottom (px)"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:228
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:303
-msgid "Distance from Edge (px)"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:182
-msgid "Distance from Left (px)"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:195
-msgid "Distance from Right (px)"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:156
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:257
-msgid "Distance from Top (px)"
-msgstr ""
-
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:170
-msgid "Distance from the bottom edge of the screen"
-msgstr ""
-
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:271
-msgid "Distance from the bottom edge on mobile"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:183
-msgid "Distance from the left edge of the screen"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:196
-msgid "Distance from the right edge of the screen"
+msgid "Distance from Bottom (px)"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:229
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:304
-msgid "Distance from the selected edge of the screen"
+msgid "Distance from Edge (px)"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:183
+msgid "Distance from Left (px)"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:196
+msgid "Distance from Right (px)"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:157
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:258
+msgid "Distance from Top (px)"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:171
+msgid "Distance from the bottom edge of the screen"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:272
+msgid "Distance from the bottom edge on mobile"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:184
+msgid "Distance from the left edge of the screen"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:197
+msgid "Distance from the right edge of the screen"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:230
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:305
+msgid "Distance from the selected edge of the screen"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:158
 msgid "Distance from the top edge of the screen"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:258
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:259
 msgid "Distance from the top edge on mobile"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:972
+#: app/Domain/Tags/RegisterTags.php:977
 msgid "Doe"
 msgstr ""
 
@@ -2244,7 +2504,7 @@ msgstr ""
 msgid "Don't show if"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:396
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:410
 msgid "Don't worry!"
 msgstr ""
 
@@ -2264,9 +2524,10 @@ msgstr ""
 msgid "Downloaded file is not accessible."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:196
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:215
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:155
 #: app/Modules/OnPageNotification/Presentation/Frontend/Views/onpage-preview.php:31
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:179
 msgid "Draft"
 msgstr ""
 
@@ -2298,7 +2559,7 @@ msgstr ""
 msgid "Duplicate %s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:374
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:375
 msgid "Duration of appear/disappear animations. Hidden when both show and hide are set to No Animation."
 msgstr ""
 
@@ -2330,7 +2591,7 @@ msgstr ""
 msgid "Dynamic Content"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:141
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:152
 msgid "Dynamic Content Restrictions"
 msgstr ""
 
@@ -2388,6 +2649,10 @@ msgstr ""
 msgid "Editing selected rule"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:127
+msgid "Editor"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:249
 msgid "Element Selector"
 msgstr ""
@@ -2420,12 +2685,12 @@ msgstr ""
 msgid "Elementor plugin is not installed."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:994
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1113
 msgid "Elementor template widgets now render correctly on frontend on-page notifications."
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:998
-#: app/Domain/Tags/RegisterTags.php:1020
+#: app/Domain/Tags/RegisterTags.php:1003
+#: app/Domain/Tags/RegisterTags.php:1025
 msgid "Email"
 msgstr ""
 
@@ -2437,7 +2702,7 @@ msgstr ""
 msgid "Enable ARIA Labels"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:391
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:392
 msgid "Enable Audio"
 msgstr ""
 
@@ -2459,8 +2724,16 @@ msgstr ""
 msgid "Enabled"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:17
+msgid "End Date"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:125
 msgid "End Date (Optional)"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:203
+msgid "End date must be after start date"
 msgstr ""
 
 #: app/Modules/Campaign/Application/Services/CampaignSettingsService.php:260
@@ -2475,7 +2748,7 @@ msgstr ""
 msgid "Engagement Analytics"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:399
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:413
 msgid "Engagement notifications that encourage interaction"
 msgstr ""
 
@@ -2491,11 +2764,11 @@ msgstr ""
 msgid "Enhanced Analytics"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:439
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:453
 msgid "Enhanced On-Page Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:463
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:477
 msgid "Enhanced Tags System"
 msgstr ""
 
@@ -2507,8 +2780,16 @@ msgstr ""
 msgid "Enter a JavaScript condition (expression) that evaluates to true/false. Do not include \"return\" or a trailing semicolon (;). Example: %s"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:124
+msgid "Enter a custom meta key and value (e.g., user_type:premium) to filter users."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/woocommerce-cart-rules-section.php:79
 msgid "Enter a number only. For Cart total, it is compared to the cart subtotal (products in cart, before shipping and tax). For Cart item count, it is the number of items."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:159
+msgid "Enter author name(s), email(s), or multiple separated by comma. Leave empty for all authors."
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:84
@@ -2540,7 +2821,7 @@ msgstr ""
 msgid "Error executing cron processing"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:14
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:15
 msgid "Error filtering templates. Please try again."
 msgstr ""
 
@@ -2569,7 +2850,7 @@ msgstr ""
 msgid "Error loading tags. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:15
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:16
 msgid "Error loading templates."
 msgstr ""
 
@@ -2599,7 +2880,7 @@ msgstr ""
 msgid "Error refreshing analytics: "
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:18
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:19
 msgid "Error refreshing templates. Please try again."
 msgstr ""
 
@@ -2616,11 +2897,11 @@ msgstr ""
 msgid "Error resetting settings. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:149
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:177
 msgid "Error retrieving eligible notifications. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:313
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:341
 msgid "Error retrieving user preferences. Please try again."
 msgstr ""
 
@@ -2646,7 +2927,7 @@ msgstr ""
 msgid "Error searching tags. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:21
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:22
 msgid "Error selecting template. Please try again."
 msgstr ""
 
@@ -2658,16 +2939,16 @@ msgstr ""
 msgid "Error sorting table"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:262
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:290
 msgid "Error tracking event. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:774
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:821
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:944
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:991
 msgid "Error updating preferences"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:375
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:403
 msgid "Error updating user preferences. Please try again."
 msgstr ""
 
@@ -2691,7 +2972,7 @@ msgstr ""
 msgid "Event queued successfully"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:254
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:282
 msgid "Event tracking failed."
 msgstr ""
 
@@ -2725,11 +3006,11 @@ msgstr ""
 msgid "Explore Pre-created Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:511
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:525
 msgid "Explore Pre-created Notifications has been updated with appearance improvements for a better experience."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:472
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:486
 msgid "Explore your new Notifal dashboard and discover how real, authentic notifications can transform your website's performance. Your customers will thank you for the genuine engagement!"
 msgstr ""
 
@@ -2749,11 +3030,11 @@ msgstr ""
 msgid "Export Data"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:980
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:977
 msgid "Fade In"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1005
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1002
 msgid "Fade Out"
 msgstr ""
 
@@ -2858,7 +3139,7 @@ msgstr ""
 msgid "Failed to save block editor content."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:121
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:122
 msgid "Failed to save notification. Please try again."
 msgstr ""
 
@@ -2870,7 +3151,7 @@ msgstr ""
 msgid "Failed to store tracking event"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:531
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:534
 msgid "Failed to track product click"
 msgstr ""
 
@@ -2878,7 +3159,7 @@ msgstr ""
 msgid "Failed to update notification status. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:367
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:395
 msgid "Failed to update preferences."
 msgstr ""
 
@@ -2890,23 +3171,27 @@ msgstr ""
 msgid "Failed to write file to disk."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1091
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1210
 msgid "Faster OnPage List Page"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:923
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1042
 msgid "Faster analytics refresh workflow"
 msgstr ""
 
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:168
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:233
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:307
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:169
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:234
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:335
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:47
 msgid "Featured Image"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:518
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:532
 msgid "Featured Image Auto source now follows your template tags consistently in both the Block Editor and Elementor."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:43
+msgid "Featured Products Only"
 msgstr ""
 
 #: app/Infrastructure/WordPress/DeactivationPopup/Infrastructure/DeactivationController.php:119
@@ -2921,7 +3206,7 @@ msgstr ""
 msgid "Fill"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:13
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:14
 msgid "Filtering templates..."
 msgstr ""
 
@@ -2937,42 +3222,42 @@ msgstr ""
 msgid "First Cart Product Name"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:992
-#: app/Domain/Tags/RegisterTags.php:1014
+#: app/Domain/Tags/RegisterTags.php:997
+#: app/Domain/Tags/RegisterTags.php:1019
 msgid "First Name"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:651
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:665
 msgid "Fixed an issue with Ajax Add to Cart in notifications."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:320
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:321
 msgid "Fixed at top of viewport"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:911
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:53
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:908
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:54
 msgid "Fixed circular element that stays in position. Perfect for chat widgets and help buttons."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:325
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:326
 msgid "Fixed: bar stays on top of all content including header. Above header: bar is inserted as the first element before the site header."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:987
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1012
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:984
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1009
 msgid "Flip"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:880
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:877
 msgid "Floating Bar (Top Bar)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:313
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:314
 msgid "Floating Bar Placement"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:878
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:875
 msgid "Floating Side Box"
 msgstr ""
 
@@ -2984,7 +3269,7 @@ msgstr ""
 msgid "Focus is trapped within this notification. Use Tab to navigate between elements."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:560
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:574
 msgid "For Post Link and Custom Link actions, you can choose the text shown on the button while the page is changing, or keep it quiet and let the redirect happen after a short moment."
 msgstr ""
 
@@ -3014,11 +3299,11 @@ msgstr ""
 msgid "Free configuration"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:413
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:427
 msgid "Free setup and configuration of new notifications"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:48
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:49
 msgid "Free shipping on orders over $50!"
 msgstr ""
 
@@ -3042,11 +3327,11 @@ msgstr ""
 msgid "Frequency: —"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:559
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:573
 msgid "Friendlier loading state for Action Button"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:993
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1112
 msgid "Frontend template rendering fix"
 msgstr ""
 
@@ -3054,12 +3339,13 @@ msgstr ""
 msgid "Full (original size)"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:151
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:226
 msgid "Full Width"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:907
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:46
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:904
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:47
 msgid "Full-width banner sliding from top. Great for site-wide announcements and promotions."
 msgstr ""
 
@@ -3076,6 +3362,10 @@ msgstr ""
 
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:200
 msgid "General Tags"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:796
+msgid "General notification influence"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Resources/Lang/js/settings.php:73
@@ -3120,11 +3410,11 @@ msgstr ""
 msgid "Generation Options"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:41
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:42
 msgid "Get 20% off your next purchase"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:409
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:423
 msgid "Get FREE support:"
 msgstr ""
 
@@ -3154,7 +3444,7 @@ msgstr ""
 msgid "Go to the product page, select a variation, then add to cart."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:318
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:332
 msgid "Got it"
 msgstr ""
 
@@ -3162,7 +3452,7 @@ msgstr ""
 msgid "Greater than (>)"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:896
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1015
 msgid "Guest checkout attribution is now more reliable with a persistent session cookie stored on checkout orders. Unpaid orders (on-hold and pending payment) now show pending influence and are counted in analytics revenue after payment."
 msgstr ""
 
@@ -3170,7 +3460,7 @@ msgstr ""
 msgid "Hard Light"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:61
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:62
 msgid "Header content"
 msgstr ""
 
@@ -3182,7 +3472,7 @@ msgstr ""
 msgid "Hide All"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:362
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:363
 msgid "Hide Animation"
 msgstr ""
 
@@ -3192,6 +3482,10 @@ msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:140
 msgid "Hide Elements"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/order-attribution.php:13
+msgid "Hide details"
 msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:194
@@ -3244,11 +3538,11 @@ msgstr ""
 msgid "How often to show this notification to users"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:355
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:356
 msgid "How the notification appears"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:363
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:364
 msgid "How the notification disappears"
 msgstr ""
 
@@ -3301,7 +3595,7 @@ msgstr ""
 msgid "If you want to make it live, turn %s on."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:407
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:421
 msgid "If you want to replace your fake sales notifications with effective alternatives, our expert team is here to help you!"
 msgstr ""
 
@@ -3383,7 +3677,7 @@ msgstr ""
 msgid "Import failed: %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:392
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:406
 msgid "Important: Fake Sales Notifications Removed"
 msgstr ""
 
@@ -3413,32 +3707,32 @@ msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:277
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:323
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:678
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:697
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:827
 msgid "Impressions"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:895
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1014
 msgid "Improved influenced revenue tracking"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:686
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:700
 msgid "Improved online chat system in plugin backend."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:658
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:672
 msgid "Improved “Above header” floating bar placement on sticky header themes so it no longer leaves gaps or overlaps after scrolling back to the top."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:868
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:987
 msgid "In Appearance settings, Animation Duration (ms) is hidden only when both Show Animation and Hide Animation are set to No Animation. The duration value is ignored on the frontend in that case."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:637
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:651
 msgid "In Behavior settings you can close the notification when someone clicks a template action button, and set how many seconds to wait before it closes."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1078
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1197
 msgid "In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder. Submit your request from the template details; we will create it and notify you when it is ready."
 msgstr ""
 
@@ -3471,7 +3765,7 @@ msgid "Influenced Orders"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:230
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:425
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:444
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:862
 msgid "Influenced Revenue"
 msgstr ""
@@ -3544,7 +3838,7 @@ msgstr ""
 msgid "Invalid content source type."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:481
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:484
 msgid "Invalid conversion data"
 msgstr ""
 
@@ -3585,14 +3879,14 @@ msgstr ""
 msgid "Invalid import data structure. Please check the file format."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:463
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:499
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:466
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:502
 msgid "Invalid nonce"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:238
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:286
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:337
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:266
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:314
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:365
 msgid "Invalid nonce. Please refresh the page and try again."
 msgstr ""
 
@@ -3611,7 +3905,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsImportController.php:138
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:101
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/ToggleStatusController.php:59
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:169
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:197
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:30
 msgid "Invalid notification ID."
 msgstr ""
@@ -3650,11 +3944,11 @@ msgstr ""
 msgid "Invalid post visibility setting."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:349
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:377
 msgid "Invalid preferences format. Please provide a valid preferences object."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:534
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:537
 msgid "Invalid product click data"
 msgstr ""
 
@@ -3733,11 +4027,11 @@ msgstr ""
 msgid "JavaScript Event"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:971
+#: app/Domain/Tags/RegisterTags.php:976
 msgid "John"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:973
+#: app/Domain/Tags/RegisterTags.php:978
 msgid "Johnny"
 msgstr ""
 
@@ -3778,8 +4072,13 @@ msgstr ""
 msgid "Labels"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:20
+msgid "Last 24 Hours"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:151
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:152
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:171
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:22
 msgid "Last 30 Days"
 msgstr ""
 
@@ -3792,17 +4091,19 @@ msgid "Last 30 days"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:150
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:151
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:170
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:21
 msgid "Last 7 Days"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:152
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:153
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:172
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:23
 msgid "Last 90 Days"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:994
-#: app/Domain/Tags/RegisterTags.php:1016
+#: app/Domain/Tags/RegisterTags.php:999
+#: app/Domain/Tags/RegisterTags.php:1021
 msgid "Last Name"
 msgstr ""
 
@@ -3818,7 +4119,7 @@ msgstr ""
 msgid "Learn More"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:428
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:442
 msgid "Learn why fake notifications hurt brands →"
 msgstr ""
 
@@ -3830,8 +4131,8 @@ msgstr ""
 msgid "Leave empty to run until you stop it manually. If set, assigned notifications stop following this campaign after this moment."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:217
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:292
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:218
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:293
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:194
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:270
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:95
@@ -3855,11 +4156,11 @@ msgstr ""
 msgid "Lighten"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:770
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:789
 msgid "Limited View"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:62
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:63
 msgid "Limited time offer - 50% off selected items!"
 msgstr ""
 
@@ -3877,6 +4178,10 @@ msgstr ""
 msgid "Live & Active"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:804
+msgid "Live cart updates on the storefront"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:219
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/template-settings.php:92
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/template-settings.php:106
@@ -3885,6 +4190,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:1014
 msgid "Load More Notifications"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:10
+msgid "Loading"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:127
@@ -3937,6 +4246,7 @@ msgid "Loading tags..."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/template-settings.php:33
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:11
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:79
 msgid "Loading templates..."
 msgstr ""
@@ -3951,9 +4261,9 @@ msgstr ""
 #: app/Modules/OnPageNotification/Resources/Lang/js/global.php:10
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:9
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:290
-#: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:336
-#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:689
-#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:750
+#: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:338
+#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:698
+#: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:762
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:129
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:130
 #: app/Modules/Templates/Presentation/Admin/ViewComponents/TemplateRenderer.php:61
@@ -3970,7 +4280,7 @@ msgstr ""
 msgid "Luminosity"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:63
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:64
 msgid "Main content area"
 msgstr ""
 
@@ -4042,19 +4352,19 @@ msgstr ""
 msgid "Mobile"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:296
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:297
 msgid "Mobile Bar Position"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:283
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:284
 msgid "Mobile Bar Position Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:245
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:246
 msgid "Mobile Position"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:237
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:238
 msgid "Mobile Position Settings"
 msgstr ""
 
@@ -4063,20 +4373,28 @@ msgstr ""
 msgid "Mobile Preview"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:903
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:38
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:900
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:39
 msgid "Modal dialog in the center with backdrop. Ideal for important messages and forms."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1021
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:19
+msgid "Modified Date"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1140
 msgid "More accurate on-page notification preview"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:937
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1056
 msgid "More accurate template tag detection and HTML widget rendering"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:580
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:867
+msgid "More flexible placement controls"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:594
 msgid "More natural repeats when notifications appear again"
 msgstr ""
 
@@ -4084,7 +4402,7 @@ msgstr ""
 msgid "More notifications loaded"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:524
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:538
 msgid "More precise URL targeting [PRO]"
 msgstr ""
 
@@ -4130,7 +4448,7 @@ msgstr ""
 msgid "Multiple rules and AND/OR logic are available in Notifal Pro. Upgrade to unlock advanced display rule combinations."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:826
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:945
 msgid "Multiple rules per notification with unique IDs, click-to-edit, Show if / Don't show if visibility mode, duplicate-rule prevention, and rules that save automatically when you save the notification."
 msgstr ""
 
@@ -4150,7 +4468,7 @@ msgstr ""
 msgid "Name shown in your campaign list. Only you and other admins see it."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:406
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:420
 msgid "Need Help Transitioning?"
 msgstr ""
 
@@ -4216,10 +4534,6 @@ msgstr ""
 msgid "New update is available. Click to go to Plugins page and update."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:787
-msgid "Next update in %s"
-msgstr ""
-
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:101
 msgid "Next update: %1$s hr %2$s min later"
 msgstr ""
@@ -4242,8 +4556,8 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:988
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1013
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:985
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1010
 msgid "No Animation"
 msgstr ""
 
@@ -4271,7 +4585,7 @@ msgstr ""
 msgid "No On-Page Notifications found in Trash"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:93
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:98
 msgid "No Template Selected"
 msgstr ""
 
@@ -4283,20 +4597,20 @@ msgstr ""
 msgid "No active notifications right now."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:497
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:516
 msgid "No change"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:260
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:310
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:360
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:401
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:554
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:609
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:279
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:329
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:379
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:420
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:573
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:628
 msgid "No change vs previous period"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:814
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:984
 msgid "No changes made to preferences"
 msgstr ""
 
@@ -4304,7 +4618,7 @@ msgstr ""
 msgid "No data available"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:924
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:921
 msgid "No description available for this display type."
 msgstr ""
 
@@ -4324,12 +4638,12 @@ msgstr ""
 msgid "No file was uploaded."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:171
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:181
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:206
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:216
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:226
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:236
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:182
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:193
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:219
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:229
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:239
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:249
 msgid "No filters configured. Click %s to create a condition."
 msgstr ""
 
@@ -4355,7 +4669,7 @@ msgstr ""
 msgid "No meta fields found."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:748
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:767
 msgid "No notification data available yet."
 msgstr ""
 
@@ -4376,6 +4690,10 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Components/NotificationDetailPopupComponent.php:84
 #: app/Modules/OnPageNotification/Resources/Lang/js/import.php:20
 msgid "No preview available"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:11
+msgid "No results found"
 msgstr ""
 
 #: app/Shared/AdminUI/Fields/FieldRenderer.php:534
@@ -4419,7 +4737,7 @@ msgid "No templates found. Please create one first."
 msgstr ""
 
 #: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:181
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:354
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:368
 msgid "No update information available for this version."
 msgstr ""
 
@@ -4444,6 +4762,14 @@ msgstr ""
 msgid "Note:"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:173
+msgid "Note: Available categories depend on the custom post type's taxonomy configuration."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:147
+msgid "Note: Available templates depend on your theme."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/notifications-list.php:157
 msgid "Note: Imported notifications will be created as drafts. You can review and publish them after import."
 msgstr ""
@@ -4461,13 +4787,13 @@ msgstr ""
 #: app/Infrastructure/WordPress/StickyMenu/Domain/StickyMenu.php:135
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:236
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:243
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:600
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:858
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/RegisterBlocks.php:125
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/WidgetsRegistrar.php:57
 msgid "Notifal"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:298
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:312
 msgid "Notifal 2.0.0 - Complete Transformation!"
 msgstr ""
 
@@ -4476,7 +4802,7 @@ msgid "Notifal Analytics"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:426
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:641
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:899
 #: app/Modules/OnPageNotification/Resources/Lang/js/order-attribution.php:8
 msgid "Notifal Attribution"
 msgstr ""
@@ -4508,21 +4834,20 @@ msgstr ""
 msgid "Notifal influenced this order - %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:396
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:410
 msgid "Notifal now offers powerful alternatives that deliver real results:"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:742
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:756
 msgid "Notifal templates are no longer included in search engine sitemaps."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:931
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1050
 msgid "Notifal templates now remain compatible with Elementor editor loading while staying excluded from search engine sitemaps."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:544
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:662
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:176
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:806
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:195
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:824
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:13
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:53
@@ -4563,28 +4888,28 @@ msgstr ""
 msgid "Notification Preferences"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:718
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:413
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:715
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:414
 msgid "Notification Sound 1"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:719
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:414
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:716
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:415
 msgid "Notification Sound 2"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:720
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:415
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:717
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:416
 msgid "Notification Sound 3"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:721
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:416
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:718
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:417
 msgid "Notification Sound 4"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:722
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:417
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:719
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:418
 msgid "Notification Sound 5"
 msgstr ""
 
@@ -4596,7 +4921,7 @@ msgstr ""
 msgid "Notification created successfully!"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:132
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:135
 msgid "Notification created successfully."
 msgstr ""
 
@@ -4619,7 +4944,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:62
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:109
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/ToggleStatusController.php:65
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:185
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:213
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:70
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:29
 msgid "Notification not found."
@@ -4637,7 +4962,7 @@ msgstr ""
 msgid "Notification saved successfully!"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:629
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:643
 msgid "Notification scheduling (start/end time)"
 msgstr ""
 
@@ -4645,12 +4970,12 @@ msgstr ""
 msgid "Notification title cannot exceed 200 characters."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:168
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:171
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:20
 msgid "Notification title is required."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:175
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:178
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:18
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:21
 msgid "Notification title must be less than 255 characters."
@@ -4664,7 +4989,7 @@ msgstr ""
 msgid "Notification updated successfully!"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:132
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:135
 msgid "Notification updated successfully."
 msgstr ""
 
@@ -4673,11 +4998,15 @@ msgstr ""
 msgid "Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:805
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:604
+msgid "Notifications influenced on this order"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:924
 msgid "Notifications pre-load alternate pool variants for faster retriggers and more variety on the same page visit."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:833
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:952
 msgid "Notifications with this option now take turns, the next one can show after the previous closes."
 msgstr ""
 
@@ -4698,12 +5027,16 @@ msgstr ""
 msgid "Object Fit"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:234
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:237
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:168
 msgid "On Exit Intent"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:233
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:114
+msgid "On Hold"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:236
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:162
 msgid "On Scroll"
 msgstr ""
@@ -4717,15 +5050,15 @@ msgstr ""
 msgid "On-Page Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:588
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:602
 msgid "On-page notification caches are now cleared automatically when you save a notification, change its status from the list, or activate/update the plugin, so your latest changes appear on the frontend without extra manual refresh steps."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1022
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1141
 msgid "On-page notification preview now correctly respects device-specific position settings for mobile and tablet viewports so your preview matches the live frontend."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:574
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:588
 msgid "On-page notification previews now respect device-specific placement for mobile and tablet, helping you trust that what you see in preview is what visitors will see."
 msgstr ""
 
@@ -4733,7 +5066,7 @@ msgstr ""
 msgid "On-page notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:567
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:581
 msgid "On-page notifications have been adjusted to work more comfortably alongside page caching, so visitors still see your messages without affecting site performance."
 msgstr ""
 
@@ -4761,11 +5094,11 @@ msgstr ""
 msgid "OnPage Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:924
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1043
 msgid "OnPage analytics Refresh now processes pending analytics events first and then reloads the dashboard, so summary cards, tables, and charts update together with clearer refresh feedback."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:966
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1085
 msgid "OnPage analytics revenue totals and charts now use WooCommerce or Easy Digital Downloads currency settings, including custom symbols and formatting."
 msgstr ""
 
@@ -4789,7 +5122,7 @@ msgstr ""
 msgid "Once user manually closes the notification, do not show it again during their session."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:685
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:699
 msgid "Online chat system update"
 msgstr ""
 
@@ -4832,7 +5165,7 @@ msgstr ""
 msgid "Opacity"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:419
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:433
 msgid "Open Support Ticket →"
 msgstr ""
 
@@ -4840,16 +5173,21 @@ msgstr ""
 msgid "Open a ticket. We reply within 2 hours."
 msgstr ""
 
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:292
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:31
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:304
 msgid "Order"
 msgstr ""
 
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:292
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:304
 msgid "Order #%s"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:738
 msgid "Order Completed Date"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:31
+msgid "Order Counter"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:722
@@ -4872,7 +5210,7 @@ msgstr ""
 msgid "Order Paid Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:167
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:178
 msgid "Order Restrictions"
 msgstr ""
 
@@ -4880,29 +5218,41 @@ msgstr ""
 msgid "Order Shipped Date"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:50
+msgid "Order Status"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:107
+msgid "Order Statuses"
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:229
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:196
 msgid "Order Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:902
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1021
 msgid "Order attribution in WooCommerce and EDD admin"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:33
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:34
 msgid "Order confirmed!"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:790
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:909
 msgid "Order list attribution at a glance"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:575
-msgid "Order total"
 msgstr ""
 
 #: app/Domain/Tags/ContextProvider.php:80
 msgid "Order with ID %d not found."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:108
+msgid "Orders Containing Products"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:51
+msgid "Orders with Products"
 msgstr ""
 
 #: app/Infrastructure/WordPress/DeactivationPopup/Domain/DeactivationReason.php:95
@@ -4927,24 +5277,25 @@ msgstr ""
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:307
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/RestrictionCardRendererTrait.php:58
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:120
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:224
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:274
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:324
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:456
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:511
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:568
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:243
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:293
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:343
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:475
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:530
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:587
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:813
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:528
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:529
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:55
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:195
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:272
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:118
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:459
 msgid "PRO"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:137
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:669
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:696
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:156
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:688
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:715
 msgid "PRO FEATURE"
 msgstr ""
 
@@ -4955,12 +5306,22 @@ msgid "Padding"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:702
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:34
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:115
 msgid "Page"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:69
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:144
+msgid "Page Authors"
+msgstr ""
+
 #: app/Domain/Tags/RegisterTags.php:330
 msgid "Page Content"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:64
+msgid "Page Counter"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:310
@@ -4983,13 +5344,26 @@ msgstr ""
 msgid "Page Published Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:212
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:225
 msgid "Page Restrictions"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:68
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:143
+msgid "Page Status"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:152
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:198
 msgid "Page Tags"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:70
+msgid "Page Template"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:145
+msgid "Page Templates"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:320
@@ -5004,13 +5378,17 @@ msgstr ""
 msgid "Page Visibility"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:55
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:69
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:56
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:70
 msgid "Page content"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:49
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:50
 msgid "Page content below"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:163
+msgid "Pages"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:469
@@ -5026,6 +5404,8 @@ msgid "Paused"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:343
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:115
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:180
 msgid "Pending"
 msgstr ""
 
@@ -5045,11 +5425,11 @@ msgstr ""
 msgid "Percentage of the element that must be visible in the viewport to trigger the notification."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:675
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:694
 msgid "Performance Over Time"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:639
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:658
 msgid "Performance optimization insights"
 msgstr ""
 
@@ -5061,32 +5441,32 @@ msgstr ""
 msgid "Persistent duration is required when \"Persistent\" is selected"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:411
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:425
 msgid "Personal website review and analysis"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1000
-#: app/Domain/Tags/RegisterTags.php:1022
+#: app/Domain/Tags/RegisterTags.php:1005
+#: app/Domain/Tags/RegisterTags.php:1027
 msgid "Phone"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:470
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:471
 msgid "Play audio when notification appears"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:392
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:393
 msgid "Play audio when notification appears or disappears"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:477
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:478
 msgid "Play audio when notification disappears"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:476
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:477
 msgid "Play on Hide"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:469
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:470
 msgid "Play on Show"
 msgstr ""
 
@@ -5094,12 +5474,16 @@ msgstr ""
 msgid "Playing..."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:104
+msgid "Please enable at least one cart product source."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/general.php:8
 msgid "Please enter a label name."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:123
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:26
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:27
 msgid "Please enter a path or URL."
 msgstr ""
 
@@ -5109,8 +5493,12 @@ msgid "Please enter a valid number for the cart comparison."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:124
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:27
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:28
 msgid "Please enter a valid path or URL."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:200
+msgid "Please enter an author name or email."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:9
@@ -5126,6 +5514,10 @@ msgstr ""
 msgid "Please fix the validation errors before saving."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:192
+msgid "Please provide a meta key and value."
+msgstr ""
+
 #: app/Infrastructure/WordPress/DeactivationPopup/Domain/DeactivationData.php:442
 msgid "Please provide additional feedback"
 msgstr ""
@@ -5138,7 +5530,7 @@ msgstr ""
 msgid "Please select a file to import."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:94
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:99
 msgid "Please select a template in the Template section to analyze its content and configure restrictions."
 msgstr ""
 
@@ -5151,16 +5543,41 @@ msgstr ""
 msgid "Please select at least one"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:194
+msgid "Please select at least one author."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:189
+msgid "Please select at least one category."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:198
+msgid "Please select at least one comment status."
+msgstr ""
+
 #: app/Shared/AdminUI/Lists/BaseListView.php:1403
 msgid "Please select at least one item to perform this action on."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:201
+msgid "Please select at least one item."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:185
+msgid "Please select at least one order status."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:196
+msgid "Please select at least one page status."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:194
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:195
 msgid "Please select at least one page."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:273
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:25
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:26
 msgid "Please select at least one post item."
 msgstr ""
 
@@ -5169,12 +5586,14 @@ msgid "Please select at least one post type to generate tags."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:262
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:22
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:23
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:199
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:13
 msgid "Please select at least one post type."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:216
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:193
 msgid "Please select at least one post."
 msgstr ""
 
@@ -5189,15 +5608,33 @@ msgid "Please select at least one product for the cart rule."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:238
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:187
 msgid "Please select at least one product."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:202
+msgid "Please select at least one status."
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Resources/Lang/js/settings.php:31
 msgid "Please select at least one tag to save."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:197
+msgid "Please select at least one template."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:190
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:10
 msgid "Please select at least one user role."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:191
+msgid "Please select at least one user."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:186
+msgid "Please select both start and end dates."
 msgstr ""
 
 #: app/Infrastructure/WordPress/DeactivationPopup/Domain/DeactivationReason.php:157
@@ -5208,11 +5645,11 @@ msgstr ""
 msgid "Please specify which plugin you found"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:271
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:274
 msgid "Please upgrade to Notifal Pro or remove these features."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:12
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:13
 msgid "Please wait while we analyze the template content."
 msgstr ""
 
@@ -5220,11 +5657,11 @@ msgstr ""
 msgid "Plugin"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:804
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:923
 msgid "Pool-based content rotation"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:879
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:876
 msgid "Popup (Modal)"
 msgstr ""
 
@@ -5232,19 +5669,20 @@ msgstr ""
 msgid "Popup Backdrop Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:246
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:247
 msgid "Position for mobile devices"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:222
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:223
 msgid "Position of the floating bar on desktop devices"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:297
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:298
 msgid "Position of the floating bar on mobile devices"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:705
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:33
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:114
 msgid "Post"
 msgstr ""
@@ -5253,8 +5691,21 @@ msgstr ""
 msgid "Post Author"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:63
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:136
+msgid "Post Authors"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:134
+msgid "Post Categories"
+msgstr ""
+
 #: app/Domain/Tags/RegisterTags.php:190
 msgid "Post Content"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:53
+msgid "Post Counter"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:254
@@ -5277,6 +5728,10 @@ msgstr ""
 msgid "Post Link"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:812
+msgid "Post Link and Ajax Add to Cart now attribute clicked revenue from the matched product line subtotal while influenced revenue reflects the full order total on the same conversion. Post Link redirects store attribution before navigation, variable products match parent clicks, and the attribution window is 24 hours."
+msgstr ""
+
 #: app/Domain/Tags/RegisterTags.php:282
 msgid "Post Meta Field"
 msgstr ""
@@ -5289,7 +5744,7 @@ msgstr ""
 msgid "Post Published Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:202
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:215
 msgid "Post Restrictions"
 msgstr ""
 
@@ -5308,6 +5763,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:249
 msgid "Post Type Visibility"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:75
+msgid "Post Types"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:270
@@ -5336,12 +5795,16 @@ msgstr ""
 msgid "Post permanently deleted."
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1012
-#: app/Domain/Tags/RegisterTags.php:1034
+#: app/Domain/Tags/RegisterTags.php:1017
+#: app/Domain/Tags/RegisterTags.php:1039
 msgid "Postcode"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:447
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:162
+msgid "Posts"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:461
 msgid "Powerful Analytics"
 msgstr ""
 
@@ -5349,12 +5812,12 @@ msgstr ""
 msgid "Pre-created Notifications"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:768
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:809
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:938
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:979
 msgid "Preferences updated successfully"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:832
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:951
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:471
 msgid "Prevent Multiple Instances"
 msgstr ""
@@ -5376,7 +5839,7 @@ msgstr ""
 msgid "Preview %s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:441
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:442
 #: app/Modules/OnPageNotification/Resources/Lang/js/general.php:20
 msgid "Preview Audio"
 msgstr ""
@@ -5391,10 +5854,10 @@ msgstr ""
 msgid "Preview Image Source"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:956
-#: app/Domain/Tags/RegisterTags.php:977
-#: app/Domain/Tags/RegisterTags.php:1069
-#: app/Domain/Tags/RegisterTags.php:1088
+#: app/Domain/Tags/RegisterTags.php:961
+#: app/Domain/Tags/RegisterTags.php:982
+#: app/Domain/Tags/RegisterTags.php:1074
+#: app/Domain/Tags/RegisterTags.php:1093
 msgid "Preview Value"
 msgstr ""
 
@@ -5406,7 +5869,7 @@ msgstr ""
 msgid "Preview mode — notification only. Display rules, frequency and analytics are not applied."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:229
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:257
 msgid "Preview mode: analytics not recorded."
 msgstr ""
 
@@ -5418,11 +5881,11 @@ msgstr ""
 msgid "Preview on this page"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:496
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:510
 msgid "Preview on-page notifications before publishing"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:438
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:439
 msgid "Preview selected audio file"
 msgstr ""
 
@@ -5430,7 +5893,7 @@ msgstr ""
 msgid "Preview viewport"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:573
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:587
 msgid "Previews that match the live site"
 msgstr ""
 
@@ -5446,16 +5909,24 @@ msgstr ""
 msgid "Priority Level Settings"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:181
+msgid "Private"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/FilterRendererTrait.php:165
 msgid "Pro Features"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:270
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:273
 msgid "Pro features detected: "
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Analytics/EventProcessor.php:115
 msgid "Processed %d events with %d errors in %sms"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:113
+msgid "Processing"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/AnalyticsTableController.php:428
@@ -5469,9 +5940,18 @@ msgid "Processing..."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:708
-#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:285
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:30
+#: app/Modules/Templates/Controllers/FeaturedImageApiController.php:297
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:120
 msgid "Product"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:86
+msgid "Product Categories"
+msgstr ""
+
+#: app/Domain/Tags/RegisterContentSourceCounterTags.php:42
+msgid "Product Counter"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:695
@@ -5510,7 +5990,7 @@ msgstr ""
 msgid "Product Publish Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:177
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:189
 msgid "Product Restrictions"
 msgstr ""
 
@@ -5527,7 +6007,7 @@ msgstr ""
 msgid "Product added to cart."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:527
+#: app/Modules/OnPageNotification/Application/Services/Analytics/ConversionTracker.php:530
 msgid "Product click tracked successfully"
 msgstr ""
 
@@ -5547,6 +6027,10 @@ msgstr ""
 msgid "Product with ID %d not found."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:164
+msgid "Products"
+msgstr ""
+
 #: app/Modules/Templates/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:83
 msgid "Promotions"
 msgstr ""
@@ -5555,11 +6039,16 @@ msgstr ""
 msgid "Publish"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:18
+msgid "Publish Date"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:74
 msgid "Publish mode makes the notification live and visible to users."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:195
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:214
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:178
 msgid "Published"
 msgstr ""
 
@@ -5571,11 +6060,11 @@ msgstr ""
 msgid "Read More"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:471
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:485
 msgid "Ready to Build Trust and Boost Conversions?"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:398
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:412
 msgid "Real-time social proof from actual customer activities"
 msgstr ""
 
@@ -5612,8 +6101,20 @@ msgstr ""
 msgid "Refresh tag preview with latest data"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:16
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:17
 msgid "Refreshing templates..."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:117
+msgid "Refunded"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:58
+msgid "Registration Date"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:97
+msgid "Related cart products"
 msgstr ""
 
 #: app/Domain/Tags/Services/DateFormatterService.php:175
@@ -5622,6 +6123,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:187
 msgid "Remember notification state (dismissed/active) when page is refreshed."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:13
+msgid "Remove"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Resources/Lang/js/settings.php:33
@@ -5644,15 +6149,15 @@ msgstr ""
 msgid "Replace {key} to use. Click for available keys."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:860
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:979
 msgid "Reported issue fixed"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:713
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:727
 msgid "Reported issues improvements"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1077
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1196
 msgid "Request Your Preferred Builder for Any Template"
 msgstr ""
 
@@ -5701,7 +6206,7 @@ msgstr ""
 msgid "Requires WooCommerce"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:207
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:226
 msgid "Reset"
 msgstr ""
 
@@ -5762,16 +6267,16 @@ msgstr ""
 msgid "Retrying connection..."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:681
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:700
 msgid "Revenue"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:376
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:395
 msgid "Revenue from clicked products"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:218
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:293
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:219
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:294
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:202
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:274
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:103
@@ -5797,6 +6302,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:28
 msgid "Rule updated successfully!"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:42
+msgid "Sale Products Only"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:127
@@ -5986,12 +6495,16 @@ msgstr ""
 msgid "Search failed. Please try again."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:503
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:517
 msgid "Search for notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:504
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:518
 msgid "Search has been added to Explore Pre-created Notifications so you can find templates quickly."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:12
+msgid "Search meta fields..."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:180
@@ -6064,7 +6577,7 @@ msgstr ""
 #: app/Core/helpers.php:103
 #: app/Infrastructure/WordPress/Admin/Settings/Resources/Lang/js/settings.php:18
 #: app/Modules/Campaign/Application/Services/CampaignService.php:52
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:92
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:93
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:25
 #: tests/Unit/Modules/OnPageNotification/GetFilteredTemplatesControllerTest.php:125
 msgid "Security check failed. Please refresh the page and try again."
@@ -6084,11 +6597,11 @@ msgstr ""
 msgid "Security verification failed."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:497
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:511
 msgid "See how your notification will look on your live site before you publish it. Use the Preview button on the edit page or from the notifications list to open a preview on your site, so you can fine-tune design and placement with confidence."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:698
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:717
 msgid "See your top performers with Pro analytics"
 msgstr ""
 
@@ -6133,7 +6646,7 @@ msgstr ""
 msgid "Select Products"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:425
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:426
 msgid "Select a default notification sound"
 msgstr ""
 
@@ -6143,6 +6656,10 @@ msgstr ""
 
 #: app/Shared/AdminUI/Lists/BaseListView.php:685
 msgid "Select bulk action"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:103
+msgid "Select one or more cart sources. Multiple selections are combined with OR logic inside this filter."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:241
@@ -6167,7 +6684,7 @@ msgstr ""
 msgid "Set notification priority (1-10, where 10 is highest). When multiple notifications compete for display, the highest priority notification will be shown. Equal priorities use automatic smart logic."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:460
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:461
 msgid "Set the volume level for audio playback (0-100%)"
 msgstr ""
 
@@ -6200,7 +6717,7 @@ msgstr ""
 msgid "Show All"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:354
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:355
 msgid "Show Animation"
 msgstr ""
 
@@ -6230,15 +6747,20 @@ msgstr ""
 msgid "Show Timing"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:238
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:241
 msgid "Show Timing option \"%s\" requires Notifal Pro."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:126
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:553
+#: app/Modules/OnPageNotification/Resources/Lang/js/order-attribution.php:12
+msgid "Show details"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:137
 msgid "Show duplicate source"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:811
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:930
 msgid "Show duplicate source (Content Source)"
 msgstr ""
 
@@ -6248,6 +6770,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:99
 msgid "Show if: display the notification when the rules below match (using AND/OR logic). Don't show if: hide the notification when those rules match."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:278
+msgid "Show notification content related to the page the visitor is viewing. Target products, posts, pages, and archives by category depth with optional fallback."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:63
@@ -6271,6 +6797,14 @@ msgstr ""
 msgid "Showing %d of %d notifications"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:89
+msgid "Shows only featured products."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:88
+msgid "Shows only products that are currently on sale."
+msgstr ""
+
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:452
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:130
 msgid "Size"
@@ -6281,45 +6815,45 @@ msgstr ""
 msgid "Skip & Deactivate"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:984
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:981
 msgid "Slide In From Bottom"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:981
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:978
 msgid "Slide In From Left"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:982
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:979
 msgid "Slide In From Right"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:983
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:980
 msgid "Slide In From Top"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1009
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1006
 msgid "Slide Out To Bottom"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1006
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1003
 msgid "Slide Out To Left"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1007
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1004
 msgid "Slide Out To Right"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1008
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1005
 msgid "Slide Out To Top"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:919
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:67
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:916
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:68
 msgid "Small badge in corner for notifications count. Minimal visual impact but noticeable."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:899
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:31
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:896
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:32
 msgid "Small notification that slides in from the side. Perfect for quick confirmations and alerts."
 msgstr ""
 
@@ -6327,23 +6861,35 @@ msgstr ""
 msgid "Smart Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:517
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:271
+msgid "Smart Targeting"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:839
+msgid "Smart Targeting [PRO]"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:531
 msgid "Smarter featured images"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:797
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:916
 msgid "Smarter retrigger after hide"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:566
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:580
 msgid "Smoother behavior on cached sites"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:860
+msgid "Smoother notification timing and display"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:359
 msgid "Soft Light"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:714
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:728
 msgid "Some reported issues were fixed to improve overall stability and performance."
 msgstr ""
 
@@ -6351,7 +6897,7 @@ msgstr ""
 msgid "Something went wrong. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:176
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:204
 msgid "Sorry, you are not allowed to view this preview."
 msgstr ""
 
@@ -6401,8 +6947,41 @@ msgstr ""
 msgid "Spacing from Button"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:40
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:167
+msgid "Spam"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:41
 msgid "Special Offer!"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:40
+msgid "Specific Categories"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:80
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:171
+msgid "Specific Items"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:67
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:142
+msgid "Specific Pages"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:62
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:135
+msgid "Specific Posts"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:41
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:87
+msgid "Specific Products"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:57
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:121
+msgid "Specific Users"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/WooCommerceCartDisplayRulesService.php:88
@@ -6413,11 +6992,11 @@ msgstr ""
 msgid "Specific product in cart"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:791
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:910
 msgid "Spot Notifal-influenced orders faster in WooCommerce and EDD, and open a quick attribution summary from the orders list. Attribution and influenced revenue stay visible when an on-hold or pending order is marked completed in admin."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:495
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:496
 msgid "Stacking order (higher = on top)"
 msgstr ""
 
@@ -6430,6 +7009,7 @@ msgid "Standard post fields"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:112
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:16
 msgid "Start Date"
 msgstr ""
 
@@ -6451,8 +7031,8 @@ msgstr ""
 msgid "Starts on"
 msgstr ""
 
-#: app/Domain/Tags/RegisterTags.php:1010
-#: app/Domain/Tags/RegisterTags.php:1032
+#: app/Domain/Tags/RegisterTags.php:1015
+#: app/Domain/Tags/RegisterTags.php:1037
 msgid "State"
 msgstr ""
 
@@ -6461,9 +7041,10 @@ msgid "Static Content"
 msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/campaign-list.php:44
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:192
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:211
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:825
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/notifications-list.php:58
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:81
 msgid "Status"
 msgstr ""
 
@@ -6471,11 +7052,11 @@ msgstr ""
 msgid "Stay on Page"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:657
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:671
 msgid "Sticky header compatibility"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:335
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:336
 msgid "Sticky on scroll"
 msgstr ""
 
@@ -6490,6 +7071,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:36
 msgid "Subscribe"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:130
+msgid "Subscriber"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/analytics.php:10
@@ -6636,15 +7221,15 @@ msgstr ""
 msgid "Template ID is required and must be a valid positive integer."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:930
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1049
 msgid "Template SEO compatibility fix"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:938
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1057
 msgid "Template analysis now detects only valid Notifal tags (ignoring CSS/JS brace syntax), and frontend notifications now apply inline template styles and execute inline template scripts reliably for Elementor HTML widget content."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:20
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:21
 msgid "Template deselected."
 msgstr ""
 
@@ -6661,7 +7246,7 @@ msgstr ""
 msgid "Template not found."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:19
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:20
 msgid "Template selected successfully."
 msgstr ""
 
@@ -6678,11 +7263,11 @@ msgstr ""
 msgid "Templates Library"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:17
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:18
 msgid "Templates refreshed successfully."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:749
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:763
 msgid "Tested with WordPress 7.0."
 msgstr ""
 
@@ -6708,11 +7293,11 @@ msgstr ""
 msgid "The PHP ZIP extension is not enabled on your server. This extension is required for importing and exporting pre-created notifications with bundled media files."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:819
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:938
 msgid "The Users display rule now includes optional visit history targeting: new visitor for welcome offers, return visitor for re-engagement, and first browser session for entry-page nudges—alongside guest, logged-in, and role targeting."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:917
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1036
 msgid "The dashboard widget now includes clicked revenue, influenced revenue, influenced orders, and active notifications in one place."
 msgstr ""
 
@@ -6750,11 +7335,11 @@ msgstr ""
 msgid "The percentage of the page the user must scroll before the notification appears."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1085
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1204
 msgid "The pre-created notifications list now shows how long until the list refreshes, so you know when new or updated templates will appear."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1092
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1211
 msgid "The pre-created notifications section now loads in the background so the page is not blocked; improved loading state and timeout handling."
 msgstr ""
 
@@ -6770,7 +7355,7 @@ msgstr ""
 msgid "The uploaded file was only partially uploaded."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:194
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:207
 msgid "The user tags will be replaced with the currently logged-in user's data. Also, make sure you set the display rules to show the notification only to logged-in users; otherwise, the tags will be replaced with empty strings."
 msgstr ""
 
@@ -6839,6 +7424,7 @@ msgid "This order was influenced by Notifal but is not paid yet, so it is not co
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:495
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:905
 msgid "This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed."
 msgstr ""
 
@@ -6903,7 +7489,7 @@ msgstr ""
 msgid "Timing Settings"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:225
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:228
 msgid "Timing feature \"%s\" requires Notifal Pro."
 msgstr ""
 
@@ -6935,7 +7521,7 @@ msgid "To add these tags to current notifal tags, please click %s at the bottom 
 msgstr ""
 
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:148
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:149
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:168
 msgid "Today"
 msgstr ""
 
@@ -6952,42 +7538,55 @@ msgstr ""
 msgid "Too many requests. Please wait a moment and try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:961
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:215
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:290
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:958
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:216
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:291
 msgid "Top"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:940
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:937
 msgid "Top Center"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:941
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:938
 msgid "Top Left"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:702
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:721
 msgid "Top Performing Notifications"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:939
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:936
 msgid "Top Right"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:331
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:350
 msgid "Total Clicks"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:231
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:250
 msgid "Total Impressions"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:539
+msgid "Total clicked revenue"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:545
+msgid "Total influenced revenue"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:863
 msgid "Total order value for orders influenced by this notification"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:426
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:445
 msgid "Total order value influenced by notifal"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:168
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:182
+msgid "Trash"
 msgstr ""
 
 #: app/Shared/AdminUI/Traits/AdminOperationsTrait.php:199
@@ -7060,6 +7659,10 @@ msgstr ""
 msgid "Type at least 3 letters to start searching."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:9
+msgid "Type at least 3 letters to start searching..."
+msgstr ""
+
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:222
 #: app/Modules/Campaign/Resources/Lang/js/campaign.php:16
 msgid "Type to search on-page notifications…"
@@ -7077,7 +7680,7 @@ msgstr ""
 msgid "URL parameter [%1$s] %2$s [%3$s]"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:525
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:539
 msgid "URL targeting options in Pro now make it easier to show different campaigns and offers to visitors based on how they arrived on your site."
 msgstr ""
 
@@ -7102,7 +7705,7 @@ msgstr ""
 msgid "Unable to parse image data."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:197
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:225
 msgid "Unable to prepare notification for preview."
 msgstr ""
 
@@ -7114,11 +7717,15 @@ msgstr ""
 msgid "Unable to verify notification permissions."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:166
+msgid "Unapproved"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:98
 msgid "Unavailable while a campaign controls the schedule. Change or remove the campaign under General."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:812
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:931
 msgid "Under Content Source > Dynamic Content Restrictions, control whether the same product, order, post, page, or custom post type can appear again in a visitor session. Default is OFF so each session rotates through available items; turn it ON when you want duplicates allowed."
 msgstr ""
 
@@ -7127,15 +7734,15 @@ msgid "Unexpected response from server."
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:309
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:281
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:300
 msgid "Unique Visitors"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:519
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:538
 msgid "Unique visitors who placed an influenced order"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:374
+#: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:337
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:901
 msgid "Unknown"
 msgstr ""
@@ -7164,7 +7771,7 @@ msgstr ""
 msgid "Unlock Multi-Filter Restrictions with Notifal Pro"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:630
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:649
 msgid "Unlock Powerful Analytics with Notifal Pro"
 msgstr ""
 
@@ -7202,10 +7809,6 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:34
 msgid "Update Rule"
-msgstr ""
-
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:778
-msgid "Updated at: %s (%s)"
 msgstr ""
 
 #: app/Infrastructure/WordPress/StickyMenu/Domain/StickyMenu.php:174
@@ -7253,9 +7856,10 @@ msgstr ""
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:344
 #: app/Infrastructure/WordPress/Admin/Settings/Resources/Lang/js/settings.php:76
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/RestrictionCardRendererTrait.php:208
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:650
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:669
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:70
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:210
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:281
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:475
 msgid "Upgrade to Pro"
 msgstr ""
@@ -7268,7 +7872,7 @@ msgstr ""
 msgid "Upgrade to Pro for detailed system health analytics"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:671
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:690
 msgid "Upgrade to view detailed performance charts"
 msgstr ""
 
@@ -7288,12 +7892,16 @@ msgstr ""
 msgid "Upload a JSON or ZIP file to import templates. Make sure the file was exported from a trusted source."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:452
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:453
 msgid "Upload your own audio file (MP3, WAV, OGG supported)"
 msgstr ""
 
 #: app/Shared/Utils/FileUploadValidator.php:58
 msgid "Uploaded file is not accessible."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:99
+msgid "Upsell cart products"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Components/FilterRenderer.php:35
@@ -7304,8 +7912,28 @@ msgstr ""
 msgid "Use Product Sale Date"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:784
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:903
 msgid "Use cart values in notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:847
+msgid "Use counter tags that respect your content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (Pro), and {custom_posttype_counter_{post_type}}. Counts follow the same filters as your dynamic content pools (date range, status, categories, products, AND/OR rules, and more). Order counting is HPOS-safe and legacy-compatible."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:102
+msgid "Use cross-sell products configured on cart items."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:26
+msgid "Use operators: >, <, =, !=, >=, <=. Combine with && (AND) or || (OR)."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:96
+msgid "Use products currently in the visitor cart."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:98
+msgid "Use products related to items in the visitor cart."
 msgstr ""
 
 #: app/Modules/Templates/Presentation/Admin/Views/components/template-creation-options.php:63
@@ -7316,12 +7944,20 @@ msgstr ""
 msgid "Use these tags to customize your text. Click on a tag to copy."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:100
+msgid "Use upsell products configured on cart items."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Components/FilterRenderer.php:39
 msgid "Used Plugins"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/general-settings.php:68
 msgid "Used to identify this notification within admin panel."
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:32
+msgid "User"
 msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:131
@@ -7360,8 +7996,13 @@ msgstr ""
 msgid "User Registration Date"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:56
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:120
+msgid "User Roles"
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:118
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:187
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:200
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:194
 msgid "User Tags"
 msgstr ""
@@ -7378,7 +8019,7 @@ msgstr ""
 msgid "User with ID %d not found."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:818
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:937
 msgid "Users rule visit history filters"
 msgstr ""
 
@@ -7424,7 +8065,7 @@ msgstr ""
 msgid "View Cart Link"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:311
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:325
 msgid "View Changelog"
 msgstr ""
 
@@ -7475,7 +8116,7 @@ msgstr ""
 msgid "View guide"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:903
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1022
 msgid "View influenced attribution in WooCommerce and Easy Digital Downloads order admin areas, including the orders list column and order details meta box (legacy and HPOS support for WooCommerce)."
 msgstr ""
 
@@ -7519,24 +8160,24 @@ msgstr ""
 msgid "We set up notifications on your site for free."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:387
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:401
 msgid "We've completely rebuilt Notifal from the ground up with enhanced on-page notifications, advanced analytics, powerful template builder, and an improved tags system. This version brings you a more professional and effective way to engage your visitors."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:393
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:407
 msgid "We've removed the fake sales notification feature to focus on genuine, trust-building notifications that actually help your business grow. While many users found this feature useful, fake notifications can damage your brand credibility and hurt long-term customer relationships."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:32
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:39
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:47
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:54
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:60
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:68
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:33
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:40
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:48
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:55
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:61
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:69
 msgid "Website Page"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:384
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:398
 msgid "Welcome to Notifal 2.0.0 - A Complete Transformation!"
 msgstr ""
 
@@ -7567,91 +8208,101 @@ msgstr ""
 #: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:277
 #: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:284
 #: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:291
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:358
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:298
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:305
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:372
 msgid "What's New in %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:434
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:448
 msgid "What's New in 2.0.0"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1072
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1191
 msgid "What's New in 2.0.1"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1044
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1163
 msgid "What's New in 2.0.2"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:491
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:505
 msgid "What's New in 2.1.0"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1016
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1135
 msgid "What's New in 2.1.1"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:547
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:561
 msgid "What's New in 2.1.5"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:610
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:624
 msgid "What's New in 2.2.0"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:680
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:694
 msgid "What's New in 2.2.1"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:708
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:722
 msgid "What's New in 2.2.2"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:988
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1107
 msgid "What's New in 2.2.3"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:960
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1079
 msgid "What's New in 2.2.4"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:736
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:750
 msgid "What's New in 2.2.5"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:890
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1009
 msgid "What's New in 2.3.0"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:855
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:974
 msgid "What's New in 2.3.1"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:771
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:890
 msgid "What's New in 2.3.5"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:834
+msgid "What's New in 2.3.7"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:785
+msgid "What's New in 2.3.9"
 msgstr ""
 
 #: app/Infrastructure/WordPress/WhatsNewPopup/Infrastructure/WhatsNewController.php:110
 msgid "What's new popup dismissed."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:798
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:917
 msgid "When Allow Re-trigger After Hide is enabled, each retrigger now shows fresh dynamic content for orders, products, posts, pages, and custom post types—not a repeat of the first notification."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:777
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:896
 msgid "When WooCommerce is active, target visitors by cart state: empty or not empty, specific product in or not in cart, product category, cart total, item count, or coupon applied. Rules update in real time after Ajax add-to-cart or cart changes, no full page refresh needed."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:553
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:567
 msgid "When WooCommerce is active, the Action Button now supports an \"Ajax Add to Cart\" link type. It adds the notification's product to the cart with a smoother, more modern experience."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:581
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:595
 msgid "When a notification is allowed to show again after being closed, its content is now refreshed more reliably so visitors are less likely to see the same item over and over, even on sites that use caching or offline support."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:127
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:138
 msgid "When disabled, each visitor session sees each source item only once per notification context until the pool is exhausted."
 msgstr ""
 
@@ -7659,7 +8310,7 @@ msgstr ""
 msgid "When disabled, notifications in this campaign will not be shown."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:336
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:337
 msgid "When enabled, the bar sticks to the top when the user scrolls. When disabled, the bar scrolls away with the page."
 msgstr ""
 
@@ -7671,11 +8322,15 @@ msgstr ""
 msgid "When should the notification appear on the page. Advanced timing options are Pro features."
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:805
+msgid "When visitors add or remove items via Ajax, the cart product pool refreshes automatically so on-page notifications can show updated cart-based products without a full page reload."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:145
 msgid "Where to display the notification on desktop devices"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:303
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:317
 msgid "Why Fake Sales Hurt Brands"
 msgstr ""
 
@@ -7684,8 +8339,12 @@ msgstr ""
 msgid "Width"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:152
+msgid "With Sidebar"
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Settings/Services/PostTypeDiscoveryService.php:157
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:650
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:664
 msgid "WooCommerce"
 msgstr ""
 
@@ -7704,11 +8363,15 @@ msgstr ""
 msgid "WooCommerce Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:776
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:854
+msgid "WooCommerce and EDD order details and the orders list popup now show a compact attribution summary: notifications influenced on the order, linkable clicked products (each on its own row), total clicked revenue, and total influenced revenue shown once. Expand Show details for per-notification breakdown. Duplicate \"(unknown product)\" rows are removed when a real product click already exists."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:895
 msgid "WooCommerce cart display rules"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:783
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:902
 msgid "WooCommerce cart dynamic tags"
 msgstr ""
 
@@ -7716,7 +8379,7 @@ msgstr ""
 msgid "WooCommerce is not currently active. Product, Order, and Cart tags will be automatically disabled until WooCommerce is activated."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:748
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:762
 msgid "WordPress 7.0 ready"
 msgstr ""
 
@@ -7724,7 +8387,7 @@ msgstr ""
 msgid "WordPress Core"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:916
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:1035
 msgid "WordPress dashboard widget expanded"
 msgstr ""
 
@@ -7739,7 +8402,7 @@ msgid "Yes"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:149
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:150
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:169
 msgid "Yesterday"
 msgstr ""
 
@@ -7751,8 +8414,8 @@ msgstr ""
 msgid "You are not allowed to create templates."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:111
-#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:23
+#: app/Modules/OnPageNotification/Application/Services/Core/NotificationSaveService.php:112
+#: app/Modules/OnPageNotification/Resources/Lang/js/global.php:24
 msgid "You can only have one active notification in the free version. Upgrade to Notifal Pro to activate multiple notifications simultaneously."
 msgstr ""
 
@@ -7829,11 +8492,11 @@ msgstr ""
 msgid "You're currently using 1 filter for dynamic content restrictions. Upgrade to Pro to add unlimited filters with AND/OR logic for complex filtering conditions and more precise control over your notifications."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:632
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:651
 msgid "You've generated %s in clicked revenue (%s in total influenced revenue)! Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:494
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:495
 msgid "Z-Index"
 msgstr ""
 
@@ -7846,15 +8509,35 @@ msgstr ""
 msgid "ZIP support is not available on this server. Please enable the PHP zip extension or contact your hosting provider."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:986
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:983
 msgid "Zoom In"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1011
+#: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:1008
 msgid "Zoom Out"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:379
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:174
+msgid "_custom_field=value"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:110
+msgid "_order_total>200"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:91
+msgid "_regular_price>100"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:138
+msgid "_thumbnail_id>0"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:148
+msgid "_wp_page_template:page-fullwidth.php"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Helpers/AnalyticsHelper.php:342
 msgid "ago"
 msgstr ""
 
@@ -7913,6 +8596,10 @@ msgstr ""
 msgid "knowledge base"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:123
+msgid "meta_key:value"
+msgstr ""
+
 #: app/Shared/AdminUI/Lists/BaseListView.php:821
 msgid "no title"
 msgstr ""
@@ -7932,12 +8619,20 @@ msgstr ""
 msgid "post types"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:160
+msgid "rating=5"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:1015
 msgid "remaining"
 msgstr ""
 
 #: app/Infrastructure/WordPress/DeactivationPopup/Infrastructure/DeactivationController.php:511
 msgid "support ticket"
+msgstr ""
+
+#: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:27
+msgid "{type} filter {index} ('{name}'): {message}"
 msgstr ""
 
 #: app/Infrastructure/WordPress/DeactivationPopup/Infrastructure/DeactivationController.php:490

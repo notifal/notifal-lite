@@ -987,17 +987,71 @@ class DisplayRulesService
     }
 
     /**
+     * Sanitize a single URL pattern for display-rule matching.
+     *
+     * WordPress sanitize_text_field() strips all percent-encoded byte sequences, which
+     * breaks non-ASCII URL paths. This sanitizer keeps percent-encoding and Unicode
+     * characters while still removing tags and control bytes.
+     *
+     * @param string $pattern Raw URL pattern from admin input.
+     * @return string Sanitized URL pattern.
+     * @since 2.3.7
+     */
+    private static function sanitizeUrlPattern(string $pattern): string
+    {
+        // Cast to string so malformed request payloads do not trigger type errors.
+        $pattern = (string) $pattern;
+
+        // Keep valid UTF-8 characters instead of stripping multilingual path segments.
+        $pattern = wp_check_invalid_utf8($pattern);
+
+        // Remove null bytes that may be injected into crafted input.
+        $pattern = wp_kses_no_null($pattern);
+
+        // Strip HTML/script markup without touching URL-safe plain text.
+        if (str_contains($pattern, '<')) {
+            $pattern = wp_pre_kses_less_than($pattern);
+            $pattern = wp_strip_all_tags($pattern, false);
+        }
+
+        // Remove ASCII control characters; URL patterns must be single-line tokens.
+        $pattern = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $pattern);
+
+        // Collapse repeated whitespace because patterns are comma-separated in the UI.
+        $pattern = preg_replace('/\s+/', ' ', $pattern);
+
+        // Trim leading/trailing spaces from each comma-separated pattern.
+        return trim($pattern);
+    }
+
+    /**
      * Sanitize URL patterns array
      *
      * @param array $patterns URL patterns
      * @return array Sanitized URL patterns
      * @since 2.0.0
+     * @since 2.3.7 Preserves percent-encoded and Unicode path segments.
      */
     private static function sanitizeUrlPatterns(array $patterns): array
     {
-        return array_map(function($pattern) {
-            return sanitize_text_field($pattern);
-        }, array_filter($patterns, 'is_string'));
+        $sanitized = [];
+
+        // Walk each submitted pattern and sanitize only string values.
+        foreach ($patterns as $pattern) {
+            if (!is_string($pattern)) {
+                continue;
+            }
+
+            // Apply URL-safe sanitization that preserves multilingual paths.
+            $clean = self::sanitizeUrlPattern($pattern);
+
+            // Skip empty patterns so matching logic does not receive blank keywords.
+            if ($clean !== '') {
+                $sanitized[] = $clean;
+            }
+        }
+
+        return $sanitized;
     }
 
     /**

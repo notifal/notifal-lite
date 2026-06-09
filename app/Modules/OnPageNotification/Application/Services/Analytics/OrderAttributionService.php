@@ -513,7 +513,7 @@ class OrderAttributionService
     }
 
     /**
-     * Render attribution rows shared by the meta box and order list popup.
+     * Render attribution summary and optional detail rows for meta box and popup.
      *
      * @param array $attributionData Enriched conversion rows for the order
      * @return void
@@ -522,62 +522,320 @@ class OrderAttributionService
      */
     private function renderAttributionRowsHtml(array $attributionData): void
     {
+        // Build once-per-order summary totals for the compact summary card
+        $summary = $this->buildAttributionSummary($attributionData);
+
         echo '<div class="notifal-attribution-metabox">';
+
+        // Summary card: influenced notifications, clicked products, revenue totals
+        echo '<div class="notifal-attribution-summary">';
+
+        $this->renderSummaryNotificationsList($summary);
+
+        $this->renderSummaryProductsList($summary);
+
+        $this->renderSummaryLine(
+            'coin',
+            __('Total clicked revenue', 'notifal'),
+            $this->formatRevenueAmount($summary['total_clicked_revenue'])
+        );
+
+        $this->renderSummaryLine(
+            'bag-check',
+            __('Total influenced revenue', 'notifal'),
+            $this->formatRevenueAmount($summary['total_influenced_revenue'])
+        );
+
+        echo '</div>';
+
+        // Toggle expands per-notification detail rows without repeating order totals
+        echo '<button type="button" class="notifal-attribution-details-toggle" aria-expanded="false">';
+        echo esc_html__('Show details', 'notifal');
+        echo '</button>';
+
+        echo '<div class="notifal-attribution-details" hidden>';
 
         foreach ($attributionData as $index => $row) {
             if ($index > 0) {
                 echo '<hr class="notifal-attr-divider" />';
             }
 
-            $notificationId = (int) ($row['notification_id'] ?? 0);
-            $notifTitle     = get_the_title($notificationId) ?: __('(deleted notification)', 'notifal');
-            $productName    = $row['product_name'] ?? __('(unknown product)', 'notifal');
-            $productRevenue = (float) ($row['product_revenue'] ?? 0);
-            $orderTotal     = (float) ($row['total_order_value'] ?? 0);
-            $editUrl        = $notificationId > 0 ? $this->urlService->getEditNotificationUrl($notificationId) : '';
+            $this->renderAttributionDetailRow($row);
+        }
 
-            echo '<div class="notifal-attr-row">';
+        echo '</div></div>';
+    }
 
-            echo '<div class="notifal-attr-line notifal-attr-line--notification">';
-            echo '<span class="notifal-icon notifal-icon-megaphone" aria-hidden="true"></span>';
-            echo '<div class="notifal-attr-line__content">';
-            echo '<span class="notifal-attr-label">' . esc_html__('Notification', 'notifal') . '</span>';
-            echo '<span class="notifal-attr-value">';
+    /**
+     * Render a single summary metric line inside the attribution summary card.
+     *
+     * @param string $iconClass Icon suffix without the notifal-icon- prefix
+     * @param string $label     Metric label
+     * @param string $value     Metric value (already escaped when needed)
+     * @return void
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function renderSummaryLine(string $iconClass, string $label, string $value): void
+    {
+        echo '<div class="notifal-attr-line notifal-attr-line--summary">';
+        echo '<span class="notifal-icon notifal-icon-' . esc_attr($iconClass) . '" aria-hidden="true"></span>';
+        echo '<div class="notifal-attr-line__content">';
+        echo '<span class="notifal-attr-label">' . esc_html($label) . '</span>';
+        echo '<span class="notifal-attr-value">' . $value . '</span>';
+        echo '</div></div>';
+    }
+
+    /**
+     * Render influenced notifications as separate linkable rows in the summary card.
+     *
+     * @param array $summary Summary payload from buildAttributionSummary()
+     * @return void
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function renderSummaryNotificationsList(array $summary): void
+    {
+        $notifications = $summary['influenced_notifications'] ?? [];
+
+        echo '<div class="notifal-attr-line notifal-attr-line--summary notifal-attr-line--list">';
+        echo '<span class="notifal-icon notifal-icon-megaphone" aria-hidden="true"></span>';
+        echo '<div class="notifal-attr-line__content">';
+        echo '<span class="notifal-attr-label">' . esc_html__('Notifications influenced on this order', 'notifal') . '</span>';
+
+        if (empty($notifications)) {
+            echo '<span class="notifal-attr-value">&mdash;</span>';
+            echo '</div></div>';
+            return;
+        }
+
+        echo '<ul class="notifal-attribution-summary-list">';
+
+        foreach ($notifications as $notification) {
+            $notificationId = (int) ($notification['notification_id'] ?? 0);
+            $title          = (string) ($notification['title'] ?? '');
+            $editUrl        = (string) ($notification['edit_url'] ?? '');
+            $label          = '#' . $notificationId . ' &mdash; ' . $title;
+
+            echo '<li class="notifal-attribution-summary-list__item">';
+
             if ($editUrl !== '') {
-                echo '<a href="' . esc_url($editUrl) . '">';
-                echo '#' . esc_html((string) $notificationId) . ' &mdash; ' . esc_html($notifTitle);
+                echo '<a href="' . esc_url($editUrl) . '" class="notifal-attribution-summary-list__link">';
+                echo esc_html($label);
                 echo '</a>';
             } else {
-                echo '#' . esc_html((string) $notificationId) . ' &mdash; ' . esc_html($notifTitle);
+                echo '<span class="notifal-attribution-summary-list__text">' . esc_html($label) . '</span>';
             }
-            echo '</span></div></div>';
 
-            echo '<div class="notifal-attr-line">';
-            echo '<span class="notifal-icon notifal-icon-cursor" aria-hidden="true"></span>';
-            echo '<div class="notifal-attr-line__content">';
-            echo '<span class="notifal-attr-label">' . esc_html__('Clicked product', 'notifal') . '</span>';
-            echo '<span class="notifal-attr-product-name">' . esc_html($productName) . '</span>';
+            echo '</li>';
+        }
+
+        echo '</ul></div></div>';
+    }
+
+    /**
+     * Render clicked products as separate linkable rows in the summary card.
+     *
+     * @param array $summary Summary payload from buildAttributionSummary()
+     * @return void
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function renderSummaryProductsList(array $summary): void
+    {
+        $clickedProducts = $summary['clicked_products'] ?? [];
+
+        echo '<div class="notifal-attr-line notifal-attr-line--summary notifal-attr-line--list">';
+        echo '<span class="notifal-icon notifal-icon-cursor" aria-hidden="true"></span>';
+        echo '<div class="notifal-attr-line__content">';
+        echo '<span class="notifal-attr-label">' . esc_html__('Clicked product', 'notifal') . '</span>';
+
+        if (empty($clickedProducts)) {
+            $fallback = !empty($summary['has_product_click'])
+                ? esc_html__('(unknown product)', 'notifal')
+                : '&mdash;';
+            echo '<span class="notifal-attr-value">' . $fallback . '</span>';
             echo '</div></div>';
+            return;
+        }
 
-            if ($productRevenue > 0 && function_exists('wc_price')) {
-                echo '<div class="notifal-attr-line">';
-                echo '<span class="notifal-icon notifal-icon-coin" aria-hidden="true"></span>';
-                echo '<div class="notifal-attr-line__content">';
-                echo '<span class="notifal-attr-label">' . esc_html__('Clicked revenue', 'notifal') . '</span>';
-                echo '<span class="notifal-attr-product-revenue">' . wp_kses_post(wc_price($productRevenue)) . '</span>';
-                echo '</div></div>';
+        echo '<ul class="notifal-attribution-summary-list">';
+
+        foreach ($clickedProducts as $product) {
+            $productId   = (int) ($product['product_id'] ?? 0);
+            $productName = (string) ($product['product_name'] ?? '');
+            $editUrl     = (string) ($product['edit_url'] ?? '');
+
+            if ($productName === '') {
+                $productName = __('(unknown product)', 'notifal');
             }
 
-            if ($orderTotal > 0 && function_exists('wc_price')) {
-                echo '<div class="notifal-attr-line">';
-                echo '<span class="notifal-icon notifal-icon-bag-check" aria-hidden="true"></span>';
-                echo '<div class="notifal-attr-line__content">';
-                echo '<span class="notifal-attr-label">' . esc_html__('Order total', 'notifal') . '</span>';
-                echo '<span class="notifal-attr-product-revenue">' . wp_kses_post(wc_price($orderTotal)) . '</span>';
-                echo '</div></div>';
+            echo '<li class="notifal-attribution-summary-list__item">';
+
+            if ($editUrl !== '') {
+                echo '<a href="' . esc_url($editUrl) . '" class="notifal-attribution-summary-list__link">';
+                echo esc_html($productName);
+                echo '</a>';
+            } else {
+                echo '<span class="notifal-attribution-summary-list__text">' . esc_html($productName) . '</span>';
             }
 
-            echo '</div>';
+            echo '</li>';
+        }
+
+        echo '</ul></div></div>';
+    }
+
+    /**
+     * Resolve the admin edit URL for a WooCommerce product or EDD download.
+     *
+     * @param int $productId WooCommerce product/variation ID or EDD download ID
+     * @return string Admin edit URL or empty string when unavailable
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function getProductAdminEditUrl(int $productId): string
+    {
+        if ($productId <= 0) {
+            return '';
+        }
+
+        // Prefer WooCommerce admin product edit screen when available
+        if (function_exists('wc_get_product')) {
+            $product = wc_get_product($productId);
+
+            if ($product) {
+                $editPostId = $product->is_type('variation')
+                    ? (int) $product->get_parent_id()
+                    : $productId;
+
+                $editLink = get_edit_post_link($editPostId, 'raw');
+
+                if (is_string($editLink) && $editLink !== '') {
+                    return $editLink;
+                }
+            }
+        }
+
+        // Fallback for EDD downloads and generic products
+        $editLink = get_edit_post_link($productId, 'raw');
+
+        return is_string($editLink) ? $editLink : '';
+    }
+
+    /**
+     * Render a linkable product name for detail rows.
+     *
+     * @param int    $productId   Product ID
+     * @param string $productName Display name
+     * @return string Safe HTML for the product label
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function formatProductNameHtml(int $productId, string $productName): string
+    {
+        if ($productName === '') {
+            $productName = __('(unknown product)', 'notifal');
+        }
+
+        $editUrl = $this->getProductAdminEditUrl($productId);
+
+        if ($editUrl !== '') {
+            return '<a href="' . esc_url($editUrl) . '" class="notifal-attr-product-name">'
+                . esc_html($productName)
+                . '</a>';
+        }
+
+        return '<span class="notifal-attr-product-name">' . esc_html($productName) . '</span>';
+    }
+
+    /**
+     * Format a revenue amount for WooCommerce or EDD admin display.
+     *
+     * @param float $amount Revenue amount
+     * @return string Formatted amount or dash when zero
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function formatRevenueAmount(float $amount): string
+    {
+        if ($amount <= 0) {
+            return '&mdash;';
+        }
+
+        if (function_exists('wc_price')) {
+            return wp_kses_post(wc_price($amount));
+        }
+
+        if (function_exists('edd_currency_filter') && function_exists('edd_format_amount')) {
+            return esc_html(edd_currency_filter(edd_format_amount($amount)));
+        }
+
+        return esc_html(number_format($amount, 2));
+    }
+
+    /**
+     * Render one per-notification detail row inside the collapsible section.
+     *
+     * @param array $row Attribution row
+     * @return void
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function renderAttributionDetailRow(array $row): void
+    {
+        $notificationId = (int) ($row['notification_id'] ?? 0);
+        $notifTitle     = get_the_title($notificationId) ?: __('(deleted notification)', 'notifal');
+        $productId      = (int) ($row['product_id'] ?? 0);
+        $productName    = (string) ($row['product_name'] ?? '');
+        $productRevenue = (float) ($row['product_revenue'] ?? 0);
+        $editUrl        = $notificationId > 0 ? $this->urlService->getEditNotificationUrl($notificationId) : '';
+
+        // Cookie/session influence rows have no clicked product
+        if ($productId <= 0) {
+            $productName = __('General notification influence', 'notifal');
+        } elseif ($productName === '') {
+            $productName = __('(unknown product)', 'notifal');
+        }
+
+        echo '<div class="notifal-attr-row">';
+
+        echo '<div class="notifal-attr-line notifal-attr-line--notification">';
+        echo '<span class="notifal-icon notifal-icon-megaphone" aria-hidden="true"></span>';
+        echo '<div class="notifal-attr-line__content">';
+        echo '<span class="notifal-attr-label">' . esc_html__('Notification', 'notifal') . '</span>';
+        echo '<span class="notifal-attr-value">';
+
+        if ($editUrl !== '') {
+            echo '<a href="' . esc_url($editUrl) . '">';
+            echo '#' . esc_html((string) $notificationId) . ' &mdash; ' . esc_html($notifTitle);
+            echo '</a>';
+        } else {
+            echo '#' . esc_html((string) $notificationId) . ' &mdash; ' . esc_html($notifTitle);
+        }
+
+        echo '</span></div></div>';
+
+        echo '<div class="notifal-attr-line">';
+        echo '<span class="notifal-icon notifal-icon-cursor" aria-hidden="true"></span>';
+        echo '<div class="notifal-attr-line__content">';
+        echo '<span class="notifal-attr-label">' . esc_html__('Clicked product', 'notifal') . '</span>';
+
+        if ($productId > 0) {
+            echo $this->formatProductNameHtml($productId, $productName);
+        } else {
+            echo '<span class="notifal-attr-product-name">' . esc_html($productName) . '</span>';
+        }
+
+        echo '</div></div>';
+
+        if ($productId > 0) {
+            echo '<div class="notifal-attr-line">';
+            echo '<span class="notifal-icon notifal-icon-coin" aria-hidden="true"></span>';
+            echo '<div class="notifal-attr-line__content">';
+            echo '<span class="notifal-attr-label">' . esc_html__('Clicked revenue', 'notifal') . '</span>';
+            echo '<span class="notifal-attr-product-revenue">' . $this->formatRevenueAmount($productRevenue) . '</span>';
+            echo '</div></div>';
         }
 
         echo '</div>';
@@ -641,53 +899,16 @@ class OrderAttributionService
         echo '<div class="edd-order-overview-addresses__title">' . esc_html__('Notifal Attribution', 'notifal') . '</div>';
         echo '<div class="edd-order-overview-addresses__address">';
 
-        echo '<div class="notifal-attribution-metabox">';
-
-        foreach ($attributionData as $index => $row) {
-            if ($index > 0) {
-                echo '<hr class="notifal-attr-divider" />';
-            }
-
-            $notificationId = (int) ($row['notification_id'] ?? 0);
-            $notifTitle     = get_the_title($notificationId) ?: __('(deleted notification)', 'notifal');
-            $productName    = $row['product_name'] ?? __('(unknown product)', 'notifal');
-            $revenue        = (float) ($row['product_revenue'] ?? 0);
-            $editUrl = $notificationId > 0 ? $this->urlService->getEditNotificationUrl($notificationId) : '';
-
-            echo '<div class="notifal-attr-row">';
-
-            echo '<div class="notifal-attr-line notifal-attr-line--notification">';
-            echo '<span class="notifal-icon notifal-icon-megaphone" aria-hidden="true"></span>';
-            echo '<div class="notifal-attr-line__content">';
-            echo '<span class="notifal-attr-label">' . esc_html__('Notification', 'notifal') . '</span>';
-            echo '<span class="notifal-attr-value">';
-            if ($editUrl !== '') {
-                echo '<a href="' . esc_url($editUrl) . '">' . esc_html($notifTitle) . '</a>';
-            } else {
-                echo esc_html($notifTitle);
-            }
-            echo '</span></div></div>';
-
-            echo '<div class="notifal-attr-line">';
-            echo '<span class="notifal-icon notifal-icon-cursor" aria-hidden="true"></span>';
-            echo '<div class="notifal-attr-line__content">';
-            echo '<span class="notifal-attr-label">' . esc_html__('Clicked product', 'notifal') . '</span>';
-            echo '<span class="notifal-attr-product-name">' . esc_html($productName) . '</span>';
-            echo '</div></div>';
-
-            if ($revenue > 0 && function_exists('edd_currency_filter') && function_exists('edd_format_amount')) {
-                echo '<div class="notifal-attr-line">';
-                echo '<span class="notifal-icon notifal-icon-coin" aria-hidden="true"></span>';
-                echo '<div class="notifal-attr-line__content">';
-                echo '<span class="notifal-attr-label">' . esc_html__('Clicked revenue', 'notifal') . '</span>';
-                echo '<span class="notifal-attr-product-revenue">' . esc_html(edd_currency_filter(edd_format_amount($revenue))) . '</span>';
-                echo '</div></div>';
-            }
-
-            echo '</div>';
+        if ($this->isPendingAttributionOnly($attributionData)) {
+            echo '<p class="notifal-order-meta-pending-notice">'
+                . esc_html__(
+                    'This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed.',
+                    'notifal'
+                )
+                . '</p>';
         }
 
-        echo '</div>';
+        $this->renderAttributionRowsHtml($attributionData);
 
         echo '</div></div>';
     }
@@ -804,6 +1025,12 @@ class OrderAttributionService
         }
         unset($row);
 
+        // Remove duplicate cookie-influence rows when a product click exists for the same notification
+        $rows = $this->normalizeAttributionRows($rows);
+
+        // Backfill display revenue for pending rows from order line items when possible
+        $rows = $this->backfillPendingDisplayRevenue($orderId, $rows);
+
         /**
          * Filter the order attribution data before it is displayed.
          *
@@ -814,6 +1041,191 @@ class OrderAttributionService
          * @since 2.3.0
          */
         return (array) apply_filters(FilterHooks::ORDER_ATTRIBUTION_DATA, $rows, $orderId);
+    }
+
+    /**
+     * Remove redundant cookie-influence rows when product clicks exist for the same notification.
+     *
+     * Cookie/session rows use product_id = 0 and appear as "(unknown product)" in the UI.
+     *
+     * @param array $rows Attribution rows
+     * @return array Normalized rows
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function normalizeAttributionRows(array $rows): array
+    {
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Collect notification IDs that already have a real product click
+        $notificationsWithProductClick = [];
+
+        foreach ($rows as $row) {
+            $notificationId = (int) ($row['notification_id'] ?? 0);
+            $productId      = (int) ($row['product_id'] ?? 0);
+
+            if ($notificationId > 0 && $productId > 0) {
+                $notificationsWithProductClick[$notificationId] = true;
+            }
+        }
+
+        $normalized = [];
+
+        foreach ($rows as $row) {
+            $notificationId = (int) ($row['notification_id'] ?? 0);
+            $productId      = (int) ($row['product_id'] ?? 0);
+
+            // Drop cookie/session rows when the same notification already has a clicked product
+            if ($productId <= 0 && isset($notificationsWithProductClick[$notificationId])) {
+                continue;
+            }
+
+            $normalized[] = $row;
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Backfill product revenue on pending rows for admin display only.
+     *
+     * Pending snapshots store product_revenue as 0 until payment is completed.
+     *
+     * @param int   $orderId WooCommerce order ID or EDD payment ID
+     * @param array $rows    Attribution rows
+     * @return array Rows with display revenue when applicable
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function backfillPendingDisplayRevenue(int $orderId, array $rows): array
+    {
+        if (empty($rows) || $orderId <= 0) {
+            return $rows;
+        }
+
+        // Build a map of product line totals from the WooCommerce order when available
+        $lineTotals = [];
+
+        if (function_exists('wc_get_order')) {
+            $order = wc_get_order($orderId);
+
+            if ($order) {
+                foreach ($order->get_items() as $item) {
+                    if (!($item instanceof \WC_Order_Item_Product)) {
+                        continue;
+                    }
+
+                    $productId = (int) $item->get_product_id();
+                    $variationId = (int) $item->get_variation_id();
+                    $resolvedId = $variationId > 0 ? $variationId : $productId;
+
+                    if ($resolvedId <= 0) {
+                        continue;
+                    }
+
+                    $lineTotals[$resolvedId] = (float) $item->get_total();
+                }
+            }
+        }
+
+        foreach ($rows as &$row) {
+            $productId      = (int) ($row['product_id'] ?? 0);
+            $productRevenue = (float) ($row['product_revenue'] ?? 0);
+            $isPending      = !empty($row['is_pending']);
+
+            // Only backfill pending rows that represent a real product click
+            if (!$isPending || $productId <= 0 || $productRevenue > 0) {
+                continue;
+            }
+
+            if (isset($lineTotals[$productId])) {
+                $row['product_revenue'] = $lineTotals[$productId];
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * Build summary totals for the attribution summary card.
+     *
+     * @param array $attributionData Normalized attribution rows
+     * @return array Summary payload for rendering
+     * @since 2.3.7
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function buildAttributionSummary(array $attributionData): array
+    {
+        // Track unique notifications and products for the summary lists
+        $influencedNotifications = [];
+        $clickedProductsById       = [];
+        $totalClickedRevenue       = 0.0;
+        $totalInfluencedRevenue    = 0.0;
+        $hasProductClick           = false;
+
+        foreach ($attributionData as $row) {
+            $notificationId = (int) ($row['notification_id'] ?? 0);
+            $productId      = (int) ($row['product_id'] ?? 0);
+            $productName    = (string) ($row['product_name'] ?? '');
+            $productRevenue = (float) ($row['product_revenue'] ?? 0);
+            $orderTotal     = (float) ($row['total_order_value'] ?? 0);
+
+            // Influenced revenue is the full order total and must be shown once
+            if ($orderTotal > $totalInfluencedRevenue) {
+                $totalInfluencedRevenue = $orderTotal;
+            }
+
+            // Collect each unique notification that influenced this order
+            if ($notificationId > 0 && !isset($influencedNotifications[$notificationId])) {
+                $influencedNotifications[$notificationId] = [
+                    'notification_id' => $notificationId,
+                    'title'           => get_the_title($notificationId) ?: __('(deleted notification)', 'notifal'),
+                    'edit_url'        => $this->urlService->getEditNotificationUrl($notificationId),
+                ];
+            }
+
+            // Only count rows tied to a real clicked product
+            if ($productId <= 0) {
+                continue;
+            }
+
+            $hasProductClick = true;
+
+            if (!isset($clickedProductsById[$productId])) {
+                $clickedProductsById[$productId] = [
+                    'product_id'   => $productId,
+                    'product_name' => $productName,
+                    'edit_url'     => $this->getProductAdminEditUrl($productId),
+                    'revenue'      => $productRevenue,
+                ];
+                continue;
+            }
+
+            // Keep the highest revenue value when duplicate product rows exist
+            if ($productRevenue > (float) ($clickedProductsById[$productId]['revenue'] ?? 0)) {
+                $clickedProductsById[$productId]['revenue'] = $productRevenue;
+            }
+
+            if ($productName !== '' && ($clickedProductsById[$productId]['product_name'] ?? '') === '') {
+                $clickedProductsById[$productId]['product_name'] = $productName;
+            }
+        }
+
+        // Sum clicked revenue once per unique product
+        foreach ($clickedProductsById as $productRow) {
+            $totalClickedRevenue += (float) ($productRow['revenue'] ?? 0);
+        }
+
+        return [
+            'influenced_notifications' => array_values($influencedNotifications),
+            'clicked_products'           => array_values($clickedProductsById),
+            'has_product_click'          => $hasProductClick,
+            'total_clicked_revenue'      => $totalClickedRevenue,
+            'total_influenced_revenue'   => $totalInfluencedRevenue,
+        ];
     }
 
     /**
@@ -857,11 +1269,16 @@ class OrderAttributionService
         }
 
         $existingKeys = [];
+        $notificationsWithProductClick = [];
 
         foreach ($rows as $row) {
             $notificationId = (int) ($row['notification_id'] ?? 0);
             $productId = (int) ($row['product_id'] ?? 0);
             $existingKeys[$notificationId . '_' . $productId] = true;
+
+            if ($notificationId > 0 && $productId > 0) {
+                $notificationsWithProductClick[$notificationId] = true;
+            }
         }
 
         foreach ($pending as $pendingRow) {
@@ -877,7 +1294,17 @@ class OrderAttributionService
                 continue;
             }
 
+            // Skip cookie influence pending rows when a product click already exists
+            if ($productId <= 0 && isset($notificationsWithProductClick[$notificationId])) {
+                continue;
+            }
+
             $existingKeys[$dedupeKey] = true;
+
+            if ($productId > 0) {
+                $notificationsWithProductClick[$notificationId] = true;
+            }
+
             $pendingRow['is_pending'] = true;
             $rows[] = $pendingRow;
         }

@@ -798,6 +798,11 @@ class RegisterTags
         ));
 
         // -----------------------
+        // Content Source Counter Tags
+        // -----------------------
+        RegisterContentSourceCounterTags::register($manager);
+
+        // -----------------------
         // WooCommerce Cart Tags
         // -----------------------
         if (PluginDetector::isWooCommerceActive()) {

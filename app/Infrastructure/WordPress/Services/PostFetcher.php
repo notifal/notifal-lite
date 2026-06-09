@@ -46,6 +46,18 @@ class PostFetcher extends BaseContentFetcher
     }
 
     /**
+     * Count posts matching the provided filters.
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching post count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int
+    {
+        return $this->countContent('post', $filters);
+    }
+
+    /**
      * Find a post by its ID.
      *
      * @param int $id Post ID.

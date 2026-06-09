@@ -2,6 +2,8 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Support\ContentSourceRequestContext;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 
 defined('ABSPATH') || exit;
@@ -74,7 +76,11 @@ class ContentSourceFilterBuilder
      */
     public function buildOrderFilters(array $settings): array
     {
-        return $this->orderFilterBuilder->buildFilters($settings);
+        // Build base order filters from configured restrictions.
+        $filters = $this->orderFilterBuilder->buildFilters($settings);
+
+        // Allow Pro smart targeting to narrow order pools via product scope.
+        return $this->applyEntityFilterHooks($filters, 'order', $settings);
     }
 
     /**
@@ -87,7 +93,11 @@ class ContentSourceFilterBuilder
      */
     public function buildProductFilters(array $settings): array
     {
-        return $this->productFilterBuilder->buildFilters($settings);
+        // Build base product filters from configured restrictions.
+        $filters = $this->productFilterBuilder->buildFilters($settings);
+
+        // Allow Pro smart targeting to inject contextual filters.
+        return $this->applyEntityFilterHooks($filters, 'product', $settings);
     }
 
     /**
@@ -113,7 +123,11 @@ class ContentSourceFilterBuilder
      */
     public function buildPostFilters(array $settings): array
     {
-        return $this->postFilterBuilder->buildFilters($settings);
+        // Build base post filters from configured restrictions.
+        $filters = $this->postFilterBuilder->buildFilters($settings);
+
+        // Allow Pro smart targeting to inject contextual filters.
+        return $this->applyEntityFilterHooks($filters, 'post', $settings);
     }
 
     /**
@@ -126,7 +140,11 @@ class ContentSourceFilterBuilder
      */
     public function buildPageFilters(array $settings): array
     {
-        return $this->pageFilterBuilder->buildFilters($settings);
+        // Build base page filters from configured restrictions.
+        $filters = $this->pageFilterBuilder->buildFilters($settings);
+
+        // Allow Pro smart targeting to inject contextual filters.
+        return $this->applyEntityFilterHooks($filters, 'page', $settings);
     }
 
     /**
@@ -145,8 +163,11 @@ class ContentSourceFilterBuilder
             return [];
         }
 
-        // Delegate to pro plugin via filter hook
-        return apply_filters('notifal_pro_build_comment_filters', [], $settings);
+        // Delegate to pro plugin via filter hook.
+        $filters = apply_filters('notifal_pro_build_comment_filters', [], $settings);
+
+        // Allow Pro smart targeting to narrow comments via parent post scope.
+        return $this->applyEntityFilterHooks($filters, 'comment', $settings);
     }
 
     /**
@@ -160,7 +181,11 @@ class ContentSourceFilterBuilder
      */
     public function buildCustomPostTypeFilters(string $postType, array $settings): array
     {
-        return $this->customPostTypeFilterBuilder->buildFilters($postType, $settings);
+        // Build base custom post type filters from configured restrictions.
+        $filters = $this->customPostTypeFilterBuilder->buildFilters($postType, $settings);
+
+        // Allow Pro smart targeting to inject contextual taxonomy filters.
+        return $this->applyEntityFilterHooks($filters, 'custom_posttype:' . sanitize_key($postType), $settings);
     }
 
     /**
@@ -224,7 +249,7 @@ class ContentSourceFilterBuilder
     private function isFilterTypeInCategory(string $filterType, string $category): bool
     {
         $validTypes = [
-            'product' => ['categories', 'specific', 'sale', 'featured', 'date_range', 'custom_meta'],
+            'product' => ['categories', 'specific', 'sale', 'featured', 'date_range', 'custom_meta', 'cart'],
             'order' => ['status', 'date_range', 'products', 'custom_meta', 'custom_filter'],
             'user' => ['roles', 'specific', 'custom_meta', 'registration_date'],
             'post' => ['categories', 'specific', 'status', 'author', 'date_range', 'custom_meta'],
@@ -270,6 +295,11 @@ class ContentSourceFilterBuilder
                     $data['categories'] = array_map('intval', $formData["filter_{$filterId}_categories"]);
                 } elseif ($filterType === 'specific' && isset($formData["filter_{$filterId}_products"])) {
                     $data['products'] = array_map('intval', $formData["filter_{$filterId}_products"]);
+                } elseif ($filterType === 'cart') {
+                    $data['cart_products'] = !empty($formData["filter_{$filterId}_cart_products"]);
+                    $data['related_cart_products'] = !empty($formData["filter_{$filterId}_related_cart_products"]);
+                    $data['upsell_cart_products'] = !empty($formData["filter_{$filterId}_upsell_cart_products"]);
+                    $data['cross_sell_cart_products'] = !empty($formData["filter_{$filterId}_cross_sell_cart_products"]);
                 }
                 break;
 
@@ -356,7 +386,15 @@ class ContentSourceFilterBuilder
 
                     if (!empty($condition['data']) && is_array($condition['data'])) {
                         foreach ($condition['data'] as $key => $value) {
-                            if ($key === 'custom_filter') {
+                            if (in_array($key, [
+                                'cart_products',
+                                'related_cart_products',
+                                'upsell_cart_products',
+                                'cross_sell_cart_products',
+                            ], true)) {
+                                // Persist cart source toggles as booleans.
+                                $sanitizedCondition['data'][$key] = !empty($value);
+                            } elseif ($key === 'custom_filter') {
                                 // Use a more lenient sanitization for custom_filter
                                 $sanitizedCondition['data'][$key] = trim(stripslashes($value));
                             } elseif (is_array($value)) {
@@ -385,5 +423,37 @@ class ContentSourceFilterBuilder
     private function isProFeatureAllowed(): bool
     {
         return $this->checkProFeatureAllowed('notifal_pro_content_source_features');
+    }
+
+    /**
+     * Apply extensibility filter hooks for entity-specific content source filters.
+     *
+     * @param array  $filters    Built filters array.
+     * @param string $entityType Entity scope key.
+     * @param array  $settings   Content source settings.
+     * @return array Filtered filters array.
+     * @since 2.3.7
+     */
+    private function applyEntityFilterHooks(array $filters, string $entityType, array $settings): array
+    {
+        // Read request-scoped page context set during template context building.
+        $pageContext = ContentSourceRequestContext::getPageContext();
+
+        /**
+         * Filter entity-specific content source filters before pool queries run.
+         *
+         * @param array  $filters     Built filters for the entity type.
+         * @param string $entityType  Entity scope key.
+         * @param array  $settings    Content source settings.
+         * @param array  $pageContext Current visitor page context.
+         * @since 2.3.7
+         */
+        return apply_filters(
+            FilterHooks::ONPAGE_CONTENT_SOURCE_ENTITY_FILTERS,
+            $filters,
+            $entityType,
+            $settings,
+            $pageContext
+        );
     }
 }

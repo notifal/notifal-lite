@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.3.5
+Stable tag: 2.3.9
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,6 +28,7 @@ Whether you want to promote a flash sale, grow your email list, announce new pro
 📊 Track performance with built-in advanced analytics
 🎨 Design freely with Elementor or WordPress Block Editor
 ⚡ Launch faster with 100+ ready-to-use templates
+🧠 Smart Targeting for context-aware dynamic content on every page
 
 ## One Plugin. Endless Possibilities. ##
 What makes Notifal truly powerful isn't just how you build notifications, it's what you can achieve with them.
@@ -132,6 +133,32 @@ This is just a simple example. With tags, you can pull in product names, prices,
 
 * **⚙️ Post Type Tag Generator [PRO]**: Have custom post types? Generate your own tags based on any post type in your database. Complete flexibility.
 
+## 🧠 Smart Targeting — Dynamic Content That Follows the Visitor ##
+
+Generic dynamic notifications pull from your entire catalog or content library. That's powerful — but on a product page, a visitor expects relevance, not a random item from somewhere else on your site.
+
+Smart Targeting connects your notification's content source to the page your visitor is actually viewing. On a single product page, show that product's data first. On a category archive, surface items from that category. On a blog post, pull related posts from the same tags or categories. The notification stays relevant because the content follows the visitor's context.
+
+**How Smart Targeting Works**
+
+Notifal reads the dynamic tags in your notification template and automatically scopes the content source to what matches the current page. On singular pages, the viewed product, post, or custom post type entry is prioritized first. On taxonomy archives, content is drawn from the category, tag, or product category your visitor is browsing. When no contextual match exists, you decide whether to fall back to your standard content source filters or hide the notification until a relevant match appears.
+
+**Smart Targeting Controls**
+
+* **📍 Context-Aware Content Source**: Limit dynamic content to items related to the current product, post, custom post type, or taxonomy archive.
+
+* **🎯 Current Page Priority**: On single product, post, and custom post type pages, the item being viewed is shown first before the scope widens.
+
+* **📂 Archive & Taxonomy Targeting**: Category, tag, and product category archives surface content from the archive your visitor is browsing.
+
+* **🔢 Category Depth Control**: Set how far smart targeting widens, from the current query only (level 0) through parent categories and page hierarchy (up to 10 levels).
+
+* **🛒 Orders & Comments via Parent Content**: Order and comment dynamic tags inherit context from the product or post on the current page.
+
+* **🔄 Smart Fallback**: Choose whether to fall back to standard content source filters when no contextual match exists, or hide the notification until a relevant match is found.
+
+* **🏷️ Template-Aware Detection**: Smart Targeting activates automatically based on the dynamic tags in your notification template, no manual entity mapping required.
+
 ## 🎯 Right Message. Right Person. Right Moment. ##
 
 A popup shown to the wrong audience, or at the wrong time, isn't just ineffective. It's annoying. And annoyed visitors don't convert.
@@ -206,7 +233,22 @@ It doesn't matter what kind of website you run. If you have visitors, you have o
 
 Whatever you build, Notifal helps you grow it.
 
-## Everything You Need. All in One Plugin. ##
+== External services ==
+
+This plugin connects to notifal.com in two ways:
+
+* **Deactivation feedback** — When you submit the deactivation survey (Plugins → Deactivate), the plugin may send the following to notifal.com: site URL, admin email address, deactivation reason, and any optional details you provide (e.g. which plugin you switched to or additional feedback), plus plugin version, PHP version, and WordPress version. This feedback helps us improve the plugin and fix bugs. Data is only sent when you actively submit the survey.
+
+* **Template library (pre-created on-page notifications)** — When you browse or import notification templates in the plugin, the plugin requests template listings, filters, and single template data from notifal.com. When you import a template, it requests a download URL and then downloads the template file and any template images from the provided URLs. The plugin sends only pagination, search, and filter choices (e.g. use case, layout); no personal data is sent. This is used only when you open the template library or click to import a template.
+
+* **Support chat (Chatwoot)** — In the plugin backend, the support chat widget is loaded from Chatwoot (`app.chatwoot.com`) to let you start a conversation with the support team. Chatwoot may process technical usage data such as your IP address, browser/device details, and chat message content when you use the chat.
+
+Service provider: Notifal.com
+Terms of Service: https://notifal.com/terms-conditions/
+Privacy Policy: https://notifal.com/privacy-policy/
+
+== Features ==
+
 **Core Features**:
 
 * Number of Active Notifications (Just 1 in FREE Version - **Unilimited in PRO Version**)
@@ -229,6 +271,9 @@ Whatever you build, Notifal helps you grow it.
 * Animations
 * Add Sound to Notifications
 * **Multi-Filters for Dynamic Content Notifications [PRO]**
+* **Smart Targeting**, context-aware dynamic content based on the visitor's current page[PRO]
+* Category Depth Level Control for Smart Targeting [PRO]
+* Smart Targeting Fallback Option [PRO]
 
 **Display Rules and Advanced Targeting**:
 
@@ -347,20 +392,6 @@ Yes! Notifal has deep WooCommerce integration. You can create cart abandonment p
 
 Notifal is designed to work with any properly coded WordPress theme. Whether you're using a free theme, a premium theme, or a custom-built theme — Notifal will work smoothly.
 
-== External services ==
-
-This plugin connects to notifal.com in two ways:
-
-* **Deactivation feedback** — When you submit the deactivation survey (Plugins → Deactivate), the plugin may send the following to notifal.com: site URL, admin email address, deactivation reason, and any optional details you provide (e.g. which plugin you switched to or additional feedback), plus plugin version, PHP version, and WordPress version. This feedback helps us improve the plugin and fix bugs. Data is only sent when you actively submit the survey.
-
-* **Template library (pre-created on-page notifications)** — When you browse or import notification templates in the plugin, the plugin requests template listings, filters, and single template data from notifal.com. When you import a template, it requests a download URL and then downloads the template file and any template images from the provided URLs. The plugin sends only pagination, search, and filter choices (e.g. use case, layout); no personal data is sent. This is used only when you open the template library or click to import a template.
-
-* **Support chat (Chatwoot)** — In the plugin backend, the support chat widget is loaded from Chatwoot (`app.chatwoot.com`) to let you start a conversation with the support team. Chatwoot may process technical usage data such as your IP address, browser/device details, and chat message content when you use the chat.
-
-Service provider: Notifal.com
-Terms of Service: https://notifal.com/terms-conditions/
-Privacy Policy: https://notifal.com/privacy-policy/
-
 
 == Screenshots ==
 1. The Notifications List helps you see all the notifications you have active or in draft. Remove, edit, duplicate, or create a new notification from here.
@@ -391,6 +422,29 @@ Privacy Policy: https://notifal.com/privacy-policy/
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.3.9 [2026-06-09]
+Added: Cart Products content source filter in Product Restrictions (WooCommerce only) — pull dynamic notification content from the visitor's live cart.
+Added: Four cart product source toggles within the Cart Products filter: cart line items, related products, upsells, and cross-sells (combined with OR logic inside the filter).
+Added: Real-time cart product pool refresh on the storefront when the WooCommerce cart changes via Ajax, so notifications can switch to updated cart-based products without a full page reload.
+Added: Cart Products filter is available only when WooCommerce is active; Product Restrictions are hidden automatically when WooCommerce is not installed.
+Improved: Revenue attribution for Post Link and Ajax Add to Cart action buttons — clicked revenue uses the matched product line subtotal (price × quantity) and influenced revenue uses the full order total on the same attributed order.
+Improved: Post Link product clicks now store influence attribution before redirect, match variable product orders via parent product IDs, and use a strict 24-hour attribution window.
+Fixed: Influenced revenue is counted together with clicked revenue when a product click converts (clicked line subtotal plus full order influenced total).
+Fixed: Copy, custom link, and other non-product notification clicks no longer create false product-click revenue attribution.
+
+2.3.7 [2026-06-06]
+Added: Content source counter dynamic tags that respect notification content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (requires Notifal Pro 2.3.3+), and {custom_posttype_counter_{post_type}} (example: {custom_posttype_counter_book}).
+Added: Smart Targeting section in Content Source settings for context-aware dynamic content based on the visitor's current product, post, page, or archive (requires Notifal Pro).
+Added: Content source extensibility hooks and visitor page context pipeline for Smart Targeting integration, including contextual entity filters, scoped pool cache keys, and contextual pool resolution.
+Added: Frontend eligible API page context enrichment (page ID, post type, and product categories) for Smart Targeting storefront requests.
+Improved: Order counting is HPOS-safe and compatible with legacy WooCommerce shop_order post-type storage.
+Improved: Order attribution summary on WooCommerce and EDD order details and order list popup, compact summary card with influenced notifications, linkable clicked products, total clicked revenue, and total influenced revenue shown once, plus expandable per-notification details.
+Fixed: Duplicate "(unknown product)" attribution rows when the same notification already had a clicked product.
+Fixed: Delay-triggered on-page notifications with Prevent Multiple Instances no longer appear instantly when a blocking notification closes; deferred notifications now re-apply their configured delay for smoother UX.
+Fixed: Popup notification z-index now applies to both the backdrop and popup content, so the modal appears above the dimmed overlay instead of behind it.
+Fixed: "Always Show" frequency now re-triggers notifications on page refresh and navigation instead of showing only once per session.
+Improved: Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so admins can use negative values for precise placement.
+
 2.3.5 [2026-05-30]
 Added: WooCommerce cart display rules (when WooCommerce is active), target visitors by cart is empty or not empty, specific product in or not in cart, product category in cart, cart total, cart item count, or coupon applied.
 Added: WooCommerce cart dynamic tags for notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.

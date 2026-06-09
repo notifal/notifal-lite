@@ -95,6 +95,42 @@ abstract class BaseContentFetcher
     }
 
     /**
+     * Count content items matching filters for a given post type.
+     *
+     * @param string $postType The content type name.
+     * @param array  $filters Optional filters to apply.
+     * @return int Total matching item count.
+     * @since 2.3.7
+     */
+    protected function countContent(string $postType, array $filters = []): int
+    {
+        // Validate post type before querying.
+        if (!$this->isValidPostType($postType)) {
+            return 0;
+        }
+
+        // Build a query that returns only IDs for efficient counting.
+        $args = [
+            'post_type'      => $postType,
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'post_status'    => 'publish',
+        ];
+
+        // Apply the same filters used by pool fetching.
+        $args = $this->applyFilters($args, $filters);
+
+        // Explicit empty intersection means no matches.
+        if (isset($args['post__in']) && $args['post__in'] === [0]) {
+            return 0;
+        }
+
+        $query = new WP_Query($args);
+
+        return is_array($query->posts) ? count($query->posts) : 0;
+    }
+
+    /**
      * Find content item by its ID.
      *
      * @param int $id Content ID.

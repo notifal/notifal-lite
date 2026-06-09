@@ -145,6 +145,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 __( 'Where to display the notification on desktop devices', 'notifal' )
             );
             ?>
+            <?php // @since 2.3.7 Position distance inputs allow negative values (no min/max HTML attributes). ?>
             <div class="notifal-desktop-distance-settings notifal-hidden">
                 <div class="notifal-distance-controls">
                     <!-- Top Distance (for top positions) -->
@@ -155,7 +156,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['desktop_top_distance'],
                             __( 'Distance from Top (px)', 'notifal' ),
                             __( 'Distance from the top edge of the screen', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 500, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -168,7 +169,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['desktop_bottom_distance'],
                             __( 'Distance from Bottom (px)', 'notifal' ),
                             __( 'Distance from the bottom edge of the screen', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 500, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -181,7 +182,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['desktop_left_distance'],
                             __( 'Distance from Left (px)', 'notifal' ),
                             __( 'Distance from the left edge of the screen', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 500, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -194,7 +195,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['desktop_right_distance'],
                             __( 'Distance from Right (px)', 'notifal' ),
                             __( 'Distance from the right edge of the screen', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 500, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -227,7 +228,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $appearance_settings['desktop_bar_distance'] ?? 0,
                 __( 'Distance from Edge (px)', 'notifal' ),
                 __( 'Distance from the selected edge of the screen', 'notifal' ),
-                ['input' => ['min' => 0, 'max' => 200, 'step' => 5]]
+                ['input' => ['step' => 1]]
             );
             ?>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'desktop_bar_position')); ?>
@@ -256,7 +257,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['mobile_top_distance'],
                             __( 'Distance from Top (px)', 'notifal' ),
                             __( 'Distance from the top edge on mobile', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 200, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -269,7 +270,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                             $appearance_settings['mobile_bottom_distance'],
                             __( 'Distance from Bottom (px)', 'notifal' ),
                             __( 'Distance from the bottom edge on mobile', 'notifal' ),
-                            ['input' => ['min' => 0, 'max' => 200, 'step' => 5]]
+                            ['input' => ['step' => 1]]
                         );
                         ?>
                     </div>
@@ -302,7 +303,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $appearance_settings['mobile_bar_distance'] ?? 0,
                 __( 'Distance from Edge (px)', 'notifal' ),
                 __( 'Distance from the selected edge of the screen', 'notifal' ),
-                ['input' => ['min' => 0, 'max' => 200, 'step' => 5]]
+                ['input' => ['step' => 1]]
             );
             ?>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'mobile_bar_position')); ?>

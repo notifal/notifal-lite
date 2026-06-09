@@ -3,7 +3,6 @@
 namespace Notifal\Modules\Templates\Application\Services;
 
 use Notifal\Domain\Tags\Services\TagDetector;
-use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 
 defined('ABSPATH') || exit;
 
@@ -12,8 +11,8 @@ defined('ABSPATH') || exit;
  *
  * When Preview Image Source is set to Auto, the effective source is determined
  * by which tags appear in the notification template: product/order → product image,
- * post → post featured image, page → page featured image, comment → product image
- * (if WooCommerce) or post featured image.
+ * post → post featured image, page → page featured image, comment → featured image
+ * of the post/page/product the comment belongs to.
  *
  * @package Notifal\Modules\Templates\Application\Services
  * @since 2.0.0
@@ -28,11 +27,11 @@ class FeaturedImageAutoSourceResolver
      * 1. Order/product tags → 'product'
      * 2. Post tags → 'post'
      * 3. Page tags → 'page'
-     * 4. Comment tags → 'product' (if WooCommerce active) else 'post'
+     * 4. Comment tags → 'comment' (parent post/page/product featured image)
      * 5. No matching tags → 'post' (default)
      *
      * @param string $templateContent Raw template content (e.g. post_content with blocks or HTML).
-     * @return string Effective source: 'product', 'post', or 'page'.
+     * @return string Effective source: 'product', 'post', 'page', or 'comment'.
      * @since 2.0.0
      */
     public static function resolve(string $templateContent): string
@@ -54,7 +53,9 @@ class FeaturedImageAutoSourceResolver
         } elseif ($hasPage) {
             $choice = 'page';
         } elseif ($hasComment) {
-            $choice = PluginDetector::isWooCommerceActive() ? 'product' : 'post';
+            // Comment templates only carry comment context — resolve to comment so the
+            // parent post/page/product featured image is used via FeaturedImageResolver.
+            $choice = 'comment';
         }
 
         return $choice;

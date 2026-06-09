@@ -101,7 +101,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
     <?php do_action(ActionHooks::ADMIN_PAGE_CONTENT_BEFORE); ?>
         <!-- Dashboard Header -->
         <div class="notifal-dashboard-header">
-            <div class="notifal-flex notifal-justify-between notifal-align-center">
+            <div class="notifal-flex notifal-justify-between notifal-align-center notifal-dashboard-header-top">
                 <div>
                     <h1 class="notifal-dashboard-title">
                         <?php esc_html_e('OnPage Analytics Dashboard', 'notifal'); ?>
@@ -126,6 +126,25 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                         <?php esc_html_e('Refresh', 'notifal'); ?>
                     </button>
                 </div>
+            </div>
+            <div class="notifal-dashboard-cache-meta" role="status" aria-live="polite">
+                <span class="notifal-icon notifal-icon-clock-history" aria-hidden="true"></span>
+                <p class="notifal-dashboard-cache-meta-text">
+                    <?php
+                    echo wp_kses_post(
+                        sprintf(
+                            /* translators: 1: last processed datetime, 2: human time diff, 3: time until next automatic refresh */
+                            __(
+                                '<strong>Cached snapshot.</strong> All metrics, charts, and tables were last processed on %1$s (%2$s). Auto-refresh in %3$s, use <strong>Refresh</strong> above to load the latest data now.',
+                                'notifal'
+                            ),
+                            esc_html($lastUpdateInfo['formatted']),
+                            esc_html($lastUpdateInfo['human_diff']),
+                            esc_html($lastUpdateInfo['next_update_human'])
+                        )
+                    );
+                    ?>
+                </p>
             </div>
         </div>
 
@@ -771,25 +790,6 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                 </span>
                             <?php endif; ?>
                         </h3>
-                        <div class="notifal-table-update-info">
-                            <span class="notifal-update-text">
-                                <?php 
-                                printf(
-                                    esc_html__('Updated at: %s (%s)', 'notifal'),
-                                    '<strong>' . esc_html($lastUpdateInfo['formatted']) . '</strong>',
-                                    '<em>' . esc_html($lastUpdateInfo['human_diff']) . '</em>'
-                                ); 
-                                ?>
-                            </span>
-                            <span class="notifal-next-update-text">
-                                <?php 
-                                printf(
-                                    esc_html__('Next update in %s', 'notifal'),
-                                    '<em>' . esc_html($lastUpdateInfo['next_update_human']) . '</em>'
-                                ); 
-                                ?>
-                            </span>
-                        </div>
                     </div>
                     <div class="notifal-table-controls<?php echo $isProUpsell ? ' notifal-controls-limited' : ''; ?>">
                         <input type="search" placeholder="<?php esc_attr_e('Search notifications...', 'notifal'); ?>" class="notifal-table-search"<?php echo $isProUpsell ? ' disabled' : ''; ?>>

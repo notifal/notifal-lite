@@ -311,6 +311,8 @@ class ActionButtonRenderer
                     $context = WidgetContextProvider::getContext();
                     if (isset($context['product']) && $context['product'] && method_exists($context['product'], 'getId')) {
                         $link_attrs[] = 'data-product-id="' . esc_attr((string) $context['product']->getId()) . '"';
+                        $link_attrs[] = 'data-context-type="product"';
+                        $link_attrs[] = 'data-is-product-context="true"';
                     }
                 }
                 break;
@@ -337,67 +339,26 @@ class ActionButtonRenderer
                 $link_attrs[] = 'data-loading-text="' . $loading_display . '"';
 
                 // Get context if available during frontend rendering
-                $contextUrl = null;
-                $contextData = null;
-                if (class_exists(WidgetContextProvider::class) && WidgetContextProvider::isActive()) {
-                    $context = WidgetContextProvider::getContext();
-                    
-                    // Determine URL based on available context entities
-                    if (isset($context['product']) && $context['product']) {
-                        // Product context - use product link
-                        $contextData = $context['product'];
-                        $contextUrl = $context['product']->getLink();
-                    } elseif (isset($context['order']) && $context['order']) {
-                        // Order context - get product from order or use order view page
-                        $order = $context['order'];
-                        $orderItems = $order->getItems();
-                        if (!empty($orderItems)) {
-                            // Get first product from order
-                            $firstItem = reset($orderItems);
-                            $product = $firstItem->getProduct();
-                            if ($product) {
-                                $contextData = $product;
-                                $contextUrl = $product->getPermalink();
-                            }
-                        }
-                        // Fallback to order view page if no product found
-                        if (!$contextUrl) {
-                            $contextUrl = $order->getViewOrderUrl();
-                        }
-                    } elseif (isset($context['post']) && $context['post']) {
-                        // Post context - use post permalink
-                        $contextData = $context['post'];
-                        $contextUrl = get_permalink($context['post']->ID);
-                    } elseif (isset($context['page']) && $context['page']) {
-                        // Page context - use page permalink
-                        $contextData = $context['page'];
-                        $contextUrl = get_permalink($context['page']->ID);
-                    } elseif (isset($context['comment']) && $context['comment']) {
-                        // Comment context - use the post/page the comment belongs to
-                        $contextData = $context['comment'];
-                        $commentPostId = $context['comment']->comment_post_ID;
-                        $contextUrl = get_permalink($commentPostId);
-                    } else {
-                        // Check for custom post types
-                        foreach ($context as $key => $value) {
-                            if (is_object($value) && isset($value->ID) && isset($value->post_type)) {
-                                // This looks like a custom post type object
-                                $contextData = $value;
-                                $contextUrl = get_permalink($value->ID);
-                                break;
-                            }
-                        }
-                    }
-                    
-                    if ($contextUrl) {
-                        $link_attrs[] = 'data-post-url="' . esc_url($contextUrl) . '"';
-                    }
-                    
-                    // Add legacy product data for backward compatibility
-                    if ($contextData && method_exists($contextData, 'getId') && method_exists($contextData, 'getLink')) {
-                        $link_attrs[] = 'data-product-id="' . esc_attr($contextData->getId()) . '"';
-                        $link_attrs[] = 'data-product-url="' . esc_url($contextData->getLink()) . '"';
-                    }
+                $contextMeta = self::resolveBlockContextMeta();
+
+                if (!empty($contextMeta['url'])) {
+                    $link_attrs[] = 'data-post-url="' . esc_url($contextMeta['url']) . '"';
+                }
+
+                if (!empty($contextMeta['context_type'])) {
+                    $link_attrs[] = 'data-context-type="' . esc_attr($contextMeta['context_type']) . '"';
+                }
+
+                if (!empty($contextMeta['is_product_context'])) {
+                    $link_attrs[] = 'data-is-product-context="true"';
+                }
+
+                if (!empty($contextMeta['product_id'])) {
+                    $link_attrs[] = 'data-product-id="' . esc_attr((string) $contextMeta['product_id']) . '"';
+                }
+
+                if (!empty($contextMeta['product_url'])) {
+                    $link_attrs[] = 'data-product-url="' . esc_url($contextMeta['product_url']) . '"';
                 }
                 break;
         }
@@ -405,7 +366,78 @@ class ActionButtonRenderer
         return implode(' ', $link_attrs);
     }
 
+    /**
+     * Resolve block-editor action button context metadata for revenue attribution.
+     *
+     * @return array{
+     *     url?: string,
+     *     context_type?: string,
+     *     is_product_context?: bool,
+     *     product_id?: int,
+     *     product_url?: string
+     * }
+     * @since 2.3.9
+     */
+    private static function resolveBlockContextMeta(): array
+    {
+        $meta = [];
 
+        if (!class_exists(WidgetContextProvider::class) || !WidgetContextProvider::isActive()) {
+            return $meta;
+        }
 
+        $context = WidgetContextProvider::getContext();
+        $contextData = null;
 
+        if (isset($context['product']) && $context['product']) {
+            $contextData = $context['product'];
+            $meta['url'] = $contextData->getLink();
+            $meta['context_type'] = 'product';
+            $meta['is_product_context'] = true;
+        } elseif (isset($context['order']) && $context['order']) {
+            $order = $context['order'];
+            $orderItems = $order->getItems();
+
+            if (!empty($orderItems)) {
+                $firstItem = reset($orderItems);
+                $product = $firstItem->getProduct();
+
+                if ($product) {
+                    $contextData = $product;
+                    $meta['url'] = $product->getPermalink();
+                    $meta['context_type'] = 'product';
+                    $meta['is_product_context'] = true;
+                }
+            }
+
+            if (empty($meta['url']) && method_exists($order, 'getViewOrderUrl')) {
+                $meta['url'] = $order->getViewOrderUrl();
+                $meta['context_type'] = 'order';
+            }
+        } elseif (isset($context['post']) && $context['post']) {
+            $meta['url'] = get_permalink($context['post']->ID);
+            $meta['context_type'] = 'post';
+        } elseif (isset($context['page']) && $context['page']) {
+            $meta['url'] = get_permalink($context['page']->ID);
+            $meta['context_type'] = 'page';
+        } elseif (isset($context['comment']) && $context['comment']) {
+            $meta['url'] = get_permalink($context['comment']->comment_post_ID);
+            $meta['context_type'] = 'comment';
+        } else {
+            foreach ($context as $value) {
+                if (is_object($value) && isset($value->ID, $value->post_type)) {
+                    $meta['url'] = get_permalink($value->ID);
+                    $meta['context_type'] = sanitize_key((string) $value->post_type);
+                    break;
+                }
+            }
+        }
+
+        if ($contextData && method_exists($contextData, 'getId') && method_exists($contextData, 'getLink')) {
+            $meta['product_id'] = (int) $contextData->getId();
+            $meta['product_url'] = $contextData->getLink();
+        }
+
+        return $meta;
+    }
 } 

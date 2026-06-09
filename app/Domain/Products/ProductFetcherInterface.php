@@ -63,4 +63,13 @@ interface ProductFetcherInterface
      * @since 2.0.0
      */
     public function findById(int $id): ?ProductDTO;
+
+    /**
+     * Count products matching the provided filters.
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching product count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int;
 }

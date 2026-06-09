@@ -11,6 +11,8 @@ use Notifal\Infrastructure\WordPress\Services\PageFetcher;
 use Notifal\Infrastructure\WordPress\Services\CustomPostTypeFetcher;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
+use Notifal\Modules\OnPageNotification\Application\Support\ContentSourceRequestContext;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextHelper;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -166,6 +168,205 @@ class ContentSourceService
     }
 
     /**
+     * Get the total number of orders matching content source order restrictions.
+     *
+     * Respects all configured order filters (date range, status, products,
+     * custom meta, custom filter, and multiple AND/OR conditions).
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Total matching order count.
+     * @since 2.3.7
+     */
+    public function getOrderCount(array $contentSourceSettings = []): int
+    {
+        return $this->resolveCachedEntityCount(
+            'order',
+            $contentSourceSettings,
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildOrderFilters($contentSourceSettings);
+
+                return $this->orderFetcher->count($filters);
+            },
+            FilterHooks::ONPAGE_ORDER_COUNT,
+            $this->filterBuilder->buildOrderFilters($contentSourceSettings)
+        );
+    }
+
+    /**
+     * Get the total number of products matching content source product restrictions.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Total matching product count.
+     * @since 2.3.7
+     */
+    public function getProductCount(array $contentSourceSettings = []): int
+    {
+        return $this->resolveCachedEntityCount(
+            'product',
+            $contentSourceSettings,
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
+
+                return $this->productFetcher->count($filters);
+            },
+            FilterHooks::ONPAGE_PRODUCT_COUNT,
+            $this->filterBuilder->buildProductFilters($contentSourceSettings)
+        );
+    }
+
+    /**
+     * Get the total number of posts matching content source post restrictions.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Total matching post count.
+     * @since 2.3.7
+     */
+    public function getPostCount(array $contentSourceSettings = []): int
+    {
+        return $this->resolveCachedEntityCount(
+            'post',
+            $contentSourceSettings,
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildPostFilters($contentSourceSettings);
+
+                return $this->postFetcher->count($filters);
+            },
+            FilterHooks::ONPAGE_POST_COUNT,
+            $this->filterBuilder->buildPostFilters($contentSourceSettings)
+        );
+    }
+
+    /**
+     * Get the total number of pages matching content source page restrictions.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Total matching page count.
+     * @since 2.3.7
+     */
+    public function getPageCount(array $contentSourceSettings = []): int
+    {
+        return $this->resolveCachedEntityCount(
+            'page',
+            $contentSourceSettings,
+            function () use ($contentSourceSettings) {
+                $filters = $this->filterBuilder->buildPageFilters($contentSourceSettings);
+
+                return $this->pageFetcher->count($filters);
+            },
+            FilterHooks::ONPAGE_PAGE_COUNT,
+            $this->filterBuilder->buildPageFilters($contentSourceSettings)
+        );
+    }
+
+    /**
+     * Get the total number of comments matching content source comment restrictions.
+     *
+     * Comment counting is delegated to Notifal Pro through integration hooks.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return int Total matching comment count.
+     * @since 2.3.7
+     */
+    public function getCommentCount(array $contentSourceSettings = []): int
+    {
+        // Build comment filters once so Pro receives smart targeting constraints too.
+        $builtFilters = $this->filterBuilder->buildCommentFilters($contentSourceSettings);
+
+        return $this->resolveCachedEntityCount(
+            'comment',
+            $contentSourceSettings,
+            function () use ($contentSourceSettings, $builtFilters) {
+                $count = apply_filters('notifal_pro_get_comment_count', null, $contentSourceSettings, $builtFilters);
+
+                return $count === null ? 0 : (int) $count;
+            },
+            FilterHooks::ONPAGE_COMMENT_COUNT,
+            $builtFilters
+        );
+    }
+
+    /**
+     * Get the total number of custom post type items matching content source restrictions.
+     *
+     * @param string $postType Custom post type slug.
+     * @param array  $contentSourceSettings Content source settings.
+     * @return int Total matching item count.
+     * @since 2.3.7
+     */
+    public function getCustomPostTypeCount(string $postType, array $contentSourceSettings = []): int
+    {
+        $postType = sanitize_key($postType);
+        if ($postType === '') {
+            return 0;
+        }
+
+        return $this->resolveCachedEntityCount(
+            'custom_posttype_' . $postType,
+            $contentSourceSettings,
+            function () use ($postType, $contentSourceSettings) {
+                $filters = $this->filterBuilder->buildCustomPostTypeFilters($postType, $contentSourceSettings);
+
+                return $this->customPostTypeFetcher->count($postType, $filters);
+            },
+            FilterHooks::ONPAGE_CUSTOM_POSTTYPE_COUNT,
+            $this->filterBuilder->buildCustomPostTypeFilters($postType, $contentSourceSettings),
+            $postType
+        );
+    }
+
+    /**
+     * Resolve, filter, and cache a content-source entity count.
+     *
+     * @param string   $scopeKey Cache scope key (order, product, post, etc.).
+     * @param array    $contentSourceSettings Content source settings.
+     * @param callable $countResolver Callable that returns the raw count.
+     * @param string   $filterHook Filter hook for modifying the count.
+     * @param array    $builtFilters Built filters for the filter hook context.
+     * @param string|null $postType Optional custom post type slug.
+     * @return int Cached entity count.
+     * @since 2.3.7
+     */
+    private function resolveCachedEntityCount(
+        string $scopeKey,
+        array $contentSourceSettings,
+        callable $countResolver,
+        string $filterHook,
+        array $builtFilters,
+        ?string $postType = null
+    ): int {
+        // Build a stable cache key from scope and settings payload.
+        $cacheKey = 'notifal_' . $scopeKey . '_count_' . md5(wp_json_encode($contentSourceSettings));
+        $cacheGroup = 'notifal_content_counts';
+
+        // Return cached count when available.
+        $cachedCount = wp_cache_get($cacheKey, $cacheGroup);
+        if ($cachedCount !== false) {
+            return (int) $cachedCount;
+        }
+
+        // Resolve the raw count from the entity fetcher.
+        $count = (int) $countResolver();
+
+        // Allow developers to adjust the computed count.
+        if ($postType !== null) {
+            $count = (int) apply_filters($filterHook, $count, $contentSourceSettings, $builtFilters, $postType);
+        } else {
+            $count = (int) apply_filters($filterHook, $count, $contentSourceSettings, $builtFilters);
+        }
+
+        // Cache the count to avoid repeated heavy queries.
+        $ttl = (int) apply_filters(
+            FilterHooks::ONPAGE_CONTENT_SOURCE_COUNT_CACHE_TIMEOUT,
+            HOUR_IN_SECONDS,
+            $contentSourceSettings,
+            $scopeKey
+        );
+        wp_cache_set($cacheKey, $count, $cacheGroup, max(60, $ttl));
+
+        return $count;
+    }
+
+    /**
      * Get order pool for deterministic selection and retrigger variants.
      *
      * @param array $contentSourceSettings Content source settings.
@@ -184,7 +385,9 @@ class ContentSourceService
                 $filters = $this->filterBuilder->buildOrderFilters($contentSourceSettings);
 
                 return $this->orderFetcher->getRandomPool($poolSize, $filters);
-            }
+            },
+            $contentSourceSettings,
+            'order'
         );
     }
 
@@ -254,29 +457,47 @@ class ContentSourceService
     private function getOrRefreshProductPool(array $contentSourceSettings, int $poolSizeForFetch): array
     {
         $cacheKey = $this->buildProductPoolCacheKey($contentSourceSettings);
-        $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
+        $cacheKey = $this->applyPoolCacheKeyFilter($cacheKey, 'product', $contentSourceSettings);
         $ttl = $this->getProductPoolCacheTtl($contentSourceSettings);
+        $bypassEntityCache = $this->shouldBypassEntityPoolCache()
+            || CartProductPoolResolver::settingsContainCartFilter($contentSourceSettings);
 
-        $cached = wp_cache_get($cacheKey, 'notifal_product_pools');
+        if (!$bypassEntityCache) {
+            $cached = wp_cache_get($cacheKey, 'notifal_product_pools');
 
-        if (is_array($cached)) {
-            $pool = $cached['pool'] ?? $cached;
-            $validatedAt = $cached['validated_at'] ?? 0;
+            if (is_array($cached)) {
+                $pool = $cached['pool'] ?? $cached;
+                $validatedAt = $cached['validated_at'] ?? 0;
+                $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
 
-            return $this->refreshSaleProductPoolIfDue(
-                $pool,
-                $validatedAt,
-                $filters,
-                $contentSourceSettings,
-                $cacheKey,
-                $ttl,
-                $poolSizeForFetch
-            );
+                return $this->refreshSaleProductPoolIfDue(
+                    $pool,
+                    $validatedAt,
+                    $filters,
+                    $contentSourceSettings,
+                    $cacheKey,
+                    $ttl,
+                    $poolSizeForFetch
+                );
+            }
         }
 
-        $pool = $this->productFetcher->getRandomPool($poolSizeForFetch, $filters);
+        // Build product filters inside the fetcher so smart targeting phase injection is accurate.
+        $pool = $this->resolvePoolOrFetch(
+            $cacheKey,
+            'notifal_product_pools',
+            function () use ($poolSizeForFetch, $contentSourceSettings) {
+                $filters = $this->filterBuilder->buildProductFilters($contentSourceSettings);
 
-        $this->storeProductPool($cacheKey, $pool, $ttl);
+                return $this->productFetcher->getRandomPool($poolSizeForFetch, $filters);
+            },
+            $contentSourceSettings,
+            'product'
+        );
+
+        if (!$bypassEntityCache) {
+            $this->storeProductPool($cacheKey, $pool, $ttl);
+        }
 
         return $pool;
     }
@@ -472,7 +693,9 @@ class ContentSourceService
                 $filters = $this->filterBuilder->buildPostFilters($contentSourceSettings);
 
                 return $this->postFetcher->getRandomPool(20, $filters);
-            }
+            },
+            $contentSourceSettings,
+            'post'
         );
     }
 
@@ -517,22 +740,96 @@ class ContentSourceService
                 $filters = $this->filterBuilder->buildPageFilters($contentSourceSettings);
 
                 return $this->pageFetcher->getRandomPool(20, $filters);
-            }
+            },
+            $contentSourceSettings,
+            'page'
+        );
+    }
+
+    /**
+     * Get comment pool for deterministic selection and smart targeting phases.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return array<int, \WP_Comment> Comment pool (may be empty).
+     * @since 2.3.7
+     */
+    public function getCommentPool(array $contentSourceSettings = []): array
+    {
+        // Comment pools are only available when Pro features are allowed.
+        if (!$this->isProFeatureAllowed()) {
+            return [];
+        }
+
+        // Build a settings-scoped cache key before page-context extension.
+        $cacheKey = $this->buildCommentPoolCacheKey($contentSourceSettings);
+
+        // Reuse the shared pool loader so smart targeting phases and cache keys apply.
+        return $this->loadOrBuildPool(
+            $cacheKey,
+            'notifal_comment_pools',
+            function () use ($contentSourceSettings) {
+                // Build filters with smart targeting constraints when applicable.
+                $filters = $this->filterBuilder->buildCommentFilters($contentSourceSettings);
+
+                // Delegate the actual query to Notifal Pro.
+                $pool = apply_filters('notifal_pro_fetch_comment_pool', [], $filters, $contentSourceSettings);
+
+                return is_array($pool) ? $pool : [];
+            },
+            $contentSourceSettings,
+            'comment'
         );
     }
 
     /**
      * Get a random comment with applied filters from content source settings.
-     * Uses Pro plugin hooks when available, otherwise returns null.
+     * Uses pool-based caching for performance and consistency.
      *
      * @param array $contentSourceSettings Content source settings
      * @return \WP_Comment|null Comment data or null if no comment found or pro not active
      * @since 2.0.0
+     * @since 2.3.7 Updated to use smart-targeting-aware comment pools.
      */
     public function getRandomComment(array $contentSourceSettings = [])
     {
-        // Comment functionality is only available in Notifal Pro
-        return apply_filters('notifal_pro_get_random_comment', null, $contentSourceSettings);
+        // Resolve the contextual comment pool first.
+        $pool = $this->getCommentPool($contentSourceSettings);
+
+        // Return null when no comments match the active scope.
+        if (empty($pool)) {
+            return null;
+        }
+
+        $pageContext = ContentSourceRequestContext::getPageContext();
+        $pinnedEntityId = (int) ($pageContext['notifal_pool_entity_id'] ?? 0);
+
+        // Honor a pinned pool entity for first paint / retrigger variant alignment.
+        if ($pinnedEntityId > 0) {
+            foreach ($pool as $comment) {
+                if ($comment instanceof \WP_Comment && (int) $comment->comment_ID === $pinnedEntityId) {
+                    $this->rememberShownSource('comment', $comment, $contentSourceSettings);
+                    ContentSourceRequestContext::setLastSelectedPoolEntityId($pinnedEntityId);
+
+                    return $comment;
+                }
+            }
+        }
+
+        $pool = $this->excludeSeenSourcesFromPool('comment', $pool, $contentSourceSettings);
+        if (empty($pool)) {
+            return null;
+        }
+
+        // Pick a random comment from the remaining pool.
+        $comment = $pool[ array_rand( $pool ) ];
+        $this->rememberShownSource('comment', $comment, $contentSourceSettings);
+
+        $entityId = $this->extractEntityId($comment);
+        if ($entityId > 0) {
+            ContentSourceRequestContext::setLastSelectedPoolEntityId($entityId);
+        }
+
+        return $comment;
     }
 
     /**
@@ -578,7 +875,9 @@ class ContentSourceService
                 $filters = $this->filterBuilder->buildCustomPostTypeFilters($postType, $contentSourceSettings);
 
                 return $this->customPostTypeFetcher->getRandomPool($postType, 20, $filters);
-            }
+            },
+            $contentSourceSettings,
+            'custom_posttype:' . sanitize_key($postType)
         );
     }
 
@@ -591,23 +890,129 @@ class ContentSourceService
      * @return array<int, mixed> Pool items (may be empty).
      * @since 2.3.5
      */
-    private function loadOrBuildPool(string $cacheKey, string $cacheGroup, callable $fetcher): array
-    {
-        $cachedPool = wp_cache_get($cacheKey, $cacheGroup);
+    private function loadOrBuildPool(
+        string $cacheKey,
+        string $cacheGroup,
+        callable $fetcher,
+        array $contentSourceSettings = [],
+        string $entityType = 'generic'
+    ): array {
+        // Extend cache key when contextual targeting is active (Pro hook).
+        $cacheKey = $this->applyPoolCacheKeyFilter($cacheKey, $entityType, $contentSourceSettings);
 
-        if (is_array($cachedPool)) {
-            return $cachedPool;
+        // Retrigger variant builds must resolve the forced contextual phase, not reuse first-paint cache.
+        $bypassEntityCache = $this->shouldBypassEntityPoolCache();
+
+        if (!$bypassEntityCache) {
+            $cachedPool = wp_cache_get($cacheKey, $cacheGroup);
+
+            if (is_array($cachedPool)) {
+                return $cachedPool;
+            }
         }
 
-        $pool = $fetcher();
+        $pool = $this->resolvePoolOrFetch($cacheKey, $cacheGroup, $fetcher, $contentSourceSettings, $entityType);
 
         if (!is_array($pool)) {
             $pool = [];
         }
 
-        wp_cache_set($cacheKey, $pool, $cacheGroup, HOUR_IN_SECONDS);
+        if (!$bypassEntityCache) {
+            wp_cache_set($cacheKey, $pool, $cacheGroup, HOUR_IN_SECONDS);
+        }
 
         return $pool;
+    }
+
+    /**
+     * Resolve a pool via extensibility hook or fall back to the default fetcher.
+     *
+     * @param string   $cacheKey              Object cache key.
+     * @param string   $cacheGroup            Object cache group.
+     * @param callable $fetcher               Default pool fetcher callback.
+     * @param array    $contentSourceSettings Content source settings.
+     * @param string   $entityType            Entity scope key.
+     * @return array<int, mixed> Resolved pool items.
+     * @since 2.3.7
+     */
+    private function resolvePoolOrFetch(
+        string $cacheKey,
+        string $cacheGroup,
+        callable $fetcher,
+        array $contentSourceSettings,
+        string $entityType
+    ): array {
+        // Allow Pro smart targeting to resolve multi-phase contextual pools.
+        $resolved = apply_filters(
+            FilterHooks::ONPAGE_CONTENT_SOURCE_RESOLVE_POOL,
+            null,
+            [
+                'entity_type' => $entityType,
+                'settings' => $contentSourceSettings,
+                'cache_key' => $cacheKey,
+                'cache_group' => $cacheGroup,
+                'fetcher' => $fetcher,
+                'page_context' => ContentSourceRequestContext::getPageContext(),
+            ]
+        );
+
+        if (is_array($resolved)) {
+            return $resolved;
+        }
+
+        // Default core loader path.
+        $pool = $fetcher();
+
+        return is_array($pool) ? $pool : [];
+    }
+
+    /**
+     * Apply pool cache key extension filter.
+     *
+     * @param string $cacheKey              Base cache key.
+     * @param string $entityType            Entity scope key.
+     * @param array  $contentSourceSettings Content source settings.
+     * @return string Extended cache key.
+     * @since 2.3.7
+     */
+    private function applyPoolCacheKeyFilter(string $cacheKey, string $entityType, array $contentSourceSettings): string
+    {
+        // Pass page context so Pro can scope cache entries per visitor page.
+        $pageContext = ContentSourceRequestContext::getPageContext();
+
+        /**
+         * Extend content source pool cache keys (e.g. smart targeting page context).
+         *
+         * @param string $cacheKey    Base cache key.
+         * @param string $entityType  Entity scope key.
+         * @param array  $settings    Content source settings.
+         * @param array  $pageContext Current visitor page context.
+         * @since 2.3.7
+         */
+        return (string) apply_filters(
+            FilterHooks::ONPAGE_CONTENT_SOURCE_POOL_CACHE_KEY,
+            $cacheKey,
+            $entityType,
+            $contentSourceSettings,
+            $pageContext
+        );
+    }
+
+    /**
+     * Determine whether entity-level pool cache should be skipped for smart targeting retrigger builds.
+     *
+     * @return bool
+     * @since 2.3.7
+     */
+    private function shouldBypassEntityPoolCache(): bool
+    {
+        $pageContext = ContentSourceRequestContext::getPageContext();
+
+        if (!is_array($pageContext)) {
+            return false;
+        }
+
+        return sanitize_key((string) ($pageContext['smart_targeting_forced_phase'] ?? '')) !== '';
     }
 
 
@@ -825,6 +1230,17 @@ class ContentSourceService
         return $this->buildContentPoolCacheKey('page', $contentSourceSettings);
     }
 
+    /**
+     * Build cache key for comment pool based on content source settings.
+     *
+     * @param array $contentSourceSettings Content source settings.
+     * @return string Cache key for comment pool.
+     * @since 2.3.7
+     */
+    private function buildCommentPoolCacheKey(array $contentSourceSettings): string
+    {
+        return $this->buildContentPoolCacheKey('comment', $contentSourceSettings);
+    }
 
     /**
      * Build cache key for custom post type pool based on content source settings.
@@ -844,7 +1260,7 @@ class ContentSourceService
      * Generic method to build cache keys for different content types.
      * Handles both multiple filters and legacy single filters.
      *
-     * @param string $contentType The content type (order, product, user, post, page, custom_posttype)
+     * @param string $contentType The content type (order, product, user, post, page, comment, custom_posttype)
      * @param array $contentSourceSettings Content source settings
      * @param string|null $postType Optional post type for custom post types
      * @return string Cache key for the content pool
@@ -928,6 +1344,8 @@ class ContentSourceService
             case 'page':
                 return $this->buildPageLegacyKey($restrictionType, $contentSourceSettings);
 
+            case 'comment':
+                return $this->buildCommentLegacyKey($restrictionType, $contentSourceSettings);
 
             case 'custom_posttype':
                 return $this->buildCustomPostTypeLegacyKey($restrictionType, $contentSourceSettings, $postType);
@@ -1119,6 +1537,47 @@ class ContentSourceService
         }
     }
 
+    /**
+     * Build legacy key for comment filters.
+     *
+     * @param string $restrictionType The restriction type.
+     * @param array  $settings          Content source settings.
+     * @return string Legacy filter key.
+     * @since 2.3.7
+     */
+    private function buildCommentLegacyKey(string $restrictionType, array $settings): string
+    {
+        switch ($restrictionType) {
+            case 'status':
+                $statuses = $settings['comment_statuses'] ?? ['approved'];
+                return 'status_' . md5(implode(',', (array) $statuses));
+
+            case 'post_type':
+                $postTypes = $settings['comment_post_types'] ?? ['post'];
+                return 'post_type_' . md5(implode(',', (array) $postTypes));
+
+            case 'author':
+                $authors = $settings['comment_authors'] ?? [];
+                return 'author_' . md5(implode(',', (array) $authors));
+
+            case 'date_range':
+                $dateRange = $settings['comment_date_range'] ?? 'last_7d';
+                $key = 'date_' . $dateRange;
+                if ($dateRange === 'custom') {
+                    $startDate = $settings['comment_date_start'] ?? '';
+                    $endDate = $settings['comment_date_end'] ?? '';
+                    $key .= '_custom_' . md5($startDate . $endDate);
+                }
+                return $key;
+
+            case 'custom':
+                $customFilter = $settings['comment_custom_filter'] ?? '';
+                return 'custom_' . md5($customFilter);
+
+            default:
+                return $restrictionType;
+        }
+    }
 
     /**
      * Build legacy key for custom post type filters.
@@ -1182,7 +1641,15 @@ class ContentSourceService
             return $pool;
         }
 
-        $seenIds = $this->getSeenSourceIds($sourceType, $contentSourceSettings);
+        // Browser session is authoritative until a retrigger request activates server rotation.
+        $seenIds = $this->getClientSeenEntityIds($contentSourceSettings);
+        if ($this->shouldTrackSeenSourceInServerSession()) {
+            $seenIds = array_values(array_unique(array_merge(
+                $seenIds,
+                $this->getSeenSourceIds($sourceType, $contentSourceSettings)
+            )));
+        }
+
         if (empty($seenIds)) {
             return $pool;
         }
@@ -1201,9 +1668,75 @@ class ContentSourceService
             return $filteredPool;
         }
 
+        // With smart targeting and fallback off, an exhausted contextual pool must not restart rotation.
+        if ($this->shouldHoldSeenSourceRotation($contentSourceSettings)) {
+            return [];
+        }
+
         $this->setSeenSourceIds($sourceType, $contentSourceSettings, []);
 
         return $pool;
+    }
+
+    /**
+     * Whether seen-source rotation should stop instead of resetting when the pool is exhausted.
+     *
+     * @param array $contentSourceSettings Notification content source settings.
+     * @return bool
+     * @since 2.3.7
+     */
+    private function shouldHoldSeenSourceRotation(array $contentSourceSettings): bool
+    {
+        if ($this->isDuplicateSourceAllowed($contentSourceSettings)) {
+            return false;
+        }
+
+        // Cart product pools are session-bound; do not restart rotation with the same cart items.
+        if (CartProductPoolResolver::settingsContainCartFilter($contentSourceSettings)) {
+            return true;
+        }
+
+        if (empty($contentSourceSettings['smart_targeting_enabled'])) {
+            return false;
+        }
+
+        // Hold rotation only on pages where smart targeting actually narrows the pool.
+        $pageContext = ContentSourceRequestContext::getPageContext();
+        if (!is_array($pageContext) || !PageContextHelper::isSmartTargetingApplicableContext($pageContext)) {
+            return false;
+        }
+
+        return empty($contentSourceSettings['smart_targeting_fallback']);
+    }
+
+    /**
+     * Determine whether server-side seen-source transients should be updated for this request.
+     *
+     * Preload and first eligibility prepare only render HTML; the browser tracks first display.
+     * Server rotation is persisted on retrigger / force-fresh API requests only.
+     *
+     * @return bool
+     * @since 2.3.7
+     */
+    private function shouldTrackSeenSourceInServerSession(): bool
+    {
+        // Read the active content-source resolution context.
+        $pageContext = ContentSourceRequestContext::getPageContext();
+        if (!is_array($pageContext) || empty($pageContext)) {
+            return false;
+        }
+
+        // Retrigger and forced-fresh API calls rotate the contextual pool server-side.
+        if (!empty($pageContext['force_fresh_content'])) {
+            return true;
+        }
+
+        // Rotation seed from the frontend marks an intentional retrigger fetch.
+        if (!empty($pageContext['retrigger_rotation'])) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -1218,6 +1751,11 @@ class ContentSourceService
     public function rememberShownSource(string $sourceType, $entity, array $contentSourceSettings): void
     {
         if ($this->isDuplicateSourceAllowed($contentSourceSettings)) {
+            return;
+        }
+
+        // Initial page prepare + eligibility must not consume the contextual pool before the browser displays it.
+        if (!$this->shouldTrackSeenSourceInServerSession()) {
             return;
         }
 
@@ -1237,6 +1775,49 @@ class ContentSourceService
         }
 
         $this->setSeenSourceIds($sourceType, $contentSourceSettings, $seenIds);
+    }
+
+    /**
+     * Read client-side shown entity IDs sent with the eligibility API request.
+     *
+     * Retrigger displays are tracked in the browser; merge them so new pages skip seen sources.
+     *
+     * @param array $contentSourceSettings Notification content source settings.
+     * @return array<int, int>
+     * @since 2.3.7
+     */
+    private function getClientSeenEntityIds(array $contentSourceSettings): array
+    {
+        if ($this->isDuplicateSourceAllowed($contentSourceSettings)) {
+            return [];
+        }
+
+        $pageContext = ContentSourceRequestContext::getPageContext();
+        if (!is_array($pageContext)) {
+            return [];
+        }
+
+        $notificationId = (int) ($pageContext['notification_id'] ?? 0);
+        if ($notificationId <= 0) {
+            return [];
+        }
+
+        $clientSeenMap = $pageContext['client_seen_sources'] ?? [];
+        if (!is_array($clientSeenMap)) {
+            return [];
+        }
+
+        $entry = $clientSeenMap[$notificationId] ?? $clientSeenMap[(string) $notificationId] ?? null;
+        if (!is_array($entry)) {
+            return [];
+        }
+
+        $entityIds = $entry['entityIds'] ?? [];
+        if (!is_array($entityIds)) {
+            return [];
+        }
+
+        return array_values(array_unique(array_filter(array_map('intval', $entityIds))));
     }
 
     /**
@@ -1323,6 +1904,10 @@ class ContentSourceService
             return (int) $entity->ID;
         }
 
+        if ($entity instanceof \WP_Comment) {
+            return (int) $entity->comment_ID;
+        }
+
         if (is_object($entity) && method_exists($entity, 'getId')) {
             return (int) $entity->getId();
         }
@@ -1333,4 +1918,22 @@ class ContentSourceService
 
         return 0;
     }
-} 
+
+    /**
+     * Whether a notification is configured to show on every page view.
+     *
+     * @param int $notificationId Notification post ID.
+     * @return bool
+     * @since 2.3.7
+     */
+    private function isAlwaysShowFrequency(int $notificationId): bool
+    {
+        $timingSettings = get_post_meta($notificationId, '_notifal_timing_settings', true);
+
+        if (!is_array($timingSettings)) {
+            return false;
+        }
+
+        return ($timingSettings['show_frequency'] ?? 'once_per_session') === 'always';
+    }
+}

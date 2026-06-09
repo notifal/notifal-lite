@@ -8,6 +8,8 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\AppearanceS
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
+use Notifal\Modules\OnPageNotification\Application\Support\ContentSourceRequestContext;
+use Notifal\Modules\OnPageNotification\Application\Support\PageContextHelper;
 
 defined('ABSPATH') || exit;
 
@@ -64,9 +66,12 @@ class NotificationDataPreparer
      * @since 2.0.0
      * @since 2.2.0 Exposes `campaign_id`, `campaign_start_date`, and `campaign_end_date` for frontend schedule alignment.
      * @since 2.3.5 Exposes `allow_duplicate_source` for frontend duplicate-source control.
+     * @since 2.3.7 Exposes `smart_targeting_enabled` and `smart_targeting_category_level` for frontend retrigger guardrails.
      */
     public function prepareForFrontend(\WP_Post $notification, array $context): ?array
     {
+        ContentSourceRequestContext::resetLastSelectedPoolEntityId();
+
         $notificationData = $this->getNotificationData($notification);
 
         // Apply content filter for dynamic content processing
@@ -82,11 +87,23 @@ class NotificationDataPreparer
             'notification_id' => (int) $notification->ID,
         ]);
 
-        $renderedContent = $this->getRenderedTemplateContent($notificationData, $context);
+        // Build retrigger variants before first paint so seen-source tracking does not shrink the pool.
+        $retriggerVariantsBuilder = notifal_app(RetriggerPoolVariantsBuilder::class);
+        $retriggerBuild = $retriggerVariantsBuilder->build($notification, $notificationData, $context);
+
+        $renderContext = $context;
+        if (isset($retriggerBuild['primary_entity_id']) && $retriggerBuild['primary_entity_id'] !== null) {
+            $renderContext['notifal_pool_entity_id'] = (int) $retriggerBuild['primary_entity_id'];
+        }
+
+        $renderedContent = $this->getRenderedTemplateContent($notificationData, $renderContext);
 
         if ($renderedContent === null) {
             return null;
         }
+
+        // Capture the entity used for the first paint after the pinned pool render completes.
+        $firstPaintEntityId = ContentSourceRequestContext::getLastSelectedPoolEntityId();
 
         // Resolve linked campaign schedule so the frontend can mirror server eligibility when the notification schedule UI is disabled.
         $campaignId = (int) get_post_meta( $notification->ID, '_notifal_campaign_id', true );
@@ -100,18 +117,35 @@ class NotificationDataPreparer
             }
         }
 
+        // Prepare timing once so legacy top-level fields stay aligned with timing settings.
+        $timingSettings = $this->prepareTimingSettings($notificationData);
+        $showTiming = isset($timingSettings['show_timing']) ? (string) $timingSettings['show_timing'] : 'immediate';
+        $legacyDelaySeconds = ($showTiming === 'delay')
+            ? (int) ($timingSettings['delay_seconds'] ?? 3)
+            : 0;
+        $legacyScrollPercentage = ($showTiming === 'scroll')
+            ? (int) ($timingSettings['scroll_percentage'] ?? 50)
+            : 0;
+
         $frontendData = [
             'id' => $notification->ID,
             'title' => $notificationData['notif_title'] ?? $notification->post_title,
             'template_content' => $renderedContent['html'] ?? ($notificationData['template_content'] ?? ''),
             'content' => $renderedContent['html'] ?? ($notificationData['template_content'] ?? ''), // Backward compatibility
             'allow_duplicate_source' => !empty($notificationData['content_source_settings']['allow_duplicate_source']),
+            // Expose smart targeting settings for frontend retrigger guardrails.
+            'smart_targeting_enabled' => !empty($notificationData['content_source_settings']['smart_targeting_enabled']),
+            'smart_targeting_category_level' => PageContextHelper::getSmartTargetingCategoryLevel(
+                is_array($notificationData['content_source_settings'] ?? null)
+                    ? $notificationData['content_source_settings']
+                    : []
+            ),
             'is_active' => (get_post_meta($notification->ID, '_notifal_notif_enabled', true) === '1'),
             'cache_bust' => time() . '_' . uniqid(),
             'display_type' => $notificationData['appearance_settings']['notification_display_type'] ?? 'toast',
-            'trigger_type' => $notificationData['behavior_settings']['trigger_type'] ?? 'delay',
-            'delay_seconds' => $notificationData['behavior_settings']['delay_seconds'] ?? 0,
-            'scroll_percentage' => $notificationData['behavior_settings']['scroll_percentage'] ?? 0,
+            'trigger_type' => $showTiming,
+            'delay_seconds' => $legacyDelaySeconds,
+            'scroll_percentage' => $legacyScrollPercentage,
             'auto_close_seconds' => $notificationData['behavior_settings']['auto_close_seconds'] ?? 0,
             'is_dismissible' => $notificationData['behavior_settings']['is_dismissible'] ?? true,
             'frequency_cap_daily' => $notificationData['behavior_settings']['frequency_cap_daily'] ?? 0,
@@ -124,7 +158,7 @@ class NotificationDataPreparer
 
             'appearance' => $this->prepareAppearanceSettings($notificationData),
             'behavior' => $this->prepareBehaviorSettings($notificationData),
-            'timing' => $this->prepareTimingSettings($notificationData),
+            'timing' => $timingSettings,
             'template_assets' => $renderedContent['assets'] ?? [],
             'builder_type' => $renderedContent['builder_type'] ?? null,
         ];
@@ -138,8 +172,6 @@ class NotificationDataPreparer
         $frontendData['priority'] = $this->getNotificationPriority($frontendData);
 
         // Client-side retrigger variants (pool-based dynamic content). @since 2.3.5
-        $retriggerVariantsBuilder = notifal_app(RetriggerPoolVariantsBuilder::class);
-        $retriggerBuild = $retriggerVariantsBuilder->build($notification, $notificationData, $context);
         $retriggerVariants = $retriggerBuild['variants'] ?? [];
         if (!empty($retriggerVariants)) {
             $frontendData['retrigger_variants'] = $retriggerVariants;
@@ -149,6 +181,22 @@ class NotificationDataPreparer
         }
         if (isset($retriggerBuild['primary_pool_index']) && $retriggerBuild['primary_pool_index'] !== null) {
             $frontendData['retrigger_primary_pool_index'] = (int) $retriggerBuild['primary_pool_index'];
+        }
+
+        $selectedPoolEntityId = ContentSourceRequestContext::getLastSelectedPoolEntityId();
+
+        // First paint tracking must reflect the rendered entity, not the retrigger pool index alone.
+        if ($firstPaintEntityId > 0) {
+            $frontendData['pool_entity_id'] = $firstPaintEntityId;
+        } elseif (PageContextHelper::isSingularContext($context) && isset($retriggerBuild['primary_entity_id']) && $retriggerBuild['primary_entity_id'] !== null) {
+            $frontendData['pool_entity_id'] = (int) $retriggerBuild['primary_entity_id'];
+        } elseif ($selectedPoolEntityId > 0) {
+            $frontendData['pool_entity_id'] = $selectedPoolEntityId;
+        } elseif (PageContextHelper::isSingularContext($context)) {
+            $singularPageId = (int) ($context['page_id'] ?? 0);
+            if ($singularPageId > 0) {
+                $frontendData['pool_entity_id'] = $singularPageId;
+            }
         }
 
         // @since 2.3.5 Visit-history user rules evaluated client-side (cache-safe).
@@ -192,6 +240,16 @@ class NotificationDataPreparer
             $templateRenderer = notifal_app(FrontendTemplateRenderer::class);
 
             $contentSourceSettings = $notificationData['content_source_settings'] ?? [];
+
+            // Elementor may serve cached widget HTML during page-load rendering; flag immediate
+            // notifications so the renderer can attach deferred featured image HTML for the frontend swap.
+            $storedTimingSettings = $notificationData['timing_settings'] ?? [];
+            $sanitizedTimingSettings = $this->timingService->sanitizeSettings(
+                is_array($storedTimingSettings) ? $storedTimingSettings : []
+            );
+            if (($sanitizedTimingSettings['show_timing'] ?? '') === 'immediate') {
+                $context['for_immediate_display'] = true;
+            }
 
             $result = $templateRenderer->renderForFrontend($templateId, $context, $contentSourceSettings);
 

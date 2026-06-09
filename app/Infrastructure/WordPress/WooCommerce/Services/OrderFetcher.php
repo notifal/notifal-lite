@@ -125,6 +125,39 @@ class OrderFetcher implements OrderFetcherInterface
     }
 
     /**
+     * Count orders matching the provided filters.
+     *
+     * Uses the same filter pipeline as pool fetching but returns the full
+     * matching total instead of a limited random sample.
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching order count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int
+    {
+        // Return zero when WooCommerce is not available.
+        if (!PluginDetector::isWooCommerceActive()) {
+            return 0;
+        }
+
+        // Build a query that requests all matching order IDs.
+        $args = [
+            'limit'   => -1,
+            'orderby' => 'ID',
+            'order'   => 'DESC',
+            'type'    => self::ORDER_TYPE_SHOP_ORDER,
+            'return'  => 'ids',
+        ];
+
+        // Apply the same content-source filters used for random pools.
+        $args = $this->applyFilters($args, $filters);
+
+        // Count IDs using HPOS-safe and legacy-compatible fetching.
+        return count($this->fetchMatchingOrderIds($args));
+    }
+
+    /**
      * Find an order by its ID.
      *
      * @param int $id
@@ -156,11 +189,24 @@ class OrderFetcher implements OrderFetcherInterface
     private function extractContextFromFilters(array $filters): array
     {
         $context = [];
+
+        // Legacy single-filter format (content source + smart targeting inject).
+        if (!empty($filters['products'])) {
+            $context['filtered_product_ids'] = array_values(array_map('intval', (array) $filters['products']));
+            return $context;
+        }
+
+        // Multi-filter format: read the first products condition.
         $conditions = $filters['conditions'] ?? [];
 
         foreach ($conditions as $condition) {
-            if (($condition['type'] ?? '') === 'products' && !empty($condition['products'])) {
-                $context['filtered_product_ids'] = $condition['products'];
+            if (($condition['type'] ?? '') !== 'products') {
+                continue;
+            }
+
+            $productIds = $condition['products'] ?? ($condition['data']['products'] ?? []);
+            if (!empty($productIds)) {
+                $context['filtered_product_ids'] = array_values(array_map('intval', (array) $productIds));
                 break;
             }
         }
@@ -243,15 +289,8 @@ class OrderFetcher implements OrderFetcherInterface
                 $condition_args = $this->applyAndLogicFilters($base_args, $single_condition_filters);
                 
                 $order_ids = [];
-                if (!empty($condition_args['meta_query'])) {
-                    // Use custom handler for meta queries to avoid wc_get_orders limitations
-                    $orders = $this->getOrdersWithMetaQuery($condition_args);
-                    foreach ($orders as $order) {
-                        $order_ids[] = $order->get_id();
-                    }
-                } else {
-                    $order_ids = wc_get_orders($condition_args);
-                }
+                // Fetch IDs through storage-agnostic helper (HPOS + legacy post type).
+                $order_ids = $this->fetchMatchingOrderIds($condition_args);
                 
                 if (!empty($order_ids)) {
                     $final_order_ids = array_merge($final_order_ids, $order_ids);
@@ -533,10 +572,71 @@ class OrderFetcher implements OrderFetcherInterface
             $wcArgs['date_created'] = $args['date_created'];
         }
 
-        // include is the documented ID filter for wc_get_orders (works on HPOS and legacy).
+        // Restrict to explicit order IDs when product or OR-filter pipelines set post__in.
         if (! empty($args['post__in'])) {
-            $wcArgs['include'] = $args['post__in'];
+            // HPOS remaps post__in to the orders table id column; legacy CPT uses WP_Query post__in.
+            $wcArgs['post__in'] = array_values(array_map('intval', (array) $args['post__in']));
         }
+
+        return $wcArgs;
+    }
+
+    /**
+     * Fetch matching parent shop order IDs for HPOS and legacy post-type storage.
+     *
+     * @param array $args Internal query arguments after filters are applied.
+     * @return int[] Matching order IDs.
+     * @since 2.3.7
+     */
+    private function fetchMatchingOrderIds(array $args): array
+    {
+        // Always scope queries to parent shop orders (exclude refunds).
+        $args = $this->ensureShopOrderType($args);
+
+        // Explicit empty intersection means no matches.
+        if (isset($args['post__in']) && $args['post__in'] === [0]) {
+            return [];
+        }
+
+        // Meta queries use dedicated HPOS/legacy handlers.
+        if (!empty($args['meta_query'])) {
+            $orders = $this->getOrdersWithMetaQuery($args);
+            $ids    = [];
+
+            foreach ($orders as $order) {
+                if ($this->isProcessableOrder($order)) {
+                    $ids[] = (int) $order->get_id();
+                }
+            }
+
+            return $ids;
+        }
+
+        // Default path uses wc_get_orders() with mapped include/date/status args.
+        $orderIds = wc_get_orders($this->buildWcGetOrdersCountArgs($args));
+
+        if (!is_array($orderIds)) {
+            return [];
+        }
+
+        return array_map('intval', $orderIds);
+    }
+
+    /**
+     * Map internal fetcher args to wc_get_orders() for ID-only counting.
+     *
+     * @param array $args Internal query arguments.
+     * @return array Arguments for wc_get_orders().
+     * @since 2.3.7
+     */
+    private function buildWcGetOrdersCountArgs(array $args): array
+    {
+        // Reuse the standard argument builder for consistency.
+        $wcArgs = $this->buildWcGetOrdersArgs($args);
+
+        // Counting only needs IDs, not full order objects.
+        $wcArgs['return'] = 'ids';
+        $wcArgs['limit']  = -1;
 
         return $wcArgs;
     }

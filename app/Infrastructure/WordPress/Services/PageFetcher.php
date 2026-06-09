@@ -45,6 +45,18 @@ class PageFetcher extends BaseContentFetcher
     }
 
     /**
+     * Count pages matching the provided filters.
+     *
+     * @param array $filters Optional filters to apply.
+     * @return int Total matching page count.
+     * @since 2.3.7
+     */
+    public function count(array $filters = []): int
+    {
+        return $this->countContent('page', $filters);
+    }
+
+    /**
      * Find a page by its ID.
      *
      * @param int $id Page ID.

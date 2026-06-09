@@ -89,6 +89,7 @@ class PreviewDataResolver
      * @param array $contentSourceSettings Optional content source settings for filtering
      * @return PreviewDataDTO|null
      * @since 2.0.0
+     * @since 2.3.7 Updated to pass `content_source_settings` into tag context for {order_counter} resolution.
      */
     public function resolve(?string $templateContent = null, array $contentSourceSettings = []): ?PreviewDataDTO
     {
@@ -100,7 +101,11 @@ class PreviewDataResolver
         $user = $currentUser ?: $this->userFetcher->getRandom();
         
         // Build context based on primary content type priority
-        $context = ['user' => $user];
+        $context = [
+            'user' => $user,
+            'content_source_settings' => $contentSourceSettings,
+            'is_preview' => true,
+        ];
         
         // Get sample data for content types
         $post = $this->contentSourceService->getRandomPost($contentSourceSettings);
@@ -181,8 +186,7 @@ class PreviewDataResolver
 
         // Attach cart snapshot for cart tag previews when WooCommerce is active.
         if (PluginDetector::isWooCommerceActive()) {
-            $context['cart']       = WooCommerceCartContextBuilder::build();
-            $context['is_preview'] = true;
+            $context['cart'] = WooCommerceCartContextBuilder::build();
         }
 
         $resolvedTags = [];
@@ -340,6 +344,12 @@ class PreviewDataResolver
             // 🟢 Order tags
             'order_created_at'       => '2024-12-31 23:59',
             'order_counter'          => '42',
+
+            // 🟢 Content source counter tags
+            'product_counter'        => '156',
+            'post_counter'           => '24',
+            'page_counter'           => '12',
+            'comment_counter'        => '87',
             'order_city'             => 'Paris',
             'order_state'            => 'Île-de-France',
             'order_country'          => 'France',

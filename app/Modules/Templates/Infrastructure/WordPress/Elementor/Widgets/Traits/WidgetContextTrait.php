@@ -55,7 +55,8 @@ trait WidgetContextTrait
      *
      * @since 2.0.0
      * @param array|null $context Context data from getWidgetContext()
-     * @return array Returns array with 'data' and 'url' keys, or empty array if no context found
+     * @return array Returns array with 'data', 'url', and optional 'context_type' keys, or empty array if no context found
+     * @since 2.3.9 Added `context_type` for revenue attribution on action buttons.
      */
     protected function resolveContextData(?array $context = null): array
     {
@@ -72,6 +73,7 @@ trait WidgetContextTrait
                 return [
                     'data' => $product,
                     'url' => $product->getLink(),
+                    'context_type' => 'product',
                 ];
             }
         }
@@ -90,6 +92,7 @@ trait WidgetContextTrait
                     return [
                         'data' => $product,
                         'url' => $product->getPermalink(),
+                        'context_type' => 'product',
                     ];
                 }
             }
@@ -99,6 +102,7 @@ trait WidgetContextTrait
                 return [
                     'data' => $order,
                     'url' => $order->getViewOrderUrl(),
+                    'context_type' => 'order',
                 ];
             }
         }
@@ -108,6 +112,7 @@ trait WidgetContextTrait
             return [
                 'data' => $context['post'],
                 'url' => get_permalink($context['post']->ID),
+                'context_type' => 'post',
             ];
         }
 
@@ -116,6 +121,7 @@ trait WidgetContextTrait
             return [
                 'data' => $context['page'],
                 'url' => get_permalink($context['page']->ID),
+                'context_type' => 'page',
             ];
         }
 
@@ -125,6 +131,7 @@ trait WidgetContextTrait
             return [
                 'data' => $context['comment'],
                 'url' => get_permalink($commentPostId),
+                'context_type' => 'comment',
             ];
         }
 
@@ -134,6 +141,7 @@ trait WidgetContextTrait
                 return [
                     'data' => $value,
                     'url' => get_permalink($value->ID),
+                    'context_type' => sanitize_key((string) $value->post_type),
                 ];
             }
         }

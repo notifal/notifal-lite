@@ -67,6 +67,12 @@ class FeaturedImageResolver
                              return self::getOrderContextImageHtml($context['order'], $size, $attributes, $context);
                      }
                 } else {
+                   // Comment-only templates may not include post/page/product keys — use the
+                   // featured image of the post the active comment belongs to instead.
+                   if (isset($context['comment']) && $context['comment']) {
+                       return self::getCommentContextImageHtml($context['comment'], $size, $attributes);
+                   }
+
                    // If selected source not found, try any available custom post types before fallback
                    $customPostTypeImage = self::getCustomPostTypeImageHtml($context, $size, $attributes);
                    if (!empty($customPostTypeImage)) {
@@ -130,12 +136,13 @@ class FeaturedImageResolver
     private static function getCommentContextImageHtml($comment, string $size, array $attributes): string
     {
         try {
-            // Check if comment object is valid
-            if (!$comment || !isset($comment->comment_post_ID)) {
+            // Resolve the parent post ID from the comment entity in context
+            $postId = self::getCommentPostId($comment);
+            if ($postId <= 0) {
                 return self::getPlaceholderImageHtml($size, $attributes);
             }
 
-            $postId = $comment->comment_post_ID;
+            // Load the post/page/product the comment was left on
             $post = get_post($postId);
 
             if (!$post) {
@@ -388,6 +395,35 @@ class FeaturedImageResolver
         }
 
         return $availableSources;
+    }
+
+    /**
+     * Extract the parent post ID from a comment entity in widget context.
+     *
+     * Supports WP_Comment objects and array-shaped comment data for flexibility.
+     *
+     * @param mixed $comment Comment object or comment data array.
+     * @return int Parent post ID or 0 when unavailable.
+     * @since 2.0.0
+     */
+    private static function getCommentPostId($comment): int
+    {
+        // Bail when comment payload is empty
+        if (!$comment) {
+            return 0;
+        }
+
+        // Standard WP_Comment object shape
+        if (is_object($comment) && isset($comment->comment_post_ID)) {
+            return (int) $comment->comment_post_ID;
+        }
+
+        // Array-shaped comment data (REST / serialized payloads)
+        if (is_array($comment) && isset($comment['comment_post_ID'])) {
+            return (int) $comment['comment_post_ID'];
+        }
+
+        return 0;
     }
 
     /**
