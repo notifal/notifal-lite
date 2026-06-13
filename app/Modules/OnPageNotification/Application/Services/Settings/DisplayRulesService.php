@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\UserDisplayRulesMatcher;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartRulesMatcher;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\WooCommerceCartDisplayRulesService;
@@ -378,6 +379,12 @@ class DisplayRulesService
             $ruleType = $item['type'] ?? '';
             $ruleData = $item['data'] ?? [];
 
+            // Users login/role rules are always evaluated server-side before HTML is rendered.
+            if ($ruleType === 'users') {
+                $ruleResults[] = self::checkUsersRule($ruleData, $context);
+                continue;
+            }
+
             // Only process lite rule types in main plugin.
             if (!self::isLiteRuleType($ruleType)) {
                 continue;
@@ -438,6 +445,22 @@ class DisplayRulesService
     {
         // Use secure hook that only the legitimate pro plugin can provide
         return apply_filters('notifal_pro_multiple_display_rules_allowed', false);
+    }
+
+    /**
+     * Check Users display rule login status and role restrictions server-side.
+     *
+     * Visit-history filters are evaluated client-side only; login and role checks
+     * must pass here so restricted HTML is never sent in public REST responses.
+     *
+     * @param array<string, mixed> $ruleData Users rule configuration.
+     * @param array<string, mixed> $context  Current page or REST context.
+     * @return bool True when the visitor matches login/role constraints.
+     * @since 2.3.10
+     */
+    private static function checkUsersRule(array $ruleData, array $context = []): bool
+    {
+        return UserDisplayRulesMatcher::matchesLoginStatus($ruleData, $context);
     }
 
     /**
