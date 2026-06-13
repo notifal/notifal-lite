@@ -309,8 +309,8 @@ class ActionButtonRenderer
                 $link_attrs[] = 'data-add-to-cart-success-text="' . esc_attr($attributes['addToCartSuccessText'] ?: __('Added!', 'notifal')) . '"';
                 if (class_exists(WidgetContextProvider::class) && WidgetContextProvider::isActive()) {
                     $context = WidgetContextProvider::getContext();
-                    if (isset($context['product']) && $context['product'] && method_exists($context['product'], 'getId')) {
-                        $link_attrs[] = 'data-product-id="' . esc_attr((string) $context['product']->getId()) . '"';
+                    if (isset($context['product']) && $context['product']) {
+                        $link_attrs = array_merge($link_attrs, self::buildProductActionLinkAttrs($context['product']));
                         $link_attrs[] = 'data-context-type="product"';
                         $link_attrs[] = 'data-is-product-context="true"';
                     }
@@ -355,6 +355,10 @@ class ActionButtonRenderer
 
                 if (!empty($contextMeta['product_id'])) {
                     $link_attrs[] = 'data-product-id="' . esc_attr((string) $contextMeta['product_id']) . '"';
+                }
+
+                if (!empty($contextMeta['variation_id'])) {
+                    $link_attrs[] = 'data-variation-id="' . esc_attr((string) $contextMeta['variation_id']) . '"';
                 }
 
                 if (!empty($contextMeta['product_url'])) {
@@ -433,11 +437,53 @@ class ActionButtonRenderer
             }
         }
 
-        if ($contextData && method_exists($contextData, 'getId') && method_exists($contextData, 'getLink')) {
+        if ($contextData && method_exists($contextData, 'getId')) {
             $meta['product_id'] = (int) $contextData->getId();
-            $meta['product_url'] = $contextData->getLink();
+            if (method_exists($contextData, 'getVariationContextId')) {
+                $variationId = (int) ($contextData->getVariationContextId() ?? 0);
+                if ($variationId > 0) {
+                    $meta['variation_id'] = $variationId;
+                }
+            }
+            if (method_exists($contextData, 'getLink')) {
+                $meta['product_url'] = $contextData->getLink();
+            }
         }
 
         return $meta;
+    }
+
+    /**
+     * Build product action button data attributes for parent and variation context.
+     *
+     * @param mixed $product Product DTO or compatible object.
+     * @return array<int, string>
+     * @since 2.3.10
+     */
+    private static function buildProductActionLinkAttrs($product): array
+    {
+        $attrs = [];
+
+        if (!$product || !method_exists($product, 'getId')) {
+            return $attrs;
+        }
+
+        $attrs[] = 'data-product-id="' . esc_attr((string) $product->getId()) . '"';
+
+        if (method_exists($product, 'getVariationContextId')) {
+            $variationId = (int) ($product->getVariationContextId() ?? 0);
+            if ($variationId > 0) {
+                $attrs[] = 'data-variation-id="' . esc_attr((string) $variationId) . '"';
+            }
+        }
+
+        if (method_exists($product, 'getLink')) {
+            $productLink = $product->getLink();
+            if (!empty($productLink)) {
+                $attrs[] = 'data-product-url="' . esc_url($productLink) . '"';
+            }
+        }
+
+        return $attrs;
     }
 } 

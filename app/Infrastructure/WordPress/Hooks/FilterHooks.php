@@ -1634,6 +1634,17 @@ class FilterHooks {
     public const ONPAGE_CLIENT_CART_RULES = 'notifal/onpage/client_cart_rules';
 
     /**
+     * Filters client-side page targeting display rules attached to a notification frontend payload.
+     *
+     * @param array<string, mixed>|null $clientRules    Client page rules or null.
+     * @param int                         $notificationId Notification post ID.
+     * @return array<string, mixed>|null
+     * @since 2.3.10
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_CLIENT_PAGE_RULES = 'notifal/onpage/client_page_rules';
+
+    /**
      * Filters the WooCommerce cart snapshot used for display rule evaluation.
      *
      * @param array<string, mixed> $cart    Normalized cart snapshot.

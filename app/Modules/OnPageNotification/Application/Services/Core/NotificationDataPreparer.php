@@ -133,6 +133,11 @@ class NotificationDataPreparer
             'template_content' => $renderedContent['html'] ?? ($notificationData['template_content'] ?? ''),
             'content' => $renderedContent['html'] ?? ($notificationData['template_content'] ?? ''), // Backward compatibility
             'allow_duplicate_source' => !empty($notificationData['content_source_settings']['allow_duplicate_source']),
+            'content_source_type' => $this->resolveContentSourceType(
+                is_array($notificationData['content_source_settings'] ?? null)
+                    ? $notificationData['content_source_settings']
+                    : []
+            ),
             // Expose smart targeting settings for frontend retrigger guardrails.
             'smart_targeting_enabled' => !empty($notificationData['content_source_settings']['smart_targeting_enabled']),
             'smart_targeting_category_level' => PageContextHelper::getSmartTargetingCategoryLevel(
@@ -209,6 +214,12 @@ class NotificationDataPreparer
         $clientCartRules = ClientCartRulesBuilder::buildFromNotificationId((int) $notification->ID);
         if (!empty($clientCartRules)) {
             $frontendData['client_cart_rules'] = $clientCartRules;
+        }
+
+        // @since 2.3.10 Page targeting rules evaluated client-side before show/exit-intent.
+        $clientPageRules = ClientPageRulesBuilder::buildFromNotificationId((int) $notification->ID);
+        if (!empty($clientPageRules)) {
+            $frontendData['client_page_rules'] = $clientPageRules;
         }
 
         return $frontendData;
@@ -354,5 +365,23 @@ class NotificationDataPreparer
         }
 
         return $priority;
+    }
+
+    /**
+     * Resolve the content source type exposed to the frontend matcher.
+     *
+     * Notifications without saved content source settings are treated as static
+     * because they use a fixed template without a rotating dynamic pool.
+     *
+     * @param array<string, mixed> $contentSourceSettings Saved content source settings.
+     * @return string `dynamic` or `static`
+     * @since 2.3.10
+     */
+    private function resolveContentSourceType(array $contentSourceSettings): string
+    {
+        // Default to static when the notification never configured a content source tab.
+        $rawType = sanitize_key((string) ($contentSourceSettings['content_source_type'] ?? ''));
+
+        return $rawType === 'dynamic' ? 'dynamic' : 'static';
     }
 }

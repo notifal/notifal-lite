@@ -4,6 +4,7 @@ use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Support\OnPageNotificationSettingsLimits;
 use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 
@@ -193,7 +194,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $timing_settings['delay_seconds'],
                 __( 'Delay (seconds)', 'notifal' ),
                 __( 'How long to wait before showing the notification', 'notifal' ),
-                ['min' => 0, 'max' => 60, 'step' => 1, 'data-depends-on' => 'show_timing', 'data-depends-value' => 'delay']
+                ['min' => OnPageNotificationSettingsLimits::MIN_DELAY_SECONDS, 'step' => 1, 'data-depends-on' => 'show_timing', 'data-depends-value' => 'delay']
             );
 
             // Scroll Percentage (conditional)
@@ -211,7 +212,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $timing_settings['idle_seconds'],
                 __( 'Idle Time (seconds)', 'notifal' ),
                 __( 'How long user should be idle before showing notification', 'notifal' ),
-                ['min' => 5, 'max' => 300, 'step' => 5, 'data-depends-on' => 'show_timing', 'data-depends-value' => 'idle']
+                ['min' => OnPageNotificationSettingsLimits::MIN_IDLE_SECONDS, 'step' => 1, 'data-depends-on' => 'show_timing', 'data-depends-value' => 'idle']
             );
 
             // Custom Trigger Configuration (conditional)
@@ -323,7 +324,8 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 __( 'Trigger Delay (seconds)', 'notifal' ),
                 __( 'Additional delay after custom trigger before showing notification', 'notifal' ),
                 [
-                    'min' => 0, 'max' => 60, 'step' => 0.1,
+                    'min' => OnPageNotificationSettingsLimits::MIN_CUSTOM_TRIGGER_DELAY_SECONDS,
+                    'step' => 0.1,
                     'data-depends-on' => 'show_timing',
                     'data-depends-value' => 'custom'
                 ]
@@ -366,7 +368,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $timing_settings['auto_hide_seconds'],
                 __( 'Auto Hide Duration (seconds)', 'notifal' ),
                 __( 'How long before automatically hiding the notification. The notification will disappear after this time without user interaction.', 'notifal' ),
-                ['min' => 1, 'max' => 60, 'step' => 1, 'data-depends-on' => 'display_duration', 'data-depends-value' => 'auto_hide']
+                ['min' => OnPageNotificationSettingsLimits::MIN_AUTO_HIDE_SECONDS, 'step' => 1, 'data-depends-on' => 'display_duration', 'data-depends-value' => 'auto_hide']
             );
 
             // Persistent Duration (conditional)
@@ -404,7 +406,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 'max_shows_per_session',
                 $timing_settings['max_shows_per_session'],
                 __( 'Max Shows Per Session', 'notifal' ),
-                __( 'Maximum number of times to show per browser session. Sessions expire after 30 minutes of inactivity and reset on page refresh. Example: 2 = show up to twice per session.', 'notifal' ),
+                __( 'Maximum times to show per browser session (shared across tabs; count persists across page refreshes). After the limit is reached, the notification stays hidden until 30 minutes pass without a show or manual close. Each show or manual close starts a new 30-minute window. Example: 4 = up to four times per session.', 'notifal' ),
                 ['min' => 1, 'max' => 10, 'step' => 1, 'data-depends-on' => 'show_frequency', 'data-depends-value' => 'once_per_session']
             );
 
@@ -439,7 +441,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 $timing_settings['retrigger_delay_seconds'],
                 __( 'Retrigger Delay (seconds)', 'notifal' ),
                 __( 'How long to wait before allowing the notification to be triggered again after being hidden.', 'notifal' ),
-                ['min' => 1, 'max' => 300, 'step' => 1, 'data-depends-on' => 'allow_retrigger_after_hide', 'data-depends-value' => '1']
+                ['min' => OnPageNotificationSettingsLimits::MIN_RETRIGGER_DELAY_SECONDS, 'step' => 1, 'data-depends-on' => 'allow_retrigger_after_hide', 'data-depends-value' => '1']
             );
 
             // Max Retriggering Per Page (conditional on allow_retrigger_after_hide)

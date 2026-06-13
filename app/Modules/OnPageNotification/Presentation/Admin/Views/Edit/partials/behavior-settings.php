@@ -5,6 +5,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Shared\AdminUI\Fields\FieldRenderer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
+use Notifal\Modules\OnPageNotification\Application\Support\OnPageNotificationSettingsLimits;
 
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -140,8 +141,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                     __( 'Time to keep the notification visible after form submit so users can see the success message before it closes. Default is 5 seconds.', 'notifal' ),
                     [
                         'input' => [
-                            'min'  => 0,
-                            'max'  => 60,
+                            'min'  => OnPageNotificationSettingsLimits::MIN_BEHAVIOR_CLOSE_DELAY_SECONDS,
                             'step' => 1,
                         ],
                     ]
@@ -169,8 +169,7 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                     __( 'Time to wait before closing after an action button click. Use zero for an immediate close when the setting is enabled.', 'notifal' ),
                     [
                         'input' => [
-                            'min'  => 0,
-                            'max'  => 60,
+                            'min'  => OnPageNotificationSettingsLimits::MIN_BEHAVIOR_CLOSE_DELAY_SECONDS,
                             'step' => 1,
                         ],
                     ]

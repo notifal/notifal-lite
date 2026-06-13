@@ -194,6 +194,13 @@ class WhatsNewPopup
         $current_version = $this->getCurrentVersion();
 
         return [
+            '2.3.10' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.10'),
+                'content' => $this->getVersion2310Content(),
+                'action_buttons' => [],
+            ],
             '2.3.9' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -761,6 +768,83 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.10
+     *
+     * @return string HTML content for version 2.3.10
+     * @since 2.3.10
+     */
+    private function getVersion2310Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.10", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔁</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smarter return visitor targeting', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The Return visitor visit-history filter now detects when someone comes back after being away, not simply after page two of the same visit. Browsing multiple pages in one active session no longer triggers return-visitor notifications.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⏱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Configurable inactivity threshold', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When Return visitor is selected in Users display rules, set Inactivity before return (hours). Default is 3 hours. Use 24 for next-day returns or 48 for two-day returns. Any page view or interaction resets the timer.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">👥</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('All Users login status (Pro)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Users display rules now include All Users as the default login status, so notifications can target both guests and logged-in visitors. Optional visit-history filters (new visitor, return visitor, first session) still apply alongside login targeting.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⚡</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Cache-safe client-side evaluation', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Return visitor checks still run entirely in the browser using activity timestamps, so full-page cache stays safe while re-engagement campaigns target visitors who were genuinely inactive.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🏷️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Better variable product sale alerts', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Notifications now pick up variable products when any variation is on sale, including Sale Products Only filters and product-page targeting.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛍️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Clearer variable product details in notifications', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Show the on-sale variation name, price, and link in your message. Total sales still reflect the whole product. Post Link and Add to Cart take shoppers straight to that variation.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('More reliable page targeting on exit intent', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Page targeting display rules are now re-checked in the browser before a notification shows, including exit-intent triggers. A cart-based popup limited to Cart and Checkout no longer appears on Shop, Home, or other pages when the cart still has items.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📚</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Z-Index setting works as expected', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The Z-Index value you set in Appearance is now respected. When two notifications overlap, the one with the higher number appears on top.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>

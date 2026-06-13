@@ -7,6 +7,7 @@ use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\ClientUserRulesBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
 use Notifal\Infrastructure\WordPress\WooCommerce\Support\WooCommerceVariationScriptSupport;
@@ -553,6 +554,8 @@ class FrontendAssetsRegistrar
             'rtl' => is_rtl(),
             'strings' => self::getFrontendStrings(),
             'context' => $currentPageContext,
+            // @since 2.3.10 Cached Users rule payload map for cache-safe client login checks.
+            'clientUserRulesIndex' => ClientUserRulesBuilder::buildActiveNotificationsIndex(),
             'immediateNotifications' => self::getImmediateNotificationsForPreload($currentPageContext),
             'siteName' => get_bloginfo('name'),
             'analyticsTrackClickClass' => sanitize_html_class(
@@ -573,6 +576,9 @@ class FrontendAssetsRegistrar
         if (PluginDetector::isWooCommerceActive()) {
             $config['ajaxAddToCartUrl'] = admin_url('admin-ajax.php');
             $config['ajaxAddToCartNonce'] = wp_create_nonce('notifal_ajax_add_to_cart');
+
+            // @since 2.3.10 WooCommerce system page IDs for client-side display rule evaluation.
+            $config['woocommercePageIds'] = PageContextHelper::getWooCommerceSystemPageIds();
 
             // @since 2.3.7 Only expose cart REST refresh when an active notification uses cart display rules.
             $requiresCartContext = CartDisplayRulesUsageChecker::anyActiveNotificationUsesCartRules();
@@ -730,6 +736,15 @@ class FrontendAssetsRegistrar
             // WooCommerce product tag archive
             $pageId = get_queried_object_id();
             $postType = 'product_tag';
+        } elseif (function_exists('is_shop') && is_shop()) {
+            // WooCommerce shop uses a product archive query but is assigned to a Page post.
+            if (function_exists('wc_get_page_id')) {
+                $shopPageId = absint(wc_get_page_id('shop'));
+                if ($shopPageId > 0) {
+                    $pageId = $shopPageId;
+                    $postType = 'page';
+                }
+            }
         } elseif (is_tax()) {
             // Custom post type and other taxonomy archives.
             $term = get_queried_object();

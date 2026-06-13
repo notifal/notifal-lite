@@ -3,7 +3,7 @@
  * Plugin Name: Notifal
  * Plugin URI: https://notifal.com/?utm_source=repo-notifal-lite&utm_campaign=plugin-uri&utm_medium=plugin-page-main-link
  * Description: Notifal helps boost engagement on your website by showing sales popups, stock alerts, offers, and custom messages to build trust, create urgency, and add social proof.
- * Version: 2.3.9
+ * Version: 2.3.10
  * Requires PHP: 7.4
  * License: GPLv2 or later
  * Author: Notifal.com
@@ -20,7 +20,7 @@ defined('ABSPATH') || exit;
 
 // Plugin Constants
 if (!defined('NOTIFAL_VERSION')) {
-    define('NOTIFAL_VERSION', '2.3.9');
+    define('NOTIFAL_VERSION', '2.3.10');
 }
 if (!defined('NOTIFAL_FILE')) {
     define('NOTIFAL_FILE', __FILE__);

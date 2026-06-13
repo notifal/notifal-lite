@@ -644,9 +644,19 @@ class OnPageNotificationApiController
         // Parse URL query parameters for UTM/query-parameter display rules
         $context['query_params'] = $this->parseQueryParamsForContext($context['url']);
 
-        // If no user_id provided, use current user
+        // If no user_id provided, use current user.
         if (empty($context['user_id'])) {
             $context['user_id'] = get_current_user_id();
+        }
+
+        // @since 2.3.10 Resolve logged-in visitors from auth cookie on public REST requests.
+        if ((int) $context['user_id'] === 0) {
+            $cookieUserId = $this->resolveUserIdFromAuthCookie();
+
+            if ($cookieUserId > 0) {
+                $context['user_id'] = $cookieUserId;
+                wp_set_current_user($cookieUserId);
+            }
         }
 
         // Detect device type if not provided
@@ -687,7 +697,11 @@ class OnPageNotificationApiController
         $context['timezone'] = wp_timezone_string();
         $context['locale'] = get_locale();
         $context['is_admin'] = current_user_can('manage_options');
-        $context['is_logged_in'] = is_user_logged_in();
+        $context['is_logged_in'] = ((int) ($context['user_id'] ?? 0)) > 0 || is_user_logged_in();
+
+        if ($context['is_logged_in'] && empty($context['user_roles'])) {
+            $context['user_roles'] = wp_get_current_user()->roles;
+        }
 
         // @since 2.3.5 Attach WooCommerce cart snapshot for cart display rules.
         if (PluginDetector::isWooCommerceActive() && CartDisplayRulesUsageChecker::anyActiveNotificationUsesCartRules()) {
@@ -1039,6 +1053,30 @@ class OnPageNotificationApiController
             'valid' => true,
             'data' => $validated,
         ];
+    }
+
+    /**
+     * Resolve the current visitor user ID from the WordPress logged-in auth cookie.
+     *
+     * Public eligibility REST requests intentionally omit nonce auth for cache safety,
+     * so cookie validation is used when get_current_user_id() is still zero.
+     *
+     * @return int Logged-in user ID or 0 when no valid cookie exists.
+     * @since 2.3.10
+     */
+    private function resolveUserIdFromAuthCookie(): int
+    {
+        if (!function_exists('wp_validate_auth_cookie')) {
+            return 0;
+        }
+
+        $validatedUserId = wp_validate_auth_cookie('', 'logged_in');
+
+        if ($validatedUserId === false) {
+            return 0;
+        }
+
+        return absint($validatedUserId);
     }
 
     /**

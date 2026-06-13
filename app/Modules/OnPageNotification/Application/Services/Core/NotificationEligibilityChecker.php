@@ -8,7 +8,6 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRule
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
-
 defined('ABSPATH') || exit;
 
 /**

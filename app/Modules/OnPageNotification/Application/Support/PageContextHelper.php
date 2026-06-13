@@ -162,6 +162,79 @@ class PageContextHelper
     }
 
     /**
+     * Map WooCommerce system routes to their underlying WordPress Page post objects.
+     *
+     * The shop page renders as a product archive in the main query, but display rules
+     * that target the Page post type must evaluate against the assigned shop page ID.
+     *
+     * @param array<string, mixed> $context Visitor page context.
+     * @return array<string, mixed>
+     * @since 2.3.10
+     */
+    public static function normalizeWooCommerceSystemPages(array $context): array
+    {
+        if (!function_exists('wc_get_page_id')) {
+            return $context;
+        }
+
+        $context = self::attachSmartTargetingViewFlags($context);
+
+        $postType = sanitize_key((string) ($context['post_type'] ?? ''));
+
+        // Product taxonomy archives are not WooCommerce system pages.
+        if (!empty($context['archive_taxonomy'])
+            || in_array($postType, ['product_category', 'product_tag'], true)
+        ) {
+            return $context;
+        }
+
+        $systemPages = [
+            'is_shop_page'     => 'shop',
+            'is_cart_page'     => 'cart',
+            'is_checkout_page' => 'checkout',
+            'is_account_page'  => 'myaccount',
+        ];
+
+        foreach ($systemPages as $flag => $wcPageKey) {
+            if (empty($context[$flag])) {
+                continue;
+            }
+
+            $wcPageId = absint(wc_get_page_id($wcPageKey));
+            if ($wcPageId <= 0) {
+                continue;
+            }
+
+            $context['page_id']   = $wcPageId;
+            $context['post_type'] = 'page';
+
+            return $context;
+        }
+
+        return $context;
+    }
+
+    /**
+     * Build WooCommerce system page ID map for frontend display rule evaluation.
+     *
+     * @return array<string, int>
+     * @since 2.3.10
+     */
+    public static function getWooCommerceSystemPageIds(): array
+    {
+        if (!function_exists('wc_get_page_id')) {
+            return [];
+        }
+
+        return [
+            'shop'      => absint(wc_get_page_id('shop')),
+            'cart'      => absint(wc_get_page_id('cart')),
+            'checkout'  => absint(wc_get_page_id('checkout')),
+            'myaccount' => absint(wc_get_page_id('myaccount')),
+        ];
+    }
+
+    /**
      * Attach smart targeting view flags used to decide when contextual narrowing applies.
      *
      * @param array<string, mixed> $context Visitor page context.

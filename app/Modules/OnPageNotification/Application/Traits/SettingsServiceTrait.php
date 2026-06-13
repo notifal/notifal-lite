@@ -56,6 +56,32 @@ trait SettingsServiceTrait
     }
 
     /**
+     * Sanitize integer value with a minimum bound only (no upper cap).
+     *
+     * @since 2.3.10
+     * @param mixed $value Input value.
+     * @param int   $min   Minimum allowed value.
+     * @return int Sanitized integer.
+     */
+    protected function sanitizeNonNegativeInteger( $value, int $min = 0 ): int
+    {
+        return max( $min, (int) $value );
+    }
+
+    /**
+     * Sanitize float value with a minimum bound only (no upper cap).
+     *
+     * @since 2.3.10
+     * @param mixed $value Input value.
+     * @param float $min   Minimum allowed value.
+     * @return float Sanitized float.
+     */
+    protected function sanitizeNonNegativeFloat( $value, float $min = 0.0 ): float
+    {
+        return max( $min, (float) $value );
+    }
+
+    /**
      * Sanitize float value within range
      *
      * @since 2.0.0

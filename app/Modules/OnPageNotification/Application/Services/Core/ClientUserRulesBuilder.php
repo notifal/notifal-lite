@@ -4,14 +4,16 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
+use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
+use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
 
 defined('ABSPATH') || exit;
 
 /**
  * Builds client-side user display rule payload for frontend evaluation.
  *
- * Visit-history filters (new / return / first session) run in the browser
- * so full-page cache stays safe. WordPress login status is still checked server-side.
+ * Login status and visit-history filters run in the browser so full-page cache
+ * stays safe. WordPress still validates rules server-side when auth is available.
  *
  * @since 2.3.5
  * @author Hossein <hossein@notifal.com>
@@ -20,10 +22,85 @@ defined('ABSPATH') || exit;
 class ClientUserRulesBuilder
 {
     /**
+     * Object cache key for the active-notifications Users rule index.
+     *
+     * @since 2.3.10
+     */
+    private const INDEX_CACHE_KEY = 'notifal_onpage_client_user_rules_index';
+
+    /**
+     * Object cache group for Users rule index lookups.
+     *
+     * @since 2.3.10
+     */
+    private const INDEX_CACHE_GROUP = 'notifal_onpage';
+
+    /**
+     * Build a cached map of client Users rule payloads for active notifications.
+     *
+     * Scans active notifications once per cache window (same pattern as cart rules usage).
+     * Only notifications with guest/logged-in or visit-history filters are included.
+     *
+     * @return array<string, array<string, int|string|bool|array<int, string>>> Map of notification ID => rules.
+     * @since 2.3.10
+     */
+    public static function buildActiveNotificationsIndex(): array
+    {
+        $cached = wp_cache_get(self::INDEX_CACHE_KEY, self::INDEX_CACHE_GROUP);
+
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $index = self::scanActiveNotificationsIndex();
+
+        wp_cache_set(self::INDEX_CACHE_KEY, $index, self::INDEX_CACHE_GROUP, HOUR_IN_SECONDS);
+
+        return $index;
+    }
+
+    /**
+     * Clear cached Users rule index after notification display rules change.
+     *
+     * @return void
+     * @since 2.3.10
+     */
+    public static function clearIndexCache(): void
+    {
+        wp_cache_delete(self::INDEX_CACHE_KEY, self::INDEX_CACHE_GROUP);
+    }
+
+    /**
+     * Scan active notifications and collect client-evaluated Users rule payloads.
+     *
+     * @return array<string, array<string, int|string|bool|array<int, string>>>
+     * @since 2.3.10
+     */
+    private static function scanActiveNotificationsIndex(): array
+    {
+        $index = [];
+
+        foreach (NotificationQuery::getAll() as $notificationPost) {
+            if (!($notificationPost instanceof \WP_Post)) {
+                continue;
+            }
+
+            $notificationId = (int) $notificationPost->ID;
+            $clientRules = self::buildFromNotificationId($notificationId);
+
+            if (!empty($clientRules)) {
+                $index[(string) $notificationId] = $clientRules;
+            }
+        }
+
+        return $index;
+    }
+
+    /**
      * Extract client-evaluated user rules from notification display rules meta.
      *
      * @param int $notificationId On-page notification post ID.
-     * @return array<string, string>|null Null when no client-side user rule applies.
+     * @return array<string, int|string|bool|array<int, string>>|null Null when no client-side user rule applies.
      * @since 2.3.5
      */
     public static function buildFromNotificationId(int $notificationId): ?array
@@ -35,23 +112,19 @@ class ClientUserRulesBuilder
             return null;
         }
 
-        $visitorType = self::resolveVisitorType($displayRules);
+        $clientRules = self::resolveClientUserRules($displayRules);
 
         // Default / unset means server-only auth filtering; skip client payload.
-        if ($visitorType === '' || $visitorType === 'any') {
+        if ($clientRules === null) {
             return null;
         }
-
-        $clientRules = [
-            'visitor_type' => $visitorType,
-        ];
 
         /**
          * Filter client-side user display rules attached to a notification payload.
          *
          * @since 2.3.5
-         * @param array<string, string>|null $clientRules Client rules or null.
-         * @param int                          $notificationId Notification post ID.
+         * @param array<string, int|string|bool|array<int, string>>|null $clientRules Client rules or null.
+         * @param int                                                      $notificationId Notification post ID.
          */
         return apply_filters(
             FilterHooks::ONPAGE_CLIENT_USER_RULES,
@@ -61,13 +134,13 @@ class ClientUserRulesBuilder
     }
 
     /**
-     * Find the first users rule with a client-evaluated visitor type.
+     * Find the first users rule that needs client-side evaluation.
      *
      * @param array<string, mixed> $displayRules Saved display rules meta.
-     * @return string Visitor type slug or empty string.
-     * @since 2.3.5
+     * @return array<string, int|string|bool|array<int, string>>|null Client payload or null when not applicable.
+     * @since 2.3.10
      */
-    private static function resolveVisitorType(array $displayRules): string
+    private static function resolveClientUserRules(array $displayRules): ?array
     {
         $items = DisplayRulesDataNormalizer::extractItems($displayRules);
 
@@ -77,15 +150,95 @@ class ClientUserRulesBuilder
             }
 
             $data = $item['data'] ?? [];
+            $userType = isset($data['user_type'])
+                ? sanitize_text_field((string) $data['user_type'])
+                : DisplayRulesService::USER_LOGIN_STATUS_DEFAULT;
             $visitorType = isset($data['visitor_type'])
                 ? sanitize_text_field((string) $data['visitor_type'])
                 : 'any';
 
-            if ($visitorType !== '' && $visitorType !== 'any') {
-                return $visitorType;
+            $needsLoginCheck = $userType !== '' && $userType !== 'all';
+            $needsVisitorCheck = $visitorType !== '' && $visitorType !== 'any';
+
+            if (!$needsLoginCheck && !$needsVisitorCheck) {
+                continue;
+            }
+
+            $clientRules = [];
+
+            // @since 2.3.10 Login status is re-checked client-side for cache-safe eligibility.
+            if ($needsLoginCheck) {
+                $clientRules['user_type'] = $userType;
+
+                if ($userType === 'logged_in') {
+                    $clientRules['limit_by_roles'] = (bool) ($data['limit_by_roles'] ?? false);
+
+                    if ($clientRules['limit_by_roles']) {
+                        $clientRules['roles'] = self::sanitizeRoles($data['roles'] ?? []);
+                    }
+                }
+            }
+
+            if ($needsVisitorCheck) {
+                $clientRules['visitor_type'] = $visitorType;
+
+                if ($visitorType === 'return_visitor') {
+                    $clientRules['inactivity_hours'] = self::sanitizeInactivityHours($data);
+                }
+            }
+
+            return $clientRules;
+        }
+
+        return null;
+    }
+
+    /**
+     * Sanitize role slugs for client-side logged-in role checks.
+     *
+     * @param mixed $roles Raw role list from saved rule data.
+     * @return array<int, string> Sanitized role slugs.
+     * @since 2.3.10
+     */
+    private static function sanitizeRoles($roles): array
+    {
+        if (!is_array($roles)) {
+            return [];
+        }
+
+        $sanitized = [];
+
+        foreach ($roles as $role) {
+            $roleSlug = sanitize_key((string) $role);
+
+            if ($roleSlug !== '') {
+                $sanitized[] = $roleSlug;
             }
         }
 
-        return '';
+        return array_values(array_unique($sanitized));
+    }
+
+    /**
+     * Sanitize inactivity hours for return-visitor client payload.
+     *
+     * @param array<string, mixed> $data Users rule data.
+     * @return int Sanitized inactivity hours.
+     * @since 2.3.10
+     */
+    private static function sanitizeInactivityHours(array $data): int
+    {
+        $inactivityHours = isset($data['inactivity_hours'])
+            ? absint($data['inactivity_hours'])
+            : DisplayRulesService::USER_RETURN_VISITOR_DEFAULT_INACTIVITY_HOURS;
+
+        if ($inactivityHours < DisplayRulesService::USER_RETURN_VISITOR_MIN_INACTIVITY_HOURS) {
+            $inactivityHours = DisplayRulesService::USER_RETURN_VISITOR_DEFAULT_INACTIVITY_HOURS;
+        }
+
+        return min(
+            DisplayRulesService::USER_RETURN_VISITOR_MAX_INACTIVITY_HOURS,
+            $inactivityHours
+        );
     }
 }

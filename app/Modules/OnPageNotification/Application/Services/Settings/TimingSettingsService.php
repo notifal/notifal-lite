@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Support\OnPageNotificationSettingsLimits;
 use Notifal\Modules\OnPageNotification\Application\Support\ScheduleDateTimeHelper;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 
@@ -178,13 +179,19 @@ class TimingSettingsService
                 ], 'immediate');
             
             case 'delay_seconds':
-                return $this->sanitizeInteger($value, 0, 60);
+                return $this->sanitizeNonNegativeInteger(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_DELAY_SECONDS
+                );
             
             case 'scroll_percentage':
                 return $this->sanitizeInteger($value, 1, 100);
             
             case 'idle_seconds':
-                return $this->sanitizeInteger($value, 5, 300);
+                return $this->sanitizeNonNegativeInteger(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_IDLE_SECONDS
+                );
             
             // Custom Trigger Settings
             case 'custom_trigger_type':
@@ -211,7 +218,10 @@ class TimingSettingsService
                 return $this->sanitizeJSON($value);
             
             case 'custom_trigger_delay':
-                return $this->sanitizeFloat($value, 0.0, 60.0);
+                return $this->sanitizeNonNegativeFloat(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_CUSTOM_TRIGGER_DELAY_SECONDS
+                );
             
             // Display Duration
             case 'display_duration':
@@ -220,7 +230,10 @@ class TimingSettingsService
                 ], 'until_dismissed');
             
             case 'auto_hide_seconds':
-                return $this->sanitizeInteger($value, 1, 60);
+                return $this->sanitizeNonNegativeInteger(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_AUTO_HIDE_SECONDS
+                );
             
             case 'persistent_duration':
                 return $this->sanitizeInteger($value, 0, 86400);
@@ -239,7 +252,10 @@ class TimingSettingsService
                 return (bool) $value;
 
             case 'retrigger_delay_seconds':
-                return $this->sanitizeInteger($value, 1, 300);
+                return $this->sanitizeNonNegativeInteger(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_RETRIGGER_DELAY_SECONDS
+                );
 
             case 'max_retrigger_per_page':
                 return $this->sanitizeInteger($value, 1, 10);
@@ -396,7 +412,7 @@ class TimingSettingsService
         switch ($show_timing) {
             case 'delay':
                 $delay = $settings['delay_seconds'] ?? 0;
-                return $delay >= 0 && $delay <= 60;
+                return $delay >= OnPageNotificationSettingsLimits::MIN_DELAY_SECONDS;
             
             case 'scroll':
                 $scroll = $settings['scroll_percentage'] ?? 0;
@@ -404,7 +420,7 @@ class TimingSettingsService
             
             case 'idle':
                 $idle = $settings['idle_seconds'] ?? 0;
-                return $idle >= 5 && $idle <= 300;
+                return $idle >= OnPageNotificationSettingsLimits::MIN_IDLE_SECONDS;
             
             case 'exit_intent':
                 // Exit intent doesn't require additional validation

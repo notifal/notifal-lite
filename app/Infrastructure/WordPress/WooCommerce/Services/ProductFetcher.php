@@ -190,31 +190,53 @@ class ProductFetcher implements ProductFetcherInterface
     }
 
     /**
-     * Resolve the WC_Product instance used for DTOs (variable parents map to a child variation).
+     * Check whether a product or variable parent is currently on sale in WooCommerce.
      *
-     * @param int $id Product or variation ID.
-     * @return WC_Product|null
-     * @since 2.0.0
+     * @param int $productId Product or variation ID.
+     * @return bool
+     * @since 2.3.10
      */
-    private function resolveWcProductForDto(int $id): ?WC_Product
+    private function isProductLiveOnSale(int $productId): bool
     {
-        $wcProduct = wc_get_product($id);
+        // Load the requested WooCommerce product without remapping variable parents.
+        $wcProduct = wc_get_product($productId);
 
-        if (!$wcProduct instanceof WC_Product) {
+        // Delegate to WooCommerce so variable parents include on-sale child variations.
+        return $wcProduct instanceof WC_Product && $wcProduct->is_on_sale();
+    }
+
+    /**
+     * Pick a child variation to represent variable product prices in tags.
+     *
+     * @param WC_Product $wcProduct Variable parent product.
+     * @return WC_Product|null
+     * @since 2.3.10
+     */
+    private function resolveDisplayVariation(WC_Product $wcProduct): ?WC_Product
+    {
+        // Bail when the product is not a variable parent.
+        if (!$wcProduct->is_type('variable')) {
             return null;
         }
 
-        // For variable products (parent), select first variation for preview
-        // For variation products, use the variation directly
-        if ($wcProduct->is_type('variable')) {
-            $children = $wcProduct->get_children();
-            if (!empty($children)) {
-                $resolved = wc_get_product($children[0]);
-                $wcProduct = $resolved instanceof WC_Product ? $resolved : $wcProduct;
+        // Read child variation IDs from the parent product.
+        $children = $wcProduct->get_children();
+        if (empty($children)) {
+            return null;
+        }
+
+        // Prefer an on-sale variation so sale tags reflect an active discount.
+        foreach ($children as $childId) {
+            $child = wc_get_product((int) $childId);
+            if ($child instanceof WC_Product && $child->is_on_sale()) {
+                return $child;
             }
         }
 
-        return $wcProduct instanceof WC_Product ? $wcProduct : null;
+        // Fall back to the first variation when none are currently on sale.
+        $firstChild = wc_get_product((int) $children[0]);
+
+        return $firstChild instanceof WC_Product ? $firstChild : null;
     }
 
     /**
@@ -239,8 +261,7 @@ class ProductFetcher implements ProductFetcherInterface
             if (!$dto instanceof ProductDTO) {
                 continue;
             }
-            $wcProduct = $this->resolveWcProductForDto($dto->getId());
-            if ($wcProduct && $wcProduct->is_on_sale()) {
+            if ($this->isProductLiveOnSale((int) $dto->getId())) {
                 $out[] = $dto;
             }
         }
@@ -296,8 +317,7 @@ class ProductFetcher implements ProductFetcherInterface
             if (count($out) >= $maxResults) {
                 break;
             }
-            $wcProduct = $this->resolveWcProductForDto((int) $productId);
-            if ($wcProduct && $wcProduct->is_on_sale()) {
+            if ($this->isProductLiveOnSale((int) $productId)) {
                 $out[] = (int) $productId;
             }
         }
@@ -314,17 +334,52 @@ class ProductFetcher implements ProductFetcherInterface
      */
     private function buildProductDTO(int $id): ?ProductDTO
     {
-        $wcProduct = $this->resolveWcProductForDto($id);
+        // Load the requested WooCommerce product object.
+        $wcProduct = wc_get_product($id);
 
         if (!$wcProduct instanceof WC_Product) {
             return null;
         }
 
+        // Defaults assume a simple product with no parent/variation split.
+        $parentProductId    = $wcProduct->get_id();
+        $variationContextId = null;
+        $displayProduct     = $wcProduct;
+
+        // Variable parents keep parent identity while prices come from a child variation.
+        if ($wcProduct->is_type('variable')) {
+            $displayVariation = $this->resolveDisplayVariation($wcProduct);
+            if ($displayVariation instanceof WC_Product) {
+                $variationContextId = $displayVariation->get_id();
+            }
+        } elseif ($wcProduct->is_type('variation')) {
+            // Direct variation lookups keep variation prices and parent aggregate meta.
+            $parentProductId    = (int) $wcProduct->get_parent_id();
+            $variationContextId = $wcProduct->get_id();
+        }
+
+        // Defaults use the parent/simple product label and URL.
+        $displayName = $displayProduct->get_name();
+        $permalink   = $displayProduct->get_permalink();
+
+        // Resolved variation drives the public name and deep-link URL shown in tags/buttons.
+        if ($variationContextId > 0) {
+            $variationProduct = wc_get_product($variationContextId);
+            if ($variationProduct instanceof WC_Product) {
+                $displayName = $variationProduct->get_name();
+                $permalink   = $variationProduct->get_permalink();
+            }
+        }
+
+        // Build the DTO from the parent ID while exposing the resolved variation details.
         $dto = new ProductDTO(
-            $wcProduct->get_id(),
-            $wcProduct->get_name(),
-            $wcProduct->get_permalink()
+            $displayProduct->get_id(),
+            $displayName,
+            $permalink
         );
+
+        // Attach parent/variation context for smart meta resolution in tags.
+        $dto->setProductContext($parentProductId, $variationContextId);
 
         /**
          * Filter: Allow modification of ProductDTO after build
@@ -394,21 +449,9 @@ class ProductFetcher implements ProductFetcherInterface
             }
         }
 
-        // Sale products filter
+        // Sale products filter (includes variable parents when any variation is on sale).
         if (isset($filters['on_sale']) && $filters['on_sale']) {
-            $args['meta_query'][] = [
-                'relation' => 'OR',
-                [
-                    'key'     => '_sale_price',
-                    'value'   => '',
-                    'compare' => '!='
-                ],
-                [
-                    'key'     => '_sale_price',
-                    'value'   => '0',
-                    'compare' => '>'
-                ]
-            ];
+            $args = $this->applySalePostInConstraint($args);
         }
 
         // Featured products filter
@@ -512,6 +555,7 @@ class ProductFetcher implements ProductFetcherInterface
         $metaConditions = [];
         $taxConditions = [];
         $postInConditions = [];
+        $applySaleConstraint = false;
 
         foreach ($conditions as $condition) {
             $conditionType = $condition['type'] ?? '';
@@ -532,10 +576,8 @@ class ProductFetcher implements ProductFetcherInterface
                     break;
 
                 case 'sale':
-                    $saleQuery = $this->buildSaleCondition();
-                    if ($saleQuery) {
-                        $metaConditions[] = $saleQuery;
-                    }
+                    // Sale constraints are applied through WooCommerce on-sale IDs, not parent meta.
+                    $applySaleConstraint = true;
                     break;
 
                 case 'featured':
@@ -611,6 +653,11 @@ class ProductFetcher implements ProductFetcherInterface
             }
         }
 
+        // Restrict the query to WooCommerce on-sale IDs (parents + variations).
+        if ($applySaleConstraint) {
+            $args = $this->applySalePostInConstraint($args);
+        }
+
         return $args;
     }
 
@@ -637,26 +684,41 @@ class ProductFetcher implements ProductFetcherInterface
     }
 
     /**
-     * Build sale condition for meta query.
+     * Restrict query args to WooCommerce on-sale product IDs.
      *
-     * @return array Sale condition for meta query
-     * @since 2.0.0
+     * Uses {@see wc_get_product_ids_on_sale()} so variable parents are included when
+     * any child variation is discounted.
+     *
+     * @param array $args WP_Query arguments.
+     * @return array
+     * @since 2.3.10
      */
-    private function buildSaleCondition(): array
+    private function applySalePostInConstraint(array $args): array
     {
-        return [
-            'relation' => 'OR',
-            [
-                'key'     => '_sale_price',
-                'value'   => '',
-                'compare' => '!='
-            ],
-            [
-                'key'     => '_sale_price',
-                'value'   => '0',
-                'compare' => '>'
-            ]
-        ];
+        // Bail when WooCommerce sale helpers are unavailable.
+        if (!function_exists('wc_get_product_ids_on_sale')) {
+            $args['post__in'] = [0];
+            return $args;
+        }
+
+        // Read WooCommerce on-sale IDs (variation IDs and parent IDs).
+        $onSaleIds = array_values(array_unique(array_map('intval', wc_get_product_ids_on_sale())));
+        if (empty($onSaleIds)) {
+            $args['post__in'] = [0];
+            return $args;
+        }
+
+        // Intersect with any existing post__in constraint (e.g. smart targeting current product).
+        if (isset($args['post__in']) && is_array($args['post__in'])) {
+            $intersected      = array_values(array_intersect($args['post__in'], $onSaleIds));
+            $args['post__in'] = !empty($intersected) ? $intersected : [0];
+            return $args;
+        }
+
+        // Apply the on-sale ID list directly when no prior post__in exists.
+        $args['post__in'] = $onSaleIds;
+
+        return $args;
     }
 
     /**
