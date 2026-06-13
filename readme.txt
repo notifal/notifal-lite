@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.3.9
+Stable tag: 2.3.10
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -14,7 +14,7 @@ Show Newsletter Form Popups, Discounted Products Notifications, Exit Intent Popu
 
 **<a href="https://notifal.com/community/course/onboarding/lessons?utm_source=WPD&utm_campaing=Notifal-Onboarding" target="_blank">Onboarding</a> — <a href="https://notifal.com/pricing/?utm_source=WPD&utm_campaing=Notifal-Pricing" target="_blank">Notifal Pro</a> — <a href="https://notifal.com/templates?utm_source=WPD&utm_campaing=Notifal-Library" target="_blank">Templates Library</a> — <a href="https://notifal.com/my-account/support/?utm_source=WPD&utm_campaing=Notifal-Free-Configuration" target="_blank">Free Configuration</a> — <a href="https://notifal.com/community?utm_source=WPD&utm_campaing=Notifal-Community" target="_blank">Community</a>**
 
-### Turn Every Visitor Into a Customer or Lead — Without Writing a Single Line of Code ###
+### Turn Every Visitor Into a Customer or Lead Without Writing a Single Line of Code ###
 
 [youtube https://youtu.be/IFTHCKWE6SY]
 
@@ -33,13 +33,13 @@ Whether you want to promote a flash sale, grow your email list, announce new pro
 ## One Plugin. Endless Possibilities. ##
 What makes Notifal truly powerful isn't just how you build notifications, it's what you can achieve with them.
 
-From growing your email list to preventing cart abandonment, from building social proof to boosting engagement, Notifal adapts to your goals. No matter what type of website you run — eCommerce store, blog, SaaS, agency, or portfolio — there's a notification strategy waiting to transform your results.
+From growing your email list to preventing cart abandonment, from building social proof to boosting engagement, Notifal adapts to your goals. No matter what type of website you run, eCommerce store, blog, SaaS, agency, or portfolio, there's a notification strategy waiting to transform your results.
 
 Here's what you can create with Notifal:
 
 * **📧 Grow Email List**: Newsletter Sign-up Form - Email Sign-Up Discount - Exit Intent Email Capture - Scroll-Based Email Capture
 
-* **💰 Increase Sales**: Discounted Products Showcase - Discount Coupon Popups - Exit Intent Coupon Code - First Purchase Coupon Code - Cross-Selling Recommendations
+* **💰 Increase Sales**: Discounted Products Showcase - Discount Coupon Popups - Exit Intent Coupon Code - First Purchase Coupon Code - Cross-Selling Recommendations - Cart-Based Product Notifications (WooCommerce)
 
 * **⭐ Build Trust & Social Proof**: Recent Sales & Buyers Notifications - Google Rating - G2 Rating -  Trustpilot Rating - Customer Testimonials
 
@@ -53,7 +53,7 @@ Here's what you can create with Notifal:
 
 * **💬 Communicate with Visitors**: WhatsApp Button - All-in-One Chat Widget - Click to Call Button - Exit Intent Contact Info - Inactive User Support Button
 
-* **📈 Grow Average Order Value (AOV)**: Free Shipping Progress Bar - Cross-Selling Recommendations
+* **📈 Grow Average Order Value (AOV)**: Free Shipping Progress Bar - Cross-Selling Recommendations - Cart Upsells & Cross-Sells via Cart Products Content Source (WooCommerce)
 
 * **👥 Grow Your User Base**: Sign-Up Pop-Up
 
@@ -121,7 +121,7 @@ With dynamic tags, you create a notification once, and its content updates autom
 
 **🔄 How Tags Work**
 
-Instead of writing static text like: ***"New Offer for You"*** You write: ***"New Offer for You, {user_name}"***. Now every visitor sees their own name. Sara sees ***"New Offer for You, Sara*. Alex sees ***"New Offer for You, Alex"***.
+Instead of writing static text like: ***"New Offer for You"*** You write: ***"New Offer for You, {user_name}"***. Now every visitor sees their own name. Sara sees ***"New Offer for You, Sara***. Alex sees ***"New Offer for You, Alex"***.
 
 This is just a simple example. With tags, you can pull in product names, prices, discount percentages, order details, cart totals, coupon codes, comment content, usernames, and more, fully personalized, real-time notifications.
 
@@ -129,13 +129,13 @@ This is just a simple example. With tags, you can pull in product names, prices,
 
 * **📝 WordPress Tags**: Dynamically insert Post, Page, Comment, and User data into your notifications.
 
-* **🛒 WooCommerce Tags**: Pull real-time Order, Product, and Cart data including `{cart_total}`, `{cart_item_count}`, `{cart_coupons}`, and `{cart_checkout_url}` — perfect for sale announcements, abandoned-cart reminders, and discount popups.
+* **🛒 WooCommerce Tags**: Pull real-time Order, Product, and Cart data including `{cart_total}`, `{cart_item_count}`, `{cart_coupons}`, and `{cart_checkout_url}`, perfect for sale announcements, abandoned-cart reminders, and discount popups. Combine with the **Cart Products** content source to rotate product tags from items in the visitor's cart, related products, upsells, and cross-sells.
 
 * **⚙️ Post Type Tag Generator [PRO]**: Have custom post types? Generate your own tags based on any post type in your database. Complete flexibility.
 
-## 🧠 Smart Targeting — Dynamic Content That Follows the Visitor ##
+## 🧠 Smart Targeting: Dynamic Content That Follows the Visitor ##
 
-Generic dynamic notifications pull from your entire catalog or content library. That's powerful — but on a product page, a visitor expects relevance, not a random item from somewhere else on your site.
+Generic dynamic notifications pull from your entire catalog or content library. That's powerful, but on a product page, a visitor expects relevance, not a random item from somewhere else on your site.
 
 Smart Targeting connects your notification's content source to the page your visitor is actually viewing. On a single product page, show that product's data first. On a category archive, surface items from that category. On a blog post, pull related posts from the same tags or categories. The notification stays relevant because the content follows the visitor's context.
 
@@ -158,6 +158,28 @@ Notifal reads the dynamic tags in your notification template and automatically s
 * **🔄 Smart Fallback**: Choose whether to fall back to standard content source filters when no contextual match exists, or hide the notification until a relevant match is found.
 
 * **🏷️ Template-Aware Detection**: Smart Targeting activates automatically based on the dynamic tags in your notification template, no manual entity mapping required.
+
+## 🛒 Cart Products Content Source, Turn Every Cart Into a Sales Opportunity ##
+
+A visitor who adds something to their cart is not a casual browser, they are one step away from buying. Notifal's **Cart Products** content source lets your dynamic notifications pull product data directly from the visitor's live WooCommerce cart, so every popup, floating box, or bar promotes items that match what they are already considering.
+
+**How Cart Products Works**
+
+In **Content Source → Product Restrictions**, add a **Cart Products** filter (WooCommerce stores only). Choose one or more sources, products currently in the cart, related products, upsells, or cross-sells configured in WooCommerce and combine them inside the filter. Notifal rotates through matching products for your dynamic tags (`{product_name}`, `{product_price}`, `{product_link}`, and more). When the cart updates via Ajax add-to-cart, notification content refreshes in real time no page reload required.
+
+**Why It Helps Shops Sell More**
+
+* **🎯 Hyper-Relevant Recommendations**: Show upsells and cross-sells tied to what's already in the cart not random products from your catalog.
+
+* **📈 Higher Average Order Value (AOV)**: Nudge shoppers toward complementary products while they are in buying mode, the moment they are most likely to add more.
+
+* **⚡ Real-Time Personalization**: Content updates as the cart changes, so every visitor sees offers that reflect their current session.
+
+* **🔗 One Notification, Infinite Variations**: Design once with dynamic tags; each shopper sees products pulled from their own cart context.
+
+* **🤝 Uses Your WooCommerce Setup**: Leverages the related, upsell, and cross-sell relationships you have already configured on each product.
+
+* **🛍️ Perfect for Cart-Stage Conversion**: Pair with Ajax Add to Cart buttons, cart display rules, and cart dynamic tags (`{cart_total}`, `{cart_checkout_url}`, and more) for a complete strategy from first add-to-cart through checkout.
 
 ## 🎯 Right Message. Right Person. Right Moment. ##
 
@@ -203,45 +225,19 @@ Trigger options:
 
 Stop showing popups randomly. Start showing them strategically.
 
-## 📅 Campaign Manager — Align Timing Across Notifications ##
+## 📅 Campaign Manager: Align Timing Across Notifications ##
 
 Running a seasonal sale, product launch, or limited-time offer? Campaign Manager groups related notifications under one schedule, keeps messaging aligned, and lets you review performance with campaign-based analytics filters. When a notification belongs to a campaign, the campaign schedule takes priority, no repeating date settings on every notification.
-
-## Built for Every Website. Tailored for Your Goals. ##
-
-It doesn't matter what kind of website you run. If you have visitors, you have opportunities to convert them. Notifal adapts to your industry, your audience, and your unique goals, helping every type of website turn passive traffic into measurable results.
-
-* **🛒 eCommerce & Online Stores**: Boost sales with discounted product popups, recover abandoned carts with exit-intent offers, display recent purchase notifications for social proof, increase average order value with free shipping bars, and drive repeat purchases with coupon codes.
-
-* **📝 Blogs & Content Websites**: Grow your subscriber base with newsletter signup popups, announce new posts to keep readers engaged, display recent comments to spark discussions, suggest related articles before visitors leave, and encourage social sharing to expand your reach.
-
-* **💼 SaaS & Software Companies**: Convert visitors into trial users with signup popups, showcase customer testimonials and G2 reviews to build credibility, announce new features or updates, and capture leads with strategically timed email forms.
-
-* **🏢 Agencies & Service Businesses**: Generate more leads with contact form popups, display client testimonials to build trust, add WhatsApp or click-to-call buttons for instant communication, and capture inquiries with exit-intent contact forms.
-
-* **🎓 Online Courses & Membership Sites**: Drive registrations with signup popups, block premium content for non-members, announce new courses or modules, and retain students with engagement notifications.
-
-* **📰 News & Magazine Websites**: Grow your readership with newsletter capture forms, announce breaking news or trending articles, encourage social media follows, and re-engage idle readers with content suggestions.
-
-* **🏪 Local Businesses**: Make it easy for customers to reach you with click-to-call and WhatsApp buttons, showcase Google reviews to build local trust, promote special offers, and capture inquiries with contact popups.
-
-* **🔗 Affiliate & Review Websites**: Capture emails for your recommendation lists, display product popups at the right moment, build trust with testimonials, and recover leaving visitors with exit-intent suggestions.
-
-* **🎗️ Non-Profits & Charities**: Encourage donations with compelling popups, grow your supporter base with email signups, announce upcoming events or campaigns, and share impact stories with notification bars.
-
-* **🔞 Adult & Age-Restricted Websites**: Ensure legal compliance with age verification popups before granting access to restricted content, protecting your business and your audience.
-
-Whatever you build, Notifal helps you grow it.
 
 == External services ==
 
 This plugin connects to notifal.com in two ways:
 
-* **Deactivation feedback** — When you submit the deactivation survey (Plugins → Deactivate), the plugin may send the following to notifal.com: site URL, admin email address, deactivation reason, and any optional details you provide (e.g. which plugin you switched to or additional feedback), plus plugin version, PHP version, and WordPress version. This feedback helps us improve the plugin and fix bugs. Data is only sent when you actively submit the survey.
+* **Deactivation feedback**: When you submit the deactivation survey (Plugins → Deactivate), the plugin may send the following to notifal.com: site URL, admin email address, deactivation reason, and any optional details you provide (e.g. which plugin you switched to or additional feedback), plus plugin version, PHP version, and WordPress version. This feedback helps us improve the plugin and fix bugs. Data is only sent when you actively submit the survey.
 
-* **Template library (pre-created on-page notifications)** — When you browse or import notification templates in the plugin, the plugin requests template listings, filters, and single template data from notifal.com. When you import a template, it requests a download URL and then downloads the template file and any template images from the provided URLs. The plugin sends only pagination, search, and filter choices (e.g. use case, layout); no personal data is sent. This is used only when you open the template library or click to import a template.
+* **Template library (pre-created on-page notifications)**: When you browse or import notification templates in the plugin, the plugin requests template listings, filters, and single template data from notifal.com. When you import a template, it requests a download URL and then downloads the template file and any template images from the provided URLs. The plugin sends only pagination, search, and filter choices (e.g. use case, layout); no personal data is sent. This is used only when you open the template library or click to import a template.
 
-* **Support chat (Chatwoot)** — In the plugin backend, the support chat widget is loaded from Chatwoot (`app.chatwoot.com`) to let you start a conversation with the support team. Chatwoot may process technical usage data such as your IP address, browser/device details, and chat message content when you use the chat.
+* **Support chat (Chatwoot)**: In the plugin backend, the support chat widget is loaded from Chatwoot (`app.chatwoot.com`) to let you start a conversation with the support team. Chatwoot may process technical usage data such as your IP address, browser/device details, and chat message content when you use the chat.
 
 Service provider: Notifal.com
 Terms of Service: https://notifal.com/terms-conditions/
@@ -252,7 +248,7 @@ Privacy Policy: https://notifal.com/privacy-policy/
 **Core Features**:
 
 * Number of Active Notifications (Just 1 in FREE Version - **Unilimited in PRO Version**)
-* Campaign Manager — create campaigns with schedule windows and assign on-page notifications
+* Campaign Manager
 * Import Notification
 * Export Notification
 * Build Templates with Elementor
@@ -271,6 +267,7 @@ Privacy Policy: https://notifal.com/privacy-policy/
 * Animations
 * Add Sound to Notifications
 * **Multi-Filters for Dynamic Content Notifications [PRO]**
+* **Cart Products Content Source (WooCommerce)** pull dynamic notification content from the visitor's live cart, including related products, upsells, and cross-sells, with real-time refresh on Ajax cart updates
 * **Smart Targeting**, context-aware dynamic content based on the visitor's current page[PRO]
 * Category Depth Level Control for Smart Targeting [PRO]
 * Smart Targeting Fallback Option [PRO]
@@ -382,15 +379,15 @@ Absolutely not. Notifal is built with performance in mind. The plugin loads only
 
 = Do I need Elementor to use Notifal? =
 
-No. While Notifal integrates beautifully with Elementor, it also works seamlessly with the native WordPress Block Editor. Use whichever builder you prefer — or simply pick a ready-made template and go live in clicks.
+No. While Notifal integrates beautifully with Elementor, it also works seamlessly with the native WordPress Block Editor. Use whichever builder you prefer, or simply pick a ready-made template and go live in clicks.
 
 = Does Notifal work with WooCommerce? =
 
-Yes! Notifal has deep WooCommerce integration. You can create cart abandonment popups, discounted product notifications, cross-sell recommendations, recent sales alerts, and use WooCommerce dynamic tags for orders and products.
+Yes! Notifal has deep WooCommerce integration. You can create cart abandonment popups, discounted product notifications, cross-sell recommendations, recent sales alerts, and use WooCommerce dynamic tags for orders, products, and cart data. With the Cart Products content source, dynamic notifications can pull product content directly from the visitor's live cart, including related products, upsells, and cross-sells and refresh automatically when the cart changes, helping you increase average order value with hyper-relevant offers at checkout time.
 
 = Is Notifal compatible with my theme? =
 
-Notifal is designed to work with any properly coded WordPress theme. Whether you're using a free theme, a premium theme, or a custom-built theme — Notifal will work smoothly.
+Notifal is designed to work with any properly coded WordPress theme. Whether you're using a free theme, a premium theme, or a custom-built theme, Notifal will work smoothly.
 
 
 == Screenshots ==
@@ -399,7 +396,7 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 3. The Tag Generator in the Settings page helps you generate dynamic tags to show smart popups.
 4. Display Rules help you create more targeted notifications and popups.
 5. If your website is powered by Elementor, you can use it to design your popups and add any widget you want!
-6. You're not using Elementor? Don't worry — we have improved the WordPress Block Editor (Gutenberg) so you can design your popups with it!
+6. You're not using Elementor? Don't worry, we have improved the WordPress Block Editor (Gutenberg) so you can design your popups with it!
 7. a Christmas themed Discounted Products Pop-up that was created with Notifal and you can import it to your website from our library.
 8. a Black Friday Countdown Pop-up with Email Sign-up Form that was created with Notifal and you can import it to your website from our library.
 9. an Email Sign-up Discount Pop-up that was created with Notifal and you can import it to your website from our library!
@@ -422,12 +419,30 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+2.3.10 [2026-06-09]
+Added: All Users login status for Users display rules (requires Notifal Pro 2.3.6+), target both guests and logged-in visitors; optional visit-history filters still apply on the storefront.
+Added: Inactivity before return (hours) setting for the Return visitor visit-history filter (default 3 hours, range 1–168) with admin tooltip examples for same-day, next-day, and multi-day returns.
+Improved: Return visitor display rule now uses inactivity-based detection instead of a simple prior-visit flag, so browsing multiple pages in the same session no longer counts as a return visit.
+Improved: Visitor activity timestamp resets on page views and throttled user interaction (click, scroll, keypress, touch, tab focus) for accurate return-visitor targeting on cached sites.
+Improved: Client-side guest and logged-in Users rule checks use a cached fresh rules index so full-page cache, session restore, and maintain-state behavior stay accurate.
+Improved: Cached Users rule index for active notifications (object cache, cleared when a notification is saved).
+Improved: Variable product notifications show the matching variation name, sale price, and product link; total sales still show the full product count.
+Improved: Client-side page context resolution falls back to WordPress body classes when localized page ID is missing, keeping page targeting accurate on dynamic storefront views.
+Improved: Eligible notification API requests now bypass browser cache to avoid stale notification lists after cart or page context changes.
+Fixed: Guests Only Users rule could still appear for logged-in visitors when maintain-state session data or cached payloads were stale.
+Fixed: Maintain state on refresh no longer treats display-rule mismatches as a user close, so changing Users rules in the same session works correctly.
+Fixed: Some reported bugs
+Fixed: Page targeting display rules (specific pages, post types, and legacy page/post/product rules) are now re-evaluated in the browser before show and exit-intent triggers, so notifications no longer appear on the wrong page when cart or other client-side rules still match.
+Fixed: Variable products with on-sale variations now work correctly with Sale Products Only filters and product-page smart targeting.
+Fixed: Z-Index setting now works as expected. When two notifications overlap, the one with the higher value appears on top.
+
+
 2.3.9 [2026-06-09]
-Added: Cart Products content source filter in Product Restrictions (WooCommerce only) — pull dynamic notification content from the visitor's live cart.
+Added: Cart Products content source filter in Product Restrictions (WooCommerce only), pull dynamic notification content from the visitor's live cart.
 Added: Four cart product source toggles within the Cart Products filter: cart line items, related products, upsells, and cross-sells (combined with OR logic inside the filter).
 Added: Real-time cart product pool refresh on the storefront when the WooCommerce cart changes via Ajax, so notifications can switch to updated cart-based products without a full page reload.
 Added: Cart Products filter is available only when WooCommerce is active; Product Restrictions are hidden automatically when WooCommerce is not installed.
-Improved: Revenue attribution for Post Link and Ajax Add to Cart action buttons — clicked revenue uses the matched product line subtotal (price × quantity) and influenced revenue uses the full order total on the same attributed order.
+Improved: Revenue attribution for Post Link and Ajax Add to Cart action buttons, clicked revenue uses the matched product line subtotal (price × quantity) and influenced revenue uses the full order total on the same attributed order.
 Improved: Post Link product clicks now store influence attribution before redirect, match variable product orders via parent product IDs, and use a strict 24-hour attribution window.
 Fixed: Influenced revenue is counted together with clicked revenue when a product click converts (clicked line subtotal plus full order influenced total).
 Fixed: Copy, custom link, and other non-product notification clicks no longer create false product-click revenue attribution.
@@ -502,29 +517,29 @@ Fixed: Some reported bugs fixed.
 Improved: Online chat system in plugin backend.
 
 2.2.0 [2026-03-20]
-Added: Campaign Manager — create campaigns with start/end date windows, assign on-page notifications to a campaign, and use the campaign schedule to control when those notifications are active.
-Added: Campaign analytics filters (Pro) — campaign metrics (impressions, clicks, close rate, conversions, users) are available in Notifal Pro v2.1.0 using event-time attribution for campaigns that are currently active.
-Added: Notification scheduling — Start/End date and time fields on each notification to control when it is active (when not driven by a campaign).
-Added: Optional “close after action button” — in Behavior settings you can close the notification when someone clicks a template action button, and choose how long to wait before it closes.
-Improved: Pro analytics — “Close” is counted only when a visitor actually dismisses the notification (not when it hides on a timer, after a form, or automatically).
+Added: Campaign Manager: create campaigns with start/end date windows, assign on-page notifications to a campaign, and use the campaign schedule to control when those notifications are active.
+Added: Campaign analytics filters (Pro): campaign metrics (impressions, clicks, close rate, conversions, users) are available in Notifal Pro v2.1.0 using event-time attribution for campaigns that are currently active.
+Added: Notification scheduling: Start/End date and time fields on each notification to control when it is active (when not driven by a campaign).
+Added: Optional “close after action button”: in Behavior settings you can close the notification when someone clicks a template action button, and choose how long to wait before it closes.
+Improved: Pro analytics: “Close” is counted only when a visitor actually dismisses the notification (not when it hides on a timer, after a form, or automatically).
 Fixed: An issue with Ajax Add to Cart for WooCommerce notifications.
 Fixed: “Above header” top bar placement on sticky headers no longer leaves a white gap or overlaps the site header after scrolling back to the top.
 
 2.1.5 [2025-03-09]
-Added: Customizable loading text for Action Button — when link type is Post Link or Custom Link, you can set the text shown while redirecting (default "Loading..."); leave empty to show no loading text and redirect after a short delay. Available in both Elementor and Block Editor.
-Added: Ajax Add to Cart (WooCommerce) — new Action Button link type when WooCommerce is active. Adds the notification's product to the cart via AJAX with settings for quantity, redirect after add (stay on page, cart, or checkout), and success text.
+Added: Customizable loading text for Action Button when link type is Post Link or Custom Link, you can set the text shown while redirecting (default "Loading..."); leave empty to show no loading text and redirect after a short delay. Available in both Elementor and Block Editor.
+Added: Ajax Add to Cart (WooCommerce), new Action Button link type when WooCommerce is active. Adds the notification's product to the cart via AJAX with settings for quantity, redirect after add (stay on page, cart, or checkout), and success text.
 Improved: On-page notifications now work better with page caching and clear their internal caches when you save settings, toggle status, or activate/update the plugin, so changes are reflected without extra steps.
 Fixed: On-page notification preview now correctly respects device-specific position settings for mobile and tablet viewports so previews match the live frontend behavior.
 Fixed: On-page notifications that are set to appear again after being closed now refresh their content more reliably, even on sites using caching.
 
 2.1.0 [2025-02-26]
-Added: On-page notification preview — see how your notification will look on your site before publishing. Use the Preview button on the edit page or in the notifications list to open a live preview on your site and fine-tune design and placement with confidence.
+Added: On-page notification preview: see how your notification will look on your site before publishing. Use the Preview button on the edit page or in the notifications list to open a live preview on your site and fine-tune design and placement with confidence.
 Added: Search for notifications in Explore Pre-created Notifications.
 Added: URL targeting options in Pro now support more precise campaign and traffic-source conditions.
 Fixed: Improved reliability of template selection and listing for on-page notifications.
 Fixed: Ensured Elementor and Block Editor template sections only show templates relevant to each builder.
 Fixed: Template previews now look and behave the same as your live notifications on the frontend.
-Fixed: Elementor templates — when a notification is set to show immediately on page load, the product or post image in the notification now appears correctly.
+Fixed: When a notification is set to show immediately on page load, the product or post image in the notification now appears correctly.
 Improved: Appearance improvements in Explore Pre-created Notifications.
 Improved: Featured Image Auto source now follows template tags in Block Editor and Elementor.
 Improved: Notifications that use templates now load styles and scripts from your theme and builders more reliably, so third‑party widgets (like countdown timers) work correctly inside notifications.
@@ -532,7 +547,7 @@ Improved: Better handling of template assets across different themes to keep eve
 Improved: WooCommerce and other plugin shortcodes now render correctly inside notification templates.
 
 2.0.2 [2025-02-19]
-Fixed: Audio Settings — default notification sounds now work correctly.
+Fixed: Audio Settings, default notification sounds now work correctly.
 
 2.0.1 [2025-02-14]
 Added: In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder; submit the request from the template details and we will create it and notify you when it is ready.

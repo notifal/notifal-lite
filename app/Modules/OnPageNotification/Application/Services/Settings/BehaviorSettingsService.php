@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Application\Support\OnPageNotificationSettingsLimits;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -121,8 +122,10 @@ class BehaviorSettingsService
 
             case 'close_on_form_submit_delay_seconds':
             case 'close_on_action_button_click_delay_seconds':
-                $int = (int) $value;
-                return max(0, min(60, $int));
+                return $this->sanitizeNonNegativeInteger(
+                    $value,
+                    OnPageNotificationSettingsLimits::MIN_BEHAVIOR_CLOSE_DELAY_SECONDS
+                );
 
             case 'maintain_state_on_refresh':
             case 'mobile_optimized':

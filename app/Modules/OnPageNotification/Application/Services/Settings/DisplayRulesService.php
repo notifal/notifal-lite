@@ -43,6 +43,46 @@ class DisplayRulesService
     ];
 
     /**
+     * Allowed login-status values for the Users display rule.
+     *
+     * @since 2.3.10
+     * @var array<int, string>
+     */
+    private const USER_LOGIN_STATUS_OPTIONS = [
+        'all',
+        'guest',
+        'logged_in',
+    ];
+
+    /**
+     * Default login-status for new Users display rules.
+     *
+     * @since 2.3.10
+     */
+    public const USER_LOGIN_STATUS_DEFAULT = 'all';
+
+    /**
+     * Default inactivity hours for return-visitor Users display rule.
+     *
+     * @since 2.3.10
+     */
+    public const USER_RETURN_VISITOR_DEFAULT_INACTIVITY_HOURS = 3;
+
+    /**
+     * Minimum inactivity hours for return-visitor Users display rule.
+     *
+     * @since 2.3.10
+     */
+    public const USER_RETURN_VISITOR_MIN_INACTIVITY_HOURS = 1;
+
+    /**
+     * Maximum inactivity hours for return-visitor Users display rule.
+     *
+     * @since 2.3.10
+     */
+    public const USER_RETURN_VISITOR_MAX_INACTIVITY_HOURS = 168;
+
+    /**
      * Basic rule types supported by the lite version.
      * Pro features (categories, url_match, users) are added via filters.
      *
@@ -812,6 +852,30 @@ class DisplayRulesService
     }
 
     /**
+     * Login-status options for the Users display rule admin select field.
+     *
+     * @return array<int, array<string, string>> Options formatted for FieldRenderer::select.
+     * @since 2.3.10
+     */
+    public static function getUserLoginStatusOptions(): array
+    {
+        return [
+            [
+                'value' => 'all',
+                'label' => __('All Users', 'notifal'),
+            ],
+            [
+                'value' => 'guest',
+                'label' => __('Guests Only', 'notifal'),
+            ],
+            [
+                'value' => 'logged_in',
+                'label' => __('Logged-in Users Only', 'notifal'),
+            ],
+        ];
+    }
+
+    /**
      * Get rule type options for UI select field
      *
      * @return array Array of rule type options formatted for FieldRenderer::select
@@ -944,7 +1008,14 @@ class DisplayRulesService
             }
 
             case 'users':
-                $sanitized['user_type'] = Helper::sanitizeInput($ruleData['user_type'] ?? 'guest', 'text');
+                // @since 2.3.10 Restrict login status to all, guest, or logged_in.
+                $userType = Helper::sanitizeInput(
+                    $ruleData['user_type'] ?? self::USER_LOGIN_STATUS_DEFAULT,
+                    'text'
+                );
+                $sanitized['user_type'] = in_array($userType, self::USER_LOGIN_STATUS_OPTIONS, true)
+                    ? $userType
+                    : self::USER_LOGIN_STATUS_DEFAULT;
                 $sanitized['limit_by_roles'] = (bool) ($ruleData['limit_by_roles'] ?? false);
                 $sanitized['roles'] = self::sanitizeUserRoles($ruleData['roles'] ?? []);
                 // @since 2.3.5 Visit-history filter (evaluated client-side when not "any").
@@ -952,6 +1023,22 @@ class DisplayRulesService
                 $sanitized['visitor_type'] = in_array($visitorType, self::USER_VISITOR_TYPE_OPTIONS, true)
                     ? $visitorType
                     : 'any';
+
+                // @since 2.3.10 Return visitor inactivity threshold (hours, client-side evaluation).
+                if ($sanitized['visitor_type'] === 'return_visitor') {
+                    $inactivityHours = isset($ruleData['inactivity_hours'])
+                        ? absint($ruleData['inactivity_hours'])
+                        : self::USER_RETURN_VISITOR_DEFAULT_INACTIVITY_HOURS;
+
+                    if ($inactivityHours < self::USER_RETURN_VISITOR_MIN_INACTIVITY_HOURS) {
+                        $inactivityHours = self::USER_RETURN_VISITOR_DEFAULT_INACTIVITY_HOURS;
+                    }
+
+                    $sanitized['inactivity_hours'] = min(
+                        self::USER_RETURN_VISITOR_MAX_INACTIVITY_HOURS,
+                        $inactivityHours
+                    );
+                }
                 break;
 
             case WooCommerceCartDisplayRulesService::RULE_TYPE:

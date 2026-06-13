@@ -76,7 +76,7 @@ return [
     'help_persistent_duration'            => __( 'The number of seconds to keep the notification persistent. Set to 0 for forever.', 'notifal' ),
     'help_show_frequency'                 => __( 'Control how often this notification is shown to users to avoid overwhelming them.', 'notifal' ),
     'help_custom_frequency_days'          => __( 'The number of days between showing this notification to the same user.', 'notifal' ),
-    'help_max_shows_per_session'          => __( 'Maximum number of times to show this notification during one user session (shared across tabs).', 'notifal' ),
+    'help_max_shows_per_session'          => __( 'Maximum times to show per browser session (shared across tabs; count persists across page refreshes). After the limit is reached, the notification stays hidden until 30 minutes pass without a show or manual close.', 'notifal' ),
     // Removed help texts for deprecated frequency options
     'help_respect_user_preferences'       => __( 'Check if the user has disabled notifications in their browser and respect that choice.', 'notifal' ),
     'help_pause_on_tab_inactive'          => __( 'Pause the notification when the browser tab is not active to avoid interrupting users.', 'notifal' ),

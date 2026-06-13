@@ -128,6 +128,9 @@ class NotificationSaveService
             // @since 2.3.7 Invalidate cart rules usage cache when display rules may have changed.
             CartDisplayRulesUsageChecker::clearCache();
 
+            // @since 2.3.10 Invalidate cached Users rule index when display rules may have changed.
+            ClientUserRulesBuilder::clearIndexCache();
+
             // Fire action hooks
             do_action(ActionHooks::ONPAGE_NOTIFICATION_SAVED, $postId, $sanitizedData);
 

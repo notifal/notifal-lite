@@ -8,6 +8,9 @@ if (!defined('ABSPATH')) {
 return [
     'enter_url_keyword'       => __( 'Please enter at least one URL keyword.', 'notifal' ),
     'select_user_role'        => __( 'Please select at least one user role.', 'notifal' ),
+    'users_login_guest'       => __( 'Guests Only', 'notifal' ),
+    'users_login_logged_in'   => __( 'Logged-in Users', 'notifal' ),
+    'users_login_all'         => __( 'All Users', 'notifal' ),
     'select_at_least_one'     => __( 'Please select at least one', 'notifal' ),
     'confirm_remove_label'    => __( 'Are you sure you want to remove the label', 'notifal' ),
     'select_post_type'        => __( 'Please select at least one post type.', 'notifal' ),

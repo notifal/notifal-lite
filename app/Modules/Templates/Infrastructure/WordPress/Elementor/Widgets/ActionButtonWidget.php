@@ -742,9 +742,7 @@ class ActionButtonWidget extends BaseWidget
                 $button_attrs['data-add-to-cart-success-text'] = esc_attr(sanitize_text_field($settings['add_to_cart_success_text'] ?? __('Added!', 'notifal')));
 
                 $data = $contextData['data'] ?? null;
-                if ($data && method_exists($data, 'getId')) {
-                    $button_attrs['data-product-id'] = $data->getId();
-                }
+                $this->appendProductActionDataAttributes($button_attrs, $data);
                 if (!empty($contextData['url'])) {
                     $button_attrs['data-post-url'] = esc_url($contextData['url']);
                 }
@@ -769,10 +767,7 @@ class ActionButtonWidget extends BaseWidget
 
                 // Legacy product data for backward compatibility
                 $data = $contextData['data'] ?? null;
-                if ($data && method_exists($data, 'getId') && method_exists($data, 'getLink')) {
-                    $button_attrs['data-product-id'] = esc_attr((string) $data->getId());
-                    $button_attrs['data-product-url'] = esc_url($data->getLink());
-                }
+                $this->appendProductActionDataAttributes($button_attrs, $data);
                 break;
         }
 
@@ -851,5 +846,39 @@ class ActionButtonWidget extends BaseWidget
             </a>
         </div>
         <?php
+    }
+
+    /**
+     * Append parent product and variation data attributes for WooCommerce action buttons.
+     *
+     * @param array<string, string> $button_attrs Button attribute map.
+     * @param mixed                 $product      Product DTO or compatible object.
+     * @return void
+     * @since 2.3.10
+     */
+    private function appendProductActionDataAttributes(array &$button_attrs, $product): void
+    {
+        if (!$product || !method_exists($product, 'getId')) {
+            return;
+        }
+
+        // Parent product ID is used for revenue attribution and Ajax add-to-cart parent_id.
+        $button_attrs['data-product-id'] = esc_attr((string) $product->getId());
+
+        // Resolved on-sale variation enables direct Ajax add-to-cart without manual selection.
+        if (method_exists($product, 'getVariationContextId')) {
+            $variationId = (int) ($product->getVariationContextId() ?? 0);
+            if ($variationId > 0) {
+                $button_attrs['data-variation-id'] = esc_attr((string) $variationId);
+            }
+        }
+
+        // Variation permalink pre-selects attributes when Post Link opens the product page.
+        if (method_exists($product, 'getLink')) {
+            $productLink = $product->getLink();
+            if (!empty($productLink)) {
+                $button_attrs['data-product-url'] = esc_url($productLink);
+            }
+        }
     }
 }

@@ -50,7 +50,8 @@ class PageContextEnricher
 
         $context = $this->inferArchiveFromUrl($context);
 
-
+        // WooCommerce shop is a product archive query but maps to a Page post for display rules.
+        $context = PageContextHelper::normalizeWooCommerceSystemPages($context);
 
         $pageId = absint($context['page_id'] ?? 0);
 
