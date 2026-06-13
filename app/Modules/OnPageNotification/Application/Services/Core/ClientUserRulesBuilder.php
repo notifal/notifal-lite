@@ -12,8 +12,9 @@ defined('ABSPATH') || exit;
 /**
  * Builds client-side user display rule payload for frontend evaluation.
  *
- * Login status and visit-history filters run in the browser so full-page cache
- * stays safe. WordPress still validates rules server-side when auth is available.
+ * Login status and visit-history filters run in the browser for full-page cache
+ * compatibility. Login and role restrictions are enforced server-side before HTML
+ * is rendered; client checks remain a cache-safe UX layer only.
  *
  * @since 2.3.5
  * @author Hossein <hossein@notifal.com>
@@ -166,11 +167,12 @@ class ClientUserRulesBuilder
 
             $clientRules = [];
 
-            // @since 2.3.10 Login status is re-checked client-side for cache-safe eligibility.
+            // Login status is mirrored client-side for cache-safe revalidation on cached pages.
             if ($needsLoginCheck) {
                 $clientRules['user_type'] = $userType;
 
-                if ($userType === 'logged_in') {
+                // Role restrictions are Pro-only; expose role payload only when Pro is licensed.
+                if ($userType === 'logged_in' && self::isProRoleRestrictionAllowed()) {
                     $clientRules['limit_by_roles'] = (bool) ($data['limit_by_roles'] ?? false);
 
                     if ($clientRules['limit_by_roles']) {
@@ -191,6 +193,17 @@ class ClientUserRulesBuilder
         }
 
         return null;
+    }
+
+    /**
+     * Whether Pro role restrictions may be exposed to the frontend client payload.
+     *
+     * @return bool True when the Pro plugin allows advanced display rules.
+     * @since 2.3.10
+     */
+    private static function isProRoleRestrictionAllowed(): bool
+    {
+        return (bool) apply_filters('notifal_pro_multiple_display_rules_allowed', false);
     }
 
     /**

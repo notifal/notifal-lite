@@ -9,6 +9,7 @@ use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\ClientUserRulesBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\VisitorAuthContextResolver;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
 use Notifal\Infrastructure\WordPress\WooCommerce\Support\WooCommerceVariationScriptSupport;
 use Notifal\Modules\OnPageNotification\Application\Traits\NotificationDataTrait;
@@ -784,14 +785,11 @@ class FrontendAssetsRegistrar
             'post_type' => $postType,
             'archive_taxonomy' => $archiveTaxonomy,
             'device_type' => $deviceType,
-            'user_id' => get_current_user_id(),
-            'is_logged_in' => is_user_logged_in(),
             'is_admin' => current_user_can('manage_options'),
             'timestamp' => current_time('timestamp'),
             'locale' => get_locale(),
             'categories' => [],
             'product_categories' => [],
-            'user_roles' => is_user_logged_in() ? wp_get_current_user()->roles : [],
             'is_front_page' => is_front_page(),
             'is_posts_home' => is_home() && !is_front_page(),
             'is_shop_page' => function_exists('is_shop') && is_shop(),
@@ -804,6 +802,12 @@ class FrontendAssetsRegistrar
                 && !(is_home() && !is_front_page())
                 && !(function_exists('is_shop') && is_shop()),
         ];
+
+        // @since 2.3.10 Align page-load auth context with REST eligibility enforcement.
+        $authContext = VisitorAuthContextResolver::resolve($context);
+        $context['user_id'] = $authContext['user_id'];
+        $context['is_logged_in'] = $authContext['is_logged_in'];
+        $context['user_roles'] = $authContext['user_roles'];
 
         $context = (new PageContextEnricher())->enrich($context);
         $context = PageContextHelper::attachSmartTargetingViewFlags($context);

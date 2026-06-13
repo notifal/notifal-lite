@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Notifal\n"
 "Report-Msgid-Bugs-To: https://notifal.com\n"
-"POT-Creation-Date: 2026-06-13 08:20+0000\n"
+"POT-Creation-Date: 2026-06-13 13:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,11 +20,11 @@ msgstr ""
 "X-Poedit-SourceCharset: UTF-8\n"
 "X-Generator: Custom POT Generator\n"
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:765
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:788
 msgid " All Items Except %1$d %2$s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:768
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:791
 msgid " Only %1$d %2$s"
 msgstr ""
 
@@ -150,7 +150,7 @@ msgstr ""
 msgid "AND (All conditions)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:836
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:859
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:126
 msgid "AND - Show if ALL rules match"
 msgstr ""
@@ -407,8 +407,8 @@ msgstr ""
 msgid "All Comments"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:695
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:707
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:718
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:730
 msgid "All Except"
 msgstr ""
 
@@ -446,8 +446,8 @@ msgstr ""
 msgid "All Pages Except"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:688
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:722
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:711
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:745
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:244
 msgid "All Post Types"
 msgstr ""
@@ -456,7 +456,7 @@ msgstr ""
 msgid "All Post Types Except"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:730
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:753
 msgid "All Post Types Except %1$d %2$s"
 msgstr ""
 
@@ -489,7 +489,7 @@ msgstr ""
 msgid "All Time range in OnPage analytics"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:865
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:888
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:55
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:13
 msgid "All Users"
@@ -2522,7 +2522,7 @@ msgstr ""
 msgid "Domain is required"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:850
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:873
 msgid "Don't show if"
 msgstr ""
 
@@ -2919,11 +2919,11 @@ msgstr ""
 msgid "Error resetting settings. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:177
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:178
 msgid "Error retrieving eligible notifications. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:341
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:342
 msgid "Error retrieving user preferences. Please try again."
 msgstr ""
 
@@ -2961,16 +2961,16 @@ msgstr ""
 msgid "Error sorting table"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:290
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:291
 msgid "Error tracking event. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:958
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:1005
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:950
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:997
 msgid "Error updating preferences"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:403
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:404
 msgid "Error updating user preferences. Please try again."
 msgstr ""
 
@@ -2994,7 +2994,7 @@ msgstr ""
 msgid "Event queued successfully"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:282
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:283
 msgid "Event tracking failed."
 msgstr ""
 
@@ -3181,7 +3181,7 @@ msgstr ""
 msgid "Failed to update notification status. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:395
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:396
 msgid "Failed to update preferences."
 msgstr ""
 
@@ -3478,7 +3478,7 @@ msgstr ""
 msgid "Guest checkout attribution is now more reliable with a persistent session cookie stored on checkout orders. Unpaid orders (on-hold and pending payment) now show pending influence and are counted in analytics revenue after payment."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:869
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:892
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:11
 msgid "Guests Only"
 msgstr ""
@@ -3911,9 +3911,9 @@ msgstr ""
 msgid "Invalid nonce"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:266
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:314
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:365
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:267
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:315
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:366
 msgid "Invalid nonce. Please refresh the page and try again."
 msgstr ""
 
@@ -3932,7 +3932,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsImportController.php:138
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:101
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/ToggleStatusController.php:59
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:197
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:198
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:30
 msgid "Invalid notification ID."
 msgstr ""
@@ -3949,7 +3949,7 @@ msgstr ""
 msgid "Invalid order ID."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:230
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:231
 msgid "Invalid page visibility setting."
 msgstr ""
 
@@ -3959,19 +3959,19 @@ msgstr ""
 msgid "Invalid post ID."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:308
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:309
 msgid "Invalid post items visibility mode."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:296
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:297
 msgid "Invalid post type visibility mode."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:252
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:253
 msgid "Invalid post visibility setting."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:377
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:378
 msgid "Invalid preferences format. Please provide a valid preferences object."
 msgstr ""
 
@@ -3979,7 +3979,7 @@ msgstr ""
 msgid "Invalid product click data"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:274
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:275
 msgid "Invalid product visibility mode."
 msgstr ""
 
@@ -3991,7 +3991,7 @@ msgstr ""
 msgid "Invalid response from server. Please try again later."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:178
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:179
 msgid "Invalid rule combination logic. Must be either AND or OR."
 msgstr ""
 
@@ -4303,7 +4303,7 @@ msgstr ""
 msgid "Logged-in Users"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:873
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:896
 msgid "Logged-in Users Only"
 msgstr ""
 
@@ -4467,7 +4467,7 @@ msgstr ""
 msgid "Multiple Triggers Configuration"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:182
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:183
 msgid "Multiple display rules require Notifal Pro. Please activate your license or use only one rule."
 msgstr ""
 
@@ -4649,7 +4649,7 @@ msgstr ""
 msgid "No change vs previous period"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:998
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:990
 msgid "No changes made to preferences"
 msgstr ""
 
@@ -4983,7 +4983,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:62
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/SaveNotificationController.php:109
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/ToggleStatusController.php:65
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:213
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:214
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:70
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:29
 msgid "Notification not found."
@@ -5057,7 +5057,7 @@ msgstr ""
 msgid "OR (Any condition)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:835
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:858
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:125
 msgid "OR - Show if ANY rule matches"
 msgstr ""
@@ -5169,12 +5169,12 @@ msgstr ""
 msgid "Online chat system update"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:697
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:709
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:720
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:732
 msgid "Only"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:733
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:756
 msgid "Only %1$d %2$s"
 msgstr ""
 
@@ -5348,7 +5348,7 @@ msgstr ""
 msgid "Padding"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:742
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:765
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:34
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:115
 msgid "Page"
@@ -5618,12 +5618,12 @@ msgstr ""
 msgid "Please select at least one page status."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:234
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:235
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:195
 msgid "Please select at least one page."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:313
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:314
 #: app/Modules/OnPageNotification/Resources/Lang/js/global.php:26
 msgid "Please select at least one post item."
 msgstr ""
@@ -5632,14 +5632,14 @@ msgstr ""
 msgid "Please select at least one post type to generate tags."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:302
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:303
 #: app/Modules/OnPageNotification/Resources/Lang/js/global.php:23
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:199
 #: app/Modules/OnPageNotification/Resources/Lang/js/rules.php:16
 msgid "Please select at least one post type."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:256
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:257
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:193
 msgid "Please select at least one post."
 msgstr ""
@@ -5654,7 +5654,7 @@ msgstr ""
 msgid "Please select at least one product for the cart rule."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:278
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:279
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:187
 msgid "Please select at least one product."
 msgstr ""
@@ -5728,7 +5728,7 @@ msgstr ""
 msgid "Position of the floating bar on mobile devices"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:745
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:768
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:33
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:114
 msgid "Post"
@@ -5859,8 +5859,8 @@ msgstr ""
 msgid "Pre-created Notifications"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:952
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:993
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:944
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:985
 msgid "Preferences updated successfully"
 msgstr ""
 
@@ -5916,7 +5916,7 @@ msgstr ""
 msgid "Preview mode — notification only. Display rules, frequency and analytics are not applied."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:257
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:258
 msgid "Preview mode: analytics not recorded."
 msgstr ""
 
@@ -5986,7 +5986,7 @@ msgstr ""
 msgid "Processing..."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:748
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:771
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:30
 #: app/Modules/Templates/Controllers/FeaturedImageApiController.php:297
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:120
@@ -6815,7 +6815,7 @@ msgstr ""
 msgid "Show duplicate source (Content Source)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:849
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:872
 msgid "Show if"
 msgstr ""
 
@@ -6956,7 +6956,7 @@ msgstr ""
 msgid "Something went wrong. Please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:204
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:205
 msgid "Sorry, you are not allowed to view this preview."
 msgstr ""
 
@@ -7735,15 +7735,15 @@ msgstr ""
 msgid "Type to search on-page notifications…"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:801
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:824
 msgid "URL %1$s (%2$d)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:782
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:805
 msgid "URL parameter [%1$s] %2$s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:790
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:813
 msgid "URL parameter [%1$s] %2$s [%3$s]"
 msgstr ""
 
@@ -7772,7 +7772,7 @@ msgstr ""
 msgid "Unable to parse image data."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:225
+#: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:226
 msgid "Unable to prepare notification for preview."
 msgstr ""
 
@@ -7862,7 +7862,7 @@ msgstr ""
 msgid "Unsupported builder type: %s. Supported builders: %s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:192
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:193
 msgid "Unsupported rule type: %s"
 msgstr ""
 
@@ -8666,13 +8666,13 @@ msgstr ""
 msgid "in %s"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:705
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:761
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:728
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:784
 msgid "item"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:705
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:761
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:728
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:784
 msgid "items"
 msgstr ""
 
@@ -8693,13 +8693,13 @@ msgstr ""
 msgid "or click to browse"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:692
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:726
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:715
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:749
 msgid "post type"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:692
-#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:726
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:715
+#: app/Modules/OnPageNotification/Application/Services/Settings/DisplayRulesService.php:749
 msgid "post types"
 msgstr ""
 

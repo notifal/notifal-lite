@@ -1623,6 +1623,20 @@ class FilterHooks {
     public const ONPAGE_CLIENT_USER_RULES = 'notifal/onpage/client_user_rules';
 
     /**
+     * Filters server-side Users display rule login/role match result.
+     *
+     * Allows Pro or custom integrations to adjust authorization without bypassing
+     * the base server-side enforcement boundary.
+     *
+     * @param bool                 $matches     Whether the visitor matches login/role constraints.
+     * @param array<string, mixed> $rule_data   Users rule configuration.
+     * @param array<string, mixed> $auth_context Resolved visitor authentication context.
+     * @return bool Modified match result.
+     * @since 2.3.10
+     */
+    public const ONPAGE_USER_DISPLAY_RULES_MATCH = 'notifal/onpage/user_display_rules/match';
+
+    /**
      * Filters client-side WooCommerce cart display rules attached to a notification frontend payload.
      *
      * @param array<string, mixed>|null $clientRules    Client cart rules or null.
