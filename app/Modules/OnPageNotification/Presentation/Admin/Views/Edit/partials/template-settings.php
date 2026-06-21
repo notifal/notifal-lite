@@ -60,14 +60,20 @@ if ( $selected_template === 0 && $get_action === 'edit' && $get_id > 0 ) {
     }
 }
 
-// Fetch templates, prioritizing selected template
-$elementor_templates =  TemplateQuery::getByBuilder('elementor', 6, $selected_template);
+// Admin builder slug used in data-builder attributes and AJAX requests.
+$html_builder_slug = 'html-builder';
+
+// Fetch templates, prioritizing selected template (HTML Builder first).
+$html_builder_templates = TemplateQuery::getByBuilder($html_builder_slug, 6, $selected_template);
+$html_builder_count     = TemplateQuery::getByBuilderCount($html_builder_slug);
+
+$elementor_templates = TemplateQuery::getByBuilder('elementor', 6, $selected_template);
 $elementor_count     = TemplateQuery::getByBuilderCount('elementor');
 
 $block_templates = TemplateQuery::getByBuilder('block-editor', 6, $selected_template);
 $block_count     = TemplateQuery::getByBuilderCount('block-editor');
 
-$no_template_found = empty($elementor_templates) && empty($block_templates);
+$no_template_found = empty($html_builder_templates) && empty($elementor_templates) && empty($block_templates);
 ?>
 
 <div class="notifal-settings-section notifal-<?php echo esc_attr( $tab ); ?>-settings">
@@ -80,6 +86,20 @@ $no_template_found = empty($elementor_templates) && empty($block_templates);
     </div>
 
     <div class="notifal-template-selector">
+
+        <?php if (!empty($html_builder_templates)) : ?>
+            <div class="notifal-template-group" data-builder="<?php echo esc_attr($html_builder_slug); ?>">
+                <h2 class="notifal-section-title"><?php esc_html_e('HTML Builder Templates', 'notifal'); ?></h2>
+                <div class="notifal-template-grid" data-builder="<?php echo esc_attr($html_builder_slug); ?>">
+                    <?php render_template_loading_state(); ?>
+                </div>
+                <?php if ($html_builder_count > 6) : ?>
+                    <button class="notifal-load-more notifal-button secondary notifal-m-auto notifal-block notifal-hidden" data-builder="<?php echo esc_attr($html_builder_slug); ?>">
+                        <?php esc_html_e('Load More', 'notifal'); ?>
+                    </button>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
 
         <?php if (PluginDetector::isElementorActive() && !empty($elementor_templates)) : ?>
             <div class="notifal-template-group" data-builder="elementor">

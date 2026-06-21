@@ -187,6 +187,19 @@ class TemplateContextBuilder
     }
 
     /**
+     * Extract raw content for tag detection from HTML Builder templates.
+     *
+     * @param string $html Raw HTML string from post_content or unsaved editor state.
+     * @return string Content used for tag/category detection.
+     * @since 2.4.0
+     */
+    public function extractRawContentFromHtml(string $html): string
+    {
+        // HTML Builder stores tags directly inside post_content markup.
+        return $html;
+    }
+
+    /**
      * Check if the frontend context indicates no matching data.
      *
      * @param array $frontendContext Frontend context array
@@ -219,30 +232,24 @@ class TemplateContextBuilder
      */
     private function buildFallbackContext(string $content, array $context): array
     {
-        // Use preview data resolver as fallback
+        // Build the same rich preview context used by Elementor/Block Editor previews.
         if ($this->previewDataResolver) {
             try {
-                $previewData = $this->previewDataResolver->resolve($content);
+                $renderContext = $this->previewDataResolver->buildTagRenderContext($content);
 
-                if ($previewData) {
-                    $previewProduct = method_exists($previewData, 'getProduct') ? $previewData->getProduct() : null;
-
-                    return array_merge($context, [
-                        'product' => $previewProduct,
-                        'tags' => method_exists($previewData, 'getTags') ? $previewData->getTags() : [],
-                        'template_content' => $content,
-                        'is_preview' => true
-                    ]);
-                }
+                return array_merge($renderContext, $context, [
+                    'template_content' => $content,
+                    'is_preview'       => true,
+                ]);
             } catch (\Exception $e) {
-                // Preview data resolver failed - continue with empty context
+                // Preview data resolver failed - continue with empty context.
             }
         }
 
-        // Return basic fallback context
+        // Return basic fallback context.
         return array_merge($context, [
             'template_content' => $content,
-            'is_preview' => true
+            'is_preview'       => true,
         ]);
     }
 }

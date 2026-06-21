@@ -348,4 +348,49 @@ class AnalyticsHelper
                 : $unknownLabel,
         ];
     }
+
+    /**
+     * Sanitize optional button click metadata from tracking payloads.
+     *
+     * @param array $trackingData Raw tracking data from frontend or queue.
+     * @return array Sanitized button_id, button_action, and button_text keys.
+     * @since 2.3.11
+     */
+    public static function sanitizeButtonClickMeta(array $trackingData): array
+    {
+        // Default empty values when metadata is absent.
+        $buttonMeta = [
+            'button_id'     => '',
+            'button_action' => '',
+            'button_text'   => '',
+        ];
+
+        // Copy sanitized values when present in the incoming payload.
+        if (isset($trackingData['button_id'])) {
+            $buttonMeta['button_id'] = substr(sanitize_text_field((string) $trackingData['button_id']), 0, 100);
+        }
+
+        if (isset($trackingData['button_action'])) {
+            $buttonMeta['button_action'] = substr(sanitize_text_field((string) $trackingData['button_action']), 0, 50);
+        }
+
+        if (isset($trackingData['button_text'])) {
+            $buttonMeta['button_text'] = substr(sanitize_text_field((string) $trackingData['button_text']), 0, 255);
+        }
+
+        return $buttonMeta;
+    }
+
+    /**
+     * Determine whether button click metadata is complete enough to aggregate.
+     *
+     * @param array $buttonMeta Sanitized button metadata.
+     * @return bool True when at least button id or action is available.
+     * @since 2.3.11
+     */
+    public static function hasButtonClickMeta(array $buttonMeta): bool
+    {
+        // Require a stable identifier or action type so rows remain distinguishable.
+        return ($buttonMeta['button_id'] ?? '') !== '' || ($buttonMeta['button_action'] ?? '') !== '';
+    }
 }

@@ -3,6 +3,8 @@
 namespace Notifal\Modules\Templates\Infrastructure\WordPress\Registration;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
+use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Infrastructure\WordPress\Registration\TaxonomyRegistrar;
 
 
@@ -280,8 +282,14 @@ class PostTypeRegistrar {
      * @return bool True if post type is notifal_template, otherwise original value.
      */
     public static function forceBlockEditor( $use_block_editor, $post_type ) {
-        // Force block editor for notifal_template post type
         if ( $post_type === 'notifal_template' ) {
+            $post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+            if ( $post_id ) {
+                $post = get_post( $post_id );
+                if ( $post && TemplateBuilderDetector::isHtmlBuilder( $post ) ) {
+                    return false;
+                }
+            }
             return true;
         }
         return $use_block_editor;
@@ -299,8 +307,14 @@ class PostTypeRegistrar {
      * @return array Modified array of editors (empty for notifal_template to force block editor).
      */
     public static function disableClassicEditorForTemplate( $editors, $post_type ) {
-        // Return block editor only for notifal_template
         if ( $post_type === 'notifal_template' ) {
+            $post_id = isset( $_GET['post'] ) ? absint( $_GET['post'] ) : 0;
+            if ( $post_id ) {
+                $post = get_post( $post_id );
+                if ( $post && TemplateBuilderDetector::isHtmlBuilder( $post ) ) {
+                    return [];
+                }
+            }
             return [ 'block_editor' => true ];
         }
         return $editors;
@@ -316,6 +330,7 @@ class PostTypeRegistrar {
      * @param string $url     The edit post URL.
      * @param int    $post_id The post ID.
      * @return string Modified URL with classic-editor__forget parameter if applicable.
+     * @since 2.4.0 Add support for HTML Builder templates.
      */
     public static function forceBlockEditorInEditLink( $url, $post_id ) {
         // Get post object to check post type
@@ -323,7 +338,12 @@ class PostTypeRegistrar {
         
         // Only modify URL for notifal_template post type
         if ( $post && $post->post_type === 'notifal_template' ) {
-            // Add classic-editor__forget parameter to force block editor
+            if ( TemplateBuilderDetector::isHtmlBuilder( $post ) ) {
+                /** @var TemplateUrlService $urlService */
+                $urlService = notifal_app( TemplateUrlService::class );
+                return $urlService->getEditHtmlBuilderUrl( $post_id );
+            }
+
             $url = add_query_arg( 'classic-editor__forget', '', $url );
         }
         
@@ -364,6 +384,7 @@ class PostTypeRegistrar {
      * for an existing notifal_template post.
      *
      * @since 2.0.0
+     * @since 2.4.0 Add support for HTML Builder templates.
      * @return void
      */
     public static function forceBlockEditorOnEditPost() {
@@ -380,7 +401,14 @@ class PostTypeRegistrar {
         if ( ! $post || $post->post_type !== 'notifal_template' ) {
             return;
         }
-        
+
+        if ( TemplateBuilderDetector::isHtmlBuilder( $post ) ) {
+            /** @var TemplateUrlService $urlService */
+            $urlService = notifal_app( TemplateUrlService::class );
+            wp_safe_redirect( $urlService->getEditHtmlBuilderUrl( $post_id ) );
+            exit;
+        }
+
         // If classic-editor parameter is present, redirect to block editor
         if ( isset( $_GET['classic-editor'] ) ) {
             // Build URL without classic-editor parameter

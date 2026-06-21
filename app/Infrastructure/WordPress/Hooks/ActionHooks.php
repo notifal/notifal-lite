@@ -674,6 +674,43 @@ class ActionHooks {
      */
     public const TEMPLATES_ADMIN_ASSETS_AFTER = 'notifal/templates/admin/assets/after';
 
+    /**
+     * Fires before enqueuing HTML Builder admin assets.
+     *
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_ASSETS_BEFORE = 'notifal/template/html_builder/assets/before';
+
+    /**
+     * Fires after enqueuing HTML Builder admin assets.
+     *
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_ASSETS_AFTER = 'notifal/template/html_builder/assets/after';
+
+    /**
+     * Fires before saving an HTML Builder template via AJAX.
+     *
+     * @param int    $templateId Template post ID.
+     * @param string $title      Requested title.
+     * @param string $html       Raw HTML payload.
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_SAVE_BEFORE = 'notifal/template/html_builder/save/before';
+
+
+    /**
+     * Fires after an HTML Builder template has been saved successfully.
+     *
+     * @param int $templateId Template post ID.
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_SAVED = 'notifal/template/html_builder/saved';
+
 
     /**
      * Fires after all Notifal Elementor widgets are registered.

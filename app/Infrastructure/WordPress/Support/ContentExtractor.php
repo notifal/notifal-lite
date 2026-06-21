@@ -48,6 +48,19 @@ class ContentExtractor
     }
 
     /**
+     * Extract raw text content containing tags from HTML Builder template for context detection.
+     *
+     * @param \WP_Post $template Template post
+     * @return string Raw content containing tags for context detection
+     * @since 2.4.0
+     */
+    public static function extractFromHtmlBuilderTemplate(\WP_Post $template): string
+    {
+        // HTML Builder stores the full markup (including Notifal tags) in post_content.
+        return (string) ($template->post_content ?? '');
+    }
+
+    /**
      * Extract raw text content containing tags from Block Editor template for context detection.
      *
      * @param \WP_Post $template Template post

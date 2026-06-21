@@ -8,6 +8,8 @@ use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\PreviewContextTrait;
 use Notifal\Modules\Templates\Config\Paths as ModulePaths;
 use Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\RegisterBlocks;
@@ -47,6 +49,7 @@ class PreviewRouteController
      * so the preview works on any WordPress setup.
      *
      * @since 2.0.0
+     * @since 2.4.0 Updated to allow draft templates for users who can edit them.
      * @return void
      */
     public static function maybeRenderPreview(): void
@@ -62,10 +65,11 @@ class PreviewRouteController
         $postId = absint($_GET['notifal_template_preview']);
         $post   = get_post($postId);
 
+        // Allow draft/private templates when the current user can edit them.
         if (
             !$post ||
             $post->post_type !== 'notifal_template' ||
-            $post->post_status !== 'publish'
+            !current_user_can('edit_post', $postId)
         ) {
             wp_die(esc_html__('Invalid or inaccessible template.', 'notifal'));
         }
@@ -171,9 +175,19 @@ class PreviewRouteController
      *
      * @param WP_Post $post Template post.
      * @return string HTML content.
+     * @since 2.4.0 Added HTML Builder rendering branch.
      */
     private static function renderPreviewContent(WP_Post $post): string
     {
+        // HTML Builder templates use the full frontend renderer pipeline.
+        if (TemplateBuilderDetector::isHtmlBuilder($post)) {
+            /** @var FrontendTemplateRenderer $renderer */
+            $renderer = notifal_app(FrontendTemplateRenderer::class);
+            $result   = $renderer->renderForFrontend($post->ID, ['is_preview' => true]);
+
+            return (string) ($result['html'] ?? '');
+        }
+
         $isElementor = ElementorHelper::hasBuilder($post) && PluginDetector::isElementorActive();
 
         if ($isElementor) {

@@ -914,7 +914,15 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                                 <?php echo esc_html(number_format($notification['stats']['total_impressions'])); ?>
                                             <?php endif; ?>
                                         </td>
-                                        <td class="<?php echo $isProUpsell ? 'notifal-blurred-data' : ''; ?>">
+                                        <td class="<?php echo $isProUpsell ? 'notifal-blurred-data' : 'notifal-clicks-cell-clickable'; ?>"
+                                            <?php if (!$isProUpsell) : ?>
+                                                data-notifal-notification-id="<?php echo esc_attr((string) (int) $notification['notification_id']); ?>"
+                                                data-notifal-notification-title="<?php echo esc_attr($notification['title']); ?>"
+                                                data-notifal-clicks="<?php echo esc_attr((string) (int) $notification['stats']['total_clicks']); ?>"
+                                                role="button"
+                                                tabindex="0"
+                                                title="<?php esc_attr_e('View button click breakdown', 'notifal'); ?>"
+                                            <?php endif; ?>>
                                             <?php if ($isProUpsell): ?>
                                                 <span class="notifal-blurred-text">##,###</span>
                                             <?php else: ?>

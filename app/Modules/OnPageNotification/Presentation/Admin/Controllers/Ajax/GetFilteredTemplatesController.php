@@ -59,7 +59,7 @@ class GetFilteredTemplatesController
             }
 
             // Validate builder parameter
-            if (!in_array($builder, ['elementor', 'block-editor'], true)) {
+            if (!in_array($builder, ['elementor', 'block-editor', 'html-builder', 'notifal_html_builder'], true)) {
                 notifal_json_error(__('Invalid builder type.', 'notifal'));
             }
 

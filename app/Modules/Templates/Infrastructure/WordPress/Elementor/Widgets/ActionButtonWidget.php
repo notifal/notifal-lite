@@ -659,8 +659,12 @@ class ActionButtonWidget extends BaseWidget
         // =====================================================================
 
         // Base attributes for the button link
+        $tracking_id = 'notifal-btn-el-' . $this->get_id();
         $button_attrs = [
             'class' => implode(' ', $button_classes),
+            'id' => esc_attr($tracking_id),
+            'data-tracking-id' => esc_attr($tracking_id),
+            'data-button-text' => esc_attr($settings['button_text']),
             'aria-label' => esc_attr__('Notification Action Button', 'notifal'),
         ];
 

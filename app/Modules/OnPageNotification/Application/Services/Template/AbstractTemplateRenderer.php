@@ -92,6 +92,9 @@ abstract class AbstractTemplateRenderer
 
             $content = $this->processTagsWithContext($content, $frontendContext);
 
+            // Hydrate class-based placeholders (featured image, close, action button).
+            $content = TemplateClassPlaceholderProcessor::process($content, $frontendContext);
+
             // Ensure shortcodes that survived builder rendering are
             // expanded.  On a normal page load the_content filter runs
             // do_shortcode() at priority 11, but in REST/AJAX context

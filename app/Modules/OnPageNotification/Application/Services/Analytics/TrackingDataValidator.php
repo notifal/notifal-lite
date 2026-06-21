@@ -173,6 +173,19 @@ class TrackingDataValidator
             $baseData[$field] = Helper::sanitizeInput($trackingData[$field] ?? $defaultValue, 'text');
         }
 
+        // Optional per-button click metadata for Pro analytics (since 2.3.11)
+        if (isset($trackingData['button_id'])) {
+            $baseData['button_id'] = substr(Helper::sanitizeInput($trackingData['button_id'], 'text'), 0, 100);
+        }
+
+        if (isset($trackingData['button_action'])) {
+            $baseData['button_action'] = substr(Helper::sanitizeInput($trackingData['button_action'], 'text'), 0, 50);
+        }
+
+        if (isset($trackingData['button_text'])) {
+            $baseData['button_text'] = substr(Helper::sanitizeInput($trackingData['button_text'], 'text'), 0, 255);
+        }
+
         return $baseData;
     }
 }

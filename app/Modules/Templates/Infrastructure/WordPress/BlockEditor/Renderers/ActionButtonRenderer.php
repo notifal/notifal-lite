@@ -44,10 +44,12 @@ class ActionButtonRenderer
         $attributes = self::sanitizeAttributes($attributes);
 
         // Generate unique button ID for analytics tracking
-        $button_id = self::generateButtonId();
+        $tracking_id = ! empty($attributes['trackingId'])
+            ? sanitize_text_field((string) $attributes['trackingId'])
+            : self::generateButtonId();
 
         // Build button HTML
-        $html = self::buildButtonHtml($attributes, $button_id);
+        $html = self::buildButtonHtml($attributes, $tracking_id);
 
         self::fireAfterRenderHook('action_button', $html, $attributes, $content, $block);
 
@@ -69,6 +71,7 @@ class ActionButtonRenderer
     {
         return [
             'buttonText' => self::sanitizeText($attributes['buttonText'] ?? __('Buy now', 'notifal')),
+            'trackingId' => self::sanitizeText($attributes['trackingId'] ?? ''),
             'linkType' => self::sanitizeFromAllowed($attributes['linkType'] ?? 'product', ['product', 'copy', 'custom', 'close', 'custom-trigger', 'ajax-add-to-cart'], 'product'),
             'copyText' => self::sanitizeText($attributes['copyText'] ?? ''),
             'customUrl' => self::sanitizeUrl($attributes['customUrl'] ?? ''),
@@ -265,6 +268,8 @@ class ActionButtonRenderer
         $link_attrs = [
             'class="notifal-action-button notifal-track-click"',
             'id="' . esc_attr($button_id) . '"',
+            'data-tracking-id="' . esc_attr($button_id) . '"',
+            'data-button-text="' . esc_attr($attributes['buttonText']) . '"',
             'aria-label="' . esc_attr__('Notification Action Button', 'notifal') . '"',
             'data-button-type="' . esc_attr($attributes['linkType']) . '"',
             'data-hover-bg="' . esc_attr($attributes['hoverBackgroundColor']) . '"',

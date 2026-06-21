@@ -2,7 +2,7 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 use Notifal\Shared\Utils\Helper;
 
@@ -35,6 +35,11 @@ class FrontendTemplateRenderer
     private $blockEditorRenderer;
 
     /**
+     * @var HtmlTemplateRenderer
+     */
+    private $htmlRenderer;
+
+    /**
      * Constructor
      *
      * @since 2.0.0
@@ -44,6 +49,7 @@ class FrontendTemplateRenderer
         $this->contextBuilder = notifal_app(TemplateContextBuilder::class);
         $this->elementorRenderer = notifal_app(ElementorTemplateRenderer::class);
         $this->blockEditorRenderer = notifal_app(BlockEditorTemplateRenderer::class);
+        $this->htmlRenderer = notifal_app(HtmlTemplateRenderer::class);
     }
 
     /**
@@ -68,10 +74,14 @@ class FrontendTemplateRenderer
                 ];
             }
 
-            $isElementor = ElementorHelper::hasBuilder($template);
+            $builderType = TemplateBuilderDetector::getBuilder($template);
+            $isElementor = $builderType === TemplateBuilderDetector::BUILDER_ELEMENTOR;
+            $isHtmlBuilder = $builderType === TemplateBuilderDetector::BUILDER_HTML;
 
-            // Extract raw content for context building
-            if ($isElementor) {
+            // Extract raw content for context building.
+            if ($isHtmlBuilder) {
+                $rawContent = $this->contextBuilder->extractRawContentFromHtml((string) $template->post_content);
+            } elseif ($isElementor) {
                 $rawContent = $this->contextBuilder->extractRawContentForElementor($template);
             } else {
                 $rawContent = $this->contextBuilder->extractRawContentFromBlocks($template);
@@ -92,8 +102,14 @@ class FrontendTemplateRenderer
                     'assets' => [],
                     'no_matching_data' => true,
                     'applied_filters' => $frontendContext['applied_filters'] ?? [],
-                    'builder_type' => $isElementor ? 'elementor' : 'block_editor'
+                    'builder_type' => $isHtmlBuilder
+                        ? TemplateBuilderDetector::BUILDER_HTML
+                        : ($isElementor ? 'elementor' : 'block_editor')
                 ];
+            }
+
+            if ($isHtmlBuilder) {
+                return $this->htmlRenderer->render($template, $frontendContext);
             }
 
             // Render using appropriate renderer
@@ -169,7 +185,7 @@ class FrontendTemplateRenderer
             return $result;
         }
 
-        // Match Elementor Product Image widget output: wrapper div containing inner notifal-pulse-img div
+        // Match Elementor Product Image widget or class-based placeholder output.
         $pattern = '/<div[^>]*notifal-featured-image-wrapper[^>]*>[\s\S]*?<\/div>\s*<\/div>/';
         $placeholder = '<div class="notifal-featured-image-deferred-placeholder" data-notifal-deferred-image="1"></div>';
 

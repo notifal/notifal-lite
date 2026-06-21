@@ -5,6 +5,8 @@ namespace Notifal\Modules\Templates\Infrastructure\WordPress\Import;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Shared\Services\MediaImportService;
 use Notifal\Shared\Utils\FileImportHelper;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
+use Notifal\Modules\Templates\Infrastructure\WordPress\HtmlBuilder\Services\HtmlTemplateSanitizer;
 use Notifal\Shared\Utils\Helper;
 use ZipArchive;
 
@@ -311,6 +313,8 @@ class Importer
                 return self::saveElementorContent($postId, $content);
             } elseif (in_array($builder, ['block_editor', 'gutenberg', 'block-editor'], true)) {
                 return self::saveBlockEditorContent($postId, $content);
+            } elseif (TemplateBuilderDetector::normalizeBuilderSlug($builder) === TemplateBuilderDetector::BUILDER_HTML) {
+                return self::saveHtmlBuilderContent($postId, $content);
             }
 
             return [
@@ -440,6 +444,36 @@ class Importer
                 'error' => __('Failed to save block editor content.', 'notifal')
             ];
         }
+
+        return ['success' => true];
+    }
+
+    /**
+     * Save HTML Builder template content.
+     *
+     * @since 2.4.0
+     * @param int   $postId  Template post ID.
+     * @param mixed $content HTML string content.
+     * @return array Array with 'success' boolean and 'error' string if failed.
+     */
+    private static function saveHtmlBuilderContent(int $postId, $content): array
+    {
+        $postContent = is_string($content) ? $content : '';
+        $sanitized = HtmlTemplateSanitizer::sanitize($postContent);
+
+        $result = wp_update_post([
+            'ID'           => $postId,
+            'post_content' => $sanitized['content'],
+        ]);
+
+        if (is_wp_error($result)) {
+            return [
+                'success' => false,
+                'error'   => __('Failed to save HTML Builder content.', 'notifal'),
+            ];
+        }
+
+        update_post_meta($postId, '_notifal_builder', TemplateBuilderDetector::BUILDER_HTML);
 
         return ['success' => true];
     }

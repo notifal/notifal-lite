@@ -50,7 +50,7 @@ class LoadMoreTemplatesController
             $limit = 6; // Load 6 templates per request to match frontend expectations
 
             // Validate builder parameter
-            if (!in_array($builder, ['elementor', 'block-editor'], true)) {
+            if (!in_array($builder, ['elementor', 'block-editor', 'html-builder', 'notifal_html_builder'], true)) {
                 notifal_json_error(__('Invalid builder type.', 'notifal'));
             }
 
@@ -133,52 +133,9 @@ class LoadMoreTemplatesController
      */
     private static function getTemplatesWithOffset(string $builder, int $offset, int $limit): array
     {
-        $metaQuery = [];
+        // Reuse TemplateQuery so HTML Builder and future builders share one query path.
+        $validTemplates = TemplateQuery::getAllByBuilder($builder);
 
-        if ($builder === 'elementor') {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'value'   => 'builder',
-                'compare' => '='
-            ];
-        } else {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'compare' => 'NOT EXISTS'
-            ];
-        }
-
-        $metaQuery = apply_filters(FilterHooks::TEMPLATES_BUILDER_META_QUERY, $metaQuery, $builder);
-
-   
-        $postsToFetch = $limit + $offset + 20; // Add buffer for empty templates
-
-        $queryArgs = [
-            'post_type'      => 'notifal_template',
-            'post_status'    => 'publish',
-            'posts_per_page' => $postsToFetch,
-            'offset'         => 0, // We'll handle offset in PHP after filtering
-            'meta_query'     => $metaQuery,
-            'orderby'        => 'date',
-            'order'          => 'DESC',
-            'no_found_rows'  => true,
-        ];
-
-        $queryArgs = apply_filters(FilterHooks::TEMPLATES_BUILDER_QUERY_ARGS, $queryArgs, $builder, $limit);
-
-        $query = new \WP_Query($queryArgs);
-
-        $validTemplates = [];
-        if ($query->have_posts()) {
-            foreach ($query->posts as $post) {
-                // Filter out truly empty templates
-                if (TemplateQuery::hasTemplateContent($post, $builder)) {
-                    $validTemplates[] = $post;
-                }
-            }
-        }
-
-        // Apply offset and limit to the valid templates
         return array_slice($validTemplates, $offset, $limit);
     }
 

@@ -42,16 +42,63 @@ class CartTagResolver
     {
         // Prefer an existing cart snapshot passed from the frontend or API.
         if (isset($context['cart']) && is_array($context['cart'])) {
-            return $context['cart'];
+            $snapshot = $context['cart'];
+
+            // Enrich empty admin-preview carts with sample values.
+            if (self::shouldUsePreviewCartSnapshot($context, $snapshot)) {
+                return self::buildPreviewSnapshot($context);
+            }
+
+            return self::appendFirstProductNameToSnapshot($snapshot);
         }
 
         // Build from WooCommerce when the plugin is available.
         if (PluginDetector::isWooCommerceActive()) {
-            return WooCommerceCartContextBuilder::build();
+            $snapshot = WooCommerceCartContextBuilder::build();
+
+            if (self::shouldUsePreviewCartSnapshot($context, $snapshot)) {
+                return self::buildPreviewSnapshot($context);
+            }
+
+            return self::appendFirstProductNameToSnapshot($snapshot);
         }
 
         // Return a safe empty structure when WooCommerce is unavailable.
         return WooCommerceCartContextBuilder::emptySnapshot();
+    }
+
+    /**
+     * Resolve a cart snapshot for builder/admin previews.
+     *
+     * Uses the live session cart when it has items; otherwise returns sample
+     * values so tags like {cart_first_product_name} render in the HTML Builder.
+     *
+     * @param array<string, mixed> $context Tag resolution context.
+     * @return array<string, mixed> Cart snapshot for preview rendering.
+     * @since 2.4.0
+     */
+    public static function resolvePreviewCartSnapshot(array $context): array
+    {
+        // Start from any snapshot already attached to the context.
+        if (isset($context['cart']) && is_array($context['cart'])) {
+            $snapshot = $context['cart'];
+        } elseif (PluginDetector::isWooCommerceActive()) {
+            $snapshot = WooCommerceCartContextBuilder::build();
+        } else {
+            $snapshot = WooCommerceCartContextBuilder::emptySnapshot();
+        }
+
+        // Outside preview mode, return the live snapshot unchanged.
+        if (!self::isPreviewMode($context)) {
+            return self::appendFirstProductNameToSnapshot($snapshot);
+        }
+
+        // Keep real cart data when the editor session already has line items.
+        if (!self::shouldUsePreviewCartSnapshot($context, $snapshot)) {
+            return self::appendFirstProductNameToSnapshot($snapshot);
+        }
+
+        return self::buildPreviewSnapshot($context);
     }
 
     /**
@@ -274,8 +321,35 @@ class CartTagResolver
             }
         }
 
-        // Preview sample when cart has no items in preview mode.
+        // Read a precomputed name from the cart snapshot when available.
+        $snapshot = self::getSnapshot($context);
+        if (!empty($snapshot['first_product_name']) && is_string($snapshot['first_product_name'])) {
+            return $snapshot['first_product_name'];
+        }
+
+        // Resolve the first product ID from the snapshot when possible.
+        $productIds = isset($snapshot['product_ids']) && is_array($snapshot['product_ids'])
+            ? array_filter(array_map('absint', $snapshot['product_ids']))
+            : [];
+        if (!empty($productIds) && function_exists('wc_get_product')) {
+            $product = wc_get_product((int) $productIds[0]);
+            if ($product && method_exists($product, 'get_name')) {
+                $name = $product->get_name();
+                if (is_string($name) && $name !== '') {
+                    return $name;
+                }
+            }
+        }
+
+        // Use the preview product DTO name when the builder provides one.
         if (self::isPreviewMode($context)) {
+            if (isset($context['product']) && is_object($context['product']) && method_exists($context['product'], 'getName')) {
+                $name = $context['product']->getName();
+                if (is_string($name) && $name !== '') {
+                    return $name;
+                }
+            }
+
             return __('Sample Product', 'notifal');
         }
 
@@ -325,5 +399,98 @@ class CartTagResolver
             && function_exists('WC')
             && WC()->cart !== null
             && !WC()->cart->is_empty();
+    }
+
+    /**
+     * Determine whether preview mode should replace an empty cart snapshot.
+     *
+     * @param array<string, mixed> $context  Tag resolution context.
+     * @param array<string, mixed> $snapshot Current cart snapshot.
+     * @return bool True when sample cart data should be used.
+     * @since 2.4.0
+     */
+    private static function shouldUsePreviewCartSnapshot(array $context, array $snapshot): bool
+    {
+        if (!self::isPreviewMode($context)) {
+            return false;
+        }
+
+        if (!empty($snapshot['is_empty'])) {
+            return true;
+        }
+
+        return (int) ($snapshot['item_count'] ?? 0) <= 0;
+    }
+
+    /**
+     * Build a sample cart snapshot for admin/builder previews.
+     *
+     * @param array<string, mixed> $context Tag resolution context.
+     * @return array<string, mixed> Sample cart snapshot.
+     * @since 2.4.0
+     */
+    private static function buildPreviewSnapshot(array $context): array
+    {
+        // Prefer the preview product name so cart tags match product tags visually.
+        $productName = self::PREVIEW_FALLBACKS['cart_first_product_name'];
+        $productId   = 0;
+
+        if (isset($context['product']) && is_object($context['product'])) {
+            if (method_exists($context['product'], 'getName')) {
+                $name = $context['product']->getName();
+                if (is_string($name) && $name !== '') {
+                    $productName = $name;
+                }
+            }
+
+            if (method_exists($context['product'], 'getId')) {
+                $productId = absint($context['product']->getId());
+            }
+        }
+
+        return [
+            'is_empty'           => false,
+            'item_count'         => (int) self::PREVIEW_FALLBACKS['cart_item_count'],
+            'total'              => (float) self::PREVIEW_FALLBACKS['cart_total'],
+            'product_ids'        => $productId > 0 ? [$productId] : [],
+            'cart_lines'         => $productId > 0
+                ? [['product_id' => $productId, 'variation_id' => 0]]
+                : [],
+            'category_ids'       => [],
+            'coupons'            => [strtolower(self::PREVIEW_FALLBACKS['cart_coupons'])],
+            'first_product_name' => $productName,
+        ];
+    }
+
+    /**
+     * Attach the first cart line product name to a snapshot when missing.
+     *
+     * @param array<string, mixed> $snapshot Cart snapshot to enrich.
+     * @return array<string, mixed> Snapshot with `first_product_name` when resolvable.
+     * @since 2.4.0
+     */
+    private static function appendFirstProductNameToSnapshot(array $snapshot): array
+    {
+        if (!empty($snapshot['first_product_name'])) {
+            return $snapshot;
+        }
+
+        $productIds = isset($snapshot['product_ids']) && is_array($snapshot['product_ids'])
+            ? array_filter(array_map('absint', $snapshot['product_ids']))
+            : [];
+
+        if (empty($productIds) || !function_exists('wc_get_product')) {
+            return $snapshot;
+        }
+
+        $product = wc_get_product((int) $productIds[0]);
+        if ($product && method_exists($product, 'get_name')) {
+            $name = $product->get_name();
+            if (is_string($name) && $name !== '') {
+                $snapshot['first_product_name'] = $name;
+            }
+        }
+
+        return $snapshot;
     }
 }

@@ -168,4 +168,15 @@ class Paths
     {
         return static::getBuildUrl('js', 'frontend');
     }
+
+    /**
+     * Get URL to shared static images copied into the Vite build output.
+     *
+     * @return string The absolute URL to the build images directory
+     * @since 2.4.0
+     */
+    public static function buildImagesUrl(): string
+    {
+        return NOTIFAL_URL . 'public/build/Assets/images/';
+    }
 }

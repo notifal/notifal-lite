@@ -90,4 +90,46 @@ class PluginDetector
 
         return is_plugin_active('notifal-pro/notifal-pro.php');
     }
+
+    /**
+     * Get the human-readable names of all currently active plugins.
+     *
+     * Merges per-site active plugins with network-activated plugins on
+     * multisite installs and resolves each slug to its display name.
+     *
+     * @return string[] Sorted list of unique active plugin names.
+     * @since 2.4.0
+     */
+    public static function getActivePluginNames(): array
+    {
+        // Ensure the plugin admin API is available outside admin context.
+        if (!function_exists('get_plugins')) {
+            include_once ABSPATH . 'wp-admin/includes/plugin.php';
+        }
+
+        // Collect per-site active plugin files.
+        $activePluginFiles = (array) get_option('active_plugins', []);
+
+        // Include network-activated plugins on multisite installs.
+        if (is_multisite()) {
+            $networkPlugins = (array) get_site_option('active_sitewide_plugins', []);
+            $activePluginFiles = array_merge($activePluginFiles, array_keys($networkPlugins));
+        }
+
+        // Map each active plugin file to its registered display name.
+        $allPlugins = get_plugins();
+        $names = [];
+
+        foreach ($activePluginFiles as $pluginFile) {
+            if (isset($allPlugins[$pluginFile]['Name']) && $allPlugins[$pluginFile]['Name'] !== '') {
+                $names[] = $allPlugins[$pluginFile]['Name'];
+            }
+        }
+
+        // Remove duplicates and sort alphabetically for stable output.
+        $names = array_values(array_unique($names));
+        sort($names);
+
+        return $names;
+    }
 }

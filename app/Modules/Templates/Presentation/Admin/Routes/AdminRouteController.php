@@ -7,6 +7,8 @@ defined('ABSPATH') || exit;
 use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
+use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Shared\AdminUI\Traits\AdminOperationsTrait;
 use Notifal\Shared\AdminUI\Toast\ToastManager;
 use Notifal\Shared\Utils\Helper;
@@ -51,6 +53,7 @@ class AdminRouteController
      *
      * @return void
      * @since 2.0.0
+     * @since 2.4.0 Add support for HTML Builder templates.
      */
     public static function dispatch(): void
     {
@@ -75,6 +78,10 @@ class AdminRouteController
 
             case 'notifal_create_elementor_template':
                 self::handleCreateElementorTemplate();
+                break;
+
+            case 'notifal_create_notifal_html_builder':
+                self::handleCreateHtmlBuilderTemplate();
                 break;
         }
     }
@@ -180,6 +187,54 @@ class AdminRouteController
         do_action(ActionHooks::TEMPLATE_CREATED, $postId);
 
         wp_redirect(ElementorHelper::getEditUrl($postId));
+        exit;
+    }
+
+    /**
+     * Creates a new HTML Builder template and redirects to the builder screen.
+     *
+     * @return void
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    protected static function handleCreateHtmlBuilderTemplate(): void
+    {
+        $nonce = Helper::sanitizeInput($_GET['_wpnonce'] ?? '', 'key');
+
+        if (!wp_verify_nonce($nonce, 'notifal_create_notifal_html_builder')) {
+            wp_die(__('Security check failed.', 'notifal'));
+        }
+
+        if (!current_user_can('edit_posts')) {
+            wp_die(__('You are not allowed to create templates.', 'notifal'));
+        }
+
+        $postId = wp_insert_post([
+            'post_title'  => apply_filters(FilterHooks::TEMPLATE_DEFAULT_TITLE, __('New HTML Template', 'notifal')),
+            'post_type'   => self::POST_TYPE,
+            'post_status' => 'draft',
+        ]);
+
+        if (is_wp_error($postId) || !$postId) {
+            wp_die(__('Failed to create a new template. Please try again.', 'notifal'));
+        }
+
+        wp_update_post([
+            'ID'         => $postId,
+            'post_title' => apply_filters(
+                FilterHooks::TEMPLATE_FINAL_TITLE,
+                sprintf(__('New HTML Template #%d', 'notifal'), $postId),
+                $postId
+            ),
+        ]);
+
+        update_post_meta($postId, '_notifal_builder', TemplateBuilderDetector::BUILDER_HTML);
+
+        do_action(ActionHooks::TEMPLATE_CREATED, $postId);
+
+        /** @var TemplateUrlService $urlService */
+        $urlService = notifal_app(TemplateUrlService::class);
+        wp_redirect($urlService->getEditHtmlBuilderUrl($postId));
         exit;
     }
 }

@@ -639,7 +639,13 @@ class OnPageNotificationApiController
             if ($requestUri !== '' && strpos($requestUri, '/wp-json/') === false) {
                 $context['url'] = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http')
                     . '://' . $_SERVER['HTTP_HOST'] . $requestUri;
+            } else {
+                // @since 2.4.0 Never pass null into string type hints on PHP 8+ REST calls.
+                $context['url'] = '';
             }
+        } else {
+            // @since 2.4.0 REST query args may arrive as mixed types; normalize to string.
+            $context['url'] = (string) $context['url'];
         }
 
         // Parse URL query parameters for UTM/query-parameter display rules
@@ -820,9 +826,10 @@ class OnPageNotificationApiController
     /**
      * Parse query parameters from URL or current request for display rule evaluation.
      *
-     * @param string $url Full URL or path with query string
+     * @param string $url Full URL or path with query string (empty string when unavailable).
      * @return array<string, string> Map of parameter name to value
      * @since 2.0.0
+     * @since 2.4.0 Accepts empty string from REST eligibility requests without a url param.
      */
     private function parseQueryParamsForContext(string $url): array
     {

@@ -15,6 +15,8 @@ use Notifal\Modules\Templates\Infrastructure\WordPress\Registration\FeaturedImag
 use Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\RegisterBlocks;
 use Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Widgets\WidgetsRegistrar;
 use Notifal\Modules\Templates\Presentation\Admin\Assets\EditorAssets;
+use Notifal\Modules\Templates\Presentation\Admin\Assets\HtmlBuilderAssets;
+use Notifal\Modules\Templates\Presentation\Admin\Controllers\HtmlBuilderPageController;
 use Notifal\Modules\Templates\Presentation\Admin\Controllers\Ajax\ImportController;
 use Notifal\Modules\Templates\Presentation\Admin\Controllers\ExportController;
 use Notifal\Modules\Templates\Presentation\Admin\ListTable\ColumnsController;
@@ -23,8 +25,12 @@ use Notifal\Modules\Templates\Presentation\Admin\Menu\MenuController;
 use Notifal\Modules\Templates\Presentation\Frontend\Routes\PreviewRouteController;
 use Notifal\Modules\Templates\Presentation\Frontend\Assets\FrontendAssetsRegistrar;
 use Notifal\Modules\Templates\Presentation\Frontend\Controllers\AjaxAddToCartController;
-use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
+use Notifal\Modules\Templates\Infrastructure\WordPress\HtmlBuilder\Controllers\Ajax\HtmlBuilderPreviewController;
+use Notifal\Modules\Templates\Infrastructure\WordPress\HtmlBuilder\Controllers\Ajax\HtmlBuilderSaveController;
+use Notifal\Modules\Templates\Infrastructure\WordPress\HtmlBuilder\Services\HtmlTemplateBuilder;
+use Notifal\Modules\Templates\Infrastructure\WordPress\HtmlBuilder\Services\HtmlTemplatePreviewService;
 use Notifal\Modules\Templates\Application\Services\PreviewDataResolver;
+use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Contracts\TemplateExporterInterface;
 use Notifal\Modules\Templates\Contracts\TemplateBuilderInterface;
 use Notifal\Domain\Products\ProductFetcherInterface;
@@ -70,6 +76,10 @@ class ServiceProvider extends AbstractServiceProvider
         ExportController::class,
         MenuController::class,
         ColumnsController::class,
+
+        // HTML Builder services.
+        HtmlBuilderPageController::class,
+        HtmlBuilderAssets::class,
 
         // Frontend services
         PreviewRouteController::class,
@@ -145,6 +155,10 @@ class ServiceProvider extends AbstractServiceProvider
         // Register AJAX handlers for import functionality
         ImportController::register();
 
+        // Register HTML Builder AJAX handlers.
+        HtmlBuilderSaveController::register();
+        HtmlBuilderPreviewController::register();
+
         // Register frontend AJAX add-to-cart when WooCommerce is active
         if (PluginDetector::isWooCommerceActive()) {
             AjaxAddToCartController::register();
@@ -199,6 +213,9 @@ class ServiceProvider extends AbstractServiceProvider
         if (function_exists('register_block_type')) {
             $this->registerBlockEditorServices($container);
         }
+
+        // HTML Builder services are always available.
+        $this->registerHtmlBuilderServices($container);
     }
 
     /**
@@ -271,6 +288,28 @@ class ServiceProvider extends AbstractServiceProvider
     }
 
     /**
+     * Register HTML Builder services and their dependencies.
+     *
+     * @param Container $container Dependency injection container.
+     * @return void
+     * @since 2.4.0
+     */
+    private function registerHtmlBuilderServices(Container $container): void
+    {
+        $container->singleton(HtmlTemplateBuilder::class, function () use ($container) {
+            return new HtmlTemplateBuilder(
+                $container->get(PreviewDataResolver::class),
+                $container->get(OrderFetcherInterface::class),
+                $container->get(UserFetcher::class)
+            );
+        });
+
+        $container->singleton(HtmlTemplatePreviewService::class, function () {
+            return new HtmlTemplatePreviewService();
+        });
+    }
+
+    /**
      * Bind template interfaces to appropriate implementations based on plugin availability.
      *
      * Dynamically selects Elementor or Block Editor implementations
@@ -332,6 +371,8 @@ class ServiceProvider extends AbstractServiceProvider
             \Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Services\ElementorTemplateBuilder::class,
             \Notifal\Modules\Templates\Infrastructure\WordPress\BlockEditor\Services\BlockEditorTagsExportProcessor::class,
             \Notifal\Modules\Templates\Infrastructure\WordPress\Elementor\Services\ElementorTagsExportProcessor::class,
+            HtmlTemplateBuilder::class,
+            HtmlTemplatePreviewService::class,
         ];
     }
 
