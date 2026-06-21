@@ -4,7 +4,7 @@ namespace Notifal\Modules\Templates\Presentation\Admin\ViewComponents;
 
 defined('ABSPATH') || exit;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TemplateContentTrait;
 use WP_Post;
@@ -40,9 +40,7 @@ class TemplateRenderer
         $previewUrl = esc_url(
             notifal_app(TemplateUrlService::class)->getPreviewUrl($id, $template)
         );
-        $editUrl = ElementorHelper::hasBuilder($template)
-            ? add_query_arg(['action' => 'elementor', 'post' => $id], admin_url('post.php'))
-            : get_edit_post_link($id);
+        $editUrl = notifal_app(TemplateUrlService::class)->getEditUrl($template);
 
         // Enhanced empty template check
         if (!self::templateHasContent($template)) {
@@ -96,7 +94,12 @@ class TemplateRenderer
      */
     private static function templateHasContent(WP_Post $template): bool
     {
-        $builder = ElementorHelper::hasBuilder($template) ? 'elementor' : 'block-editor';
-        return self::hasTemplateContent($template, $builder);
+        $builder = TemplateBuilderDetector::getBuilder($template);
+        if ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            return self::hasTemplateContent($template, TemplateBuilderDetector::BUILDER_HTML);
+        }
+
+        $legacyBuilder = $builder === TemplateBuilderDetector::BUILDER_ELEMENTOR ? 'elementor' : 'block-editor';
+        return self::hasTemplateContent($template, $legacyBuilder);
     }
 }

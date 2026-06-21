@@ -2,8 +2,8 @@
 
 namespace Notifal\Modules\Templates\Application\Services;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Shared\Services\BaseExportService;
 use WP_Post;
 
@@ -106,17 +106,23 @@ class TemplateExportService extends BaseExportService
             return [];
         }
 
-        $isElementor = ElementorHelper::hasBuilder($post);
+        $builder = TemplateBuilderDetector::getBuilder($post);
 
-        // Safely extract content based on builder type
-        $content = $isElementor
-            ? self::getElementorContent($post->ID)
-            : $post->post_content;
+        if ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
+            $content = self::getElementorContent($post->ID);
+            $exportBuilder = 'elementor';
+        } elseif ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            $content = $post->post_content;
+            $exportBuilder = TemplateBuilderDetector::BUILDER_HTML;
+        } else {
+            $content = $post->post_content;
+            $exportBuilder = 'block-editor';
+        }
 
         $data = [
             'id' => $post->ID,
             'title' => $post->post_title,
-            'builder' => $isElementor ? 'elementor' : 'block-editor',
+            'builder' => $exportBuilder,
             'content' => $content,
         ];
 
@@ -188,7 +194,12 @@ class TemplateExportService extends BaseExportService
             $dependencies['images'] = self::extractImagesFromElementorData($templateData['content']);
         }
 
-        // Extract image URLs and attachment IDs from Block Editor content (blocks + raw HTML)
+        // Extract image URLs from HTML Builder content.
+        if ($templateData['builder'] === TemplateBuilderDetector::BUILDER_HTML && is_string($templateData['content'])) {
+            $dependencies['images'] = self::extractImagesFromBlockContent($templateData['content']);
+        }
+
+        // Extract image URLs from Block Editor content (blocks + raw HTML)
         if ($templateData['builder'] === 'block-editor' && is_string($templateData['content'])) {
             $blockEditorDeps = self::extractBlockEditorDependencies($templateData['content']);
             $dependencies['images'] = array_unique(array_merge(

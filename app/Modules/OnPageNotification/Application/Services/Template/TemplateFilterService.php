@@ -2,7 +2,7 @@
 
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Infrastructure\WordPress\Repositories\TemplateQuery;
 use WP_Post;
 
@@ -18,10 +18,22 @@ defined('ABSPATH') || exit;
 class TemplateFilterService
 {
     /**
-     * Check whether a template was created with the given builder (Elementor or Block Editor).
+     * Builder slugs accepted by the OnPage notification template picker.
      *
-     * @param WP_Post|null $post   The template post object.
-     * @param string       $builder The builder type ('elementor' or 'block-editor').
+     * @since 2.4.0
+     */
+    private const ACCEPTED_BUILDERS = [
+        'elementor',
+        'block-editor',
+        'html-builder',
+        'notifal_html_builder',
+    ];
+
+    /**
+     * Check whether a template was created with the given builder.
+     *
+     * @param WP_Post|null $post    The template post object.
+     * @param string       $builder The builder type (elementor, block-editor, or html-builder).
      * @return bool True if the template belongs to the builder, false otherwise.
      * @since 2.0.3
      */
@@ -30,8 +42,11 @@ class TemplateFilterService
         if (!$post) {
             return false;
         }
-        $isElementor = ElementorHelper::hasBuilder($post);
-        return ($builder === 'elementor' && $isElementor) || ($builder === 'block-editor' && !$isElementor);
+
+        $normalizedRequested = TemplateBuilderDetector::normalizeBuilderSlug($builder);
+        $templateBuilder = TemplateBuilderDetector::getBuilder($post);
+
+        return $normalizedRequested === $templateBuilder;
     }
 
     /**
@@ -48,8 +63,8 @@ class TemplateFilterService
             throw new \InvalidArgumentException('Invalid content source type. Must be "static" or "dynamic".');
         }
 
-        if (!in_array($builder, ['elementor', 'block-editor'], true)) {
-            throw new \InvalidArgumentException('Invalid builder type. Must be "elementor" or "block-editor".');
+        if (!in_array($builder, self::ACCEPTED_BUILDERS, true)) {
+            throw new \InvalidArgumentException('Invalid builder type. Must be "elementor", "block-editor", or "html-builder".');
         }
     }
 

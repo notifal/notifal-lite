@@ -4,9 +4,12 @@ namespace Notifal\Modules\Templates\Infrastructure\WordPress\Repositories;
 
 defined('ABSPATH') || exit;
 
+use Notifal\Domain\Settings\Services\SettingsService;
+use Notifal\Domain\Tags\Services\TagDetector;
+use Notifal\Domain\Tags\TagManager;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
-use Notifal\Domain\Settings\Services\SettingsService;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TemplateContentTrait;
 use WP_Post;
 use WP_Query;
@@ -61,27 +64,12 @@ class TemplateQuery
      */
     public static function getByBuilder(string $builder, int $limit = 6, int $selectedTemplateId = 0): array
     {
-        $metaQuery = [];
-
-        if ($builder === 'elementor') {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'value'   => 'builder',
-                'compare' => '='
-            ];
-        } else {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'compare' => 'NOT EXISTS'
-            ];
-        }
-
-        $metaQuery = apply_filters(FilterHooks::TEMPLATES_BUILDER_META_QUERY, $metaQuery, $builder);
+        $metaQuery = self::buildBuilderMetaQuery($builder);
 
         $queryArgs = [
             'post_type'      => 'notifal_template',
             'post_status'    => 'publish',
-            'posts_per_page' => $limit === -1 ? -1 : ($limit * 2), // Get all if limit is -1, otherwise get more to filter out empty ones
+            'posts_per_page' => $limit,
             'meta_query'     => $metaQuery,
             'orderby'        => 'date',
             'order'          => 'DESC',
@@ -95,10 +83,14 @@ class TemplateQuery
         $templates = [];
         $selectedTemplate = null;
 
-        // First, check if selected template exists and belongs to this builder
+        // First, check if selected template exists and belongs to this builder.
         if ($selectedTemplateId > 0) {
             $selectedPost = self::get($selectedTemplateId);
-            if ($selectedPost && self::hasTemplateContent($selectedPost, $builder)) {
+            if (
+                $selectedPost
+                && self::postBelongsToBuilder($selectedPost, $builder)
+                && self::hasTemplateContent($selectedPost, $builder)
+            ) {
                 $selectedTemplate = $selectedPost;
                 $templates[] = $selectedPost;
             }
@@ -152,6 +144,12 @@ class TemplateQuery
      */
     public static function hasNotifalTags(WP_Post $post, string $builder): bool
     {
+        $normalizedBuilder = TemplateBuilderDetector::normalizeBuilderSlug($builder);
+
+        if ($normalizedBuilder === TemplateBuilderDetector::BUILDER_HTML) {
+            return self::contentHasNotifalTags((string) ($post->post_content ?? ''));
+        }
+
         $isElementor = \Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper::hasBuilder($post);
 
         if ($isElementor) {
@@ -227,22 +225,7 @@ class TemplateQuery
      */
     public static function getAllByBuilder(string $builder): array
     {
-        $metaQuery = [];
-
-        if ($builder === 'elementor') {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'value'   => 'builder',
-                'compare' => '='
-            ];
-        } else {
-            $metaQuery[] = [
-                'key'     => '_elementor_edit_mode',
-                'compare' => 'NOT EXISTS'
-            ];
-        }
-
-        $metaQuery = apply_filters(FilterHooks::TEMPLATES_BUILDER_META_QUERY, $metaQuery, $builder);
+        $metaQuery = self::buildBuilderMetaQuery($builder);
 
         $queryArgs = [
             'post_type'      => 'notifal_template',
@@ -280,9 +263,20 @@ class TemplateQuery
      */
     private static function contentHasNotifalTags(string $content): bool
     {
+        // Prefer centralized tag detection (includes cart tags and entity patterns).
+        if (TagDetector::hasAnyNotifalTags($content)) {
+            return true;
+        }
+
+        // Match registered static and dynamic pattern tags from TagManager.
+        if (self::contentHasRegisteredNotifalTags($content)) {
+            return true;
+        }
+
         $matches = [];
         $tagPattern = '/(?<![\$\{])\{([a-zA-Z_][a-zA-Z0-9_\/\.\-]*)\}/';
-        preg_match_all($tagPattern, $content, $matches);
+        $decodedContent = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        preg_match_all($tagPattern, $decodedContent, $matches);
 
         if (empty($matches[1]) || !is_array($matches[1])) {
             return false;
@@ -306,6 +300,72 @@ class TemplateQuery
     }
 
     /**
+     * Detect merge tags by matching extracted tokens against TagManager registrations.
+     *
+     * @param string $content Template HTML or builder content.
+     * @return bool True when a registered or pattern-based Notifal tag is present.
+     * @since 2.4.0
+     */
+    private static function contentHasRegisteredNotifalTags(string $content): bool
+    {
+        if (!function_exists('notifal_app')) {
+            return false;
+        }
+
+        try {
+            /** @var TagManager $tagManager */
+            $tagManager = notifal_app(TagManager::class);
+            $decodedContent = html_entity_decode($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $matches = [];
+
+            if (!preg_match_all('/\{([^}]+)\}/', $decodedContent, $matches) || empty($matches[1])) {
+                return false;
+            }
+
+            foreach ($matches[1] as $tagKey) {
+                if (!is_string($tagKey) || $tagKey === '') {
+                    continue;
+                }
+
+                if ($tagManager->get($tagKey) !== null) {
+                    return true;
+                }
+
+                foreach ($tagManager->all() as $tag) {
+                    $patternKey = $tag->getKey();
+
+                    if (strpos($patternKey, '{key}') === false) {
+                        continue;
+                    }
+
+                    $prefix = str_replace('{key}', '', $patternKey);
+
+                    if ($prefix !== '' && strpos($tagKey, $prefix) === 0) {
+                        return true;
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check whether a template post belongs to the requested builder slug.
+     *
+     * @param WP_Post $post    Template post object.
+     * @param string  $builder Builder slug from admin filters.
+     * @return bool True when the post was created with the given builder.
+     * @since 2.4.0
+     */
+    private static function postBelongsToBuilder(WP_Post $post, string $builder): bool
+    {
+        return TemplateBuilderDetector::normalizeBuilderSlug($builder) === TemplateBuilderDetector::getBuilder($post);
+    }
+
+    /**
      * Get known Notifal tag prefixes for template classification.
      *
      * @since 2.3.0
@@ -321,6 +381,8 @@ class TemplateQuery
             'page_',
             'comment_',
             'cpt_',
+            'cart_',
+            'custom_posttype_',
         ];
 
         if (!function_exists('notifal_app')) {
@@ -344,5 +406,51 @@ class TemplateQuery
         }
 
         return array_values(array_unique($prefixes));
+    }
+
+    /**
+     * Build meta_query arguments for a specific builder slug.
+     *
+     * @param string $builder Builder slug from admin filters.
+     * @return array Meta query array.
+     * @since 2.4.0
+     */
+    private static function buildBuilderMetaQuery(string $builder): array
+    {
+        $metaQuery = [];
+        $normalizedBuilder = TemplateBuilderDetector::normalizeBuilderSlug($builder);
+
+        if ($normalizedBuilder === TemplateBuilderDetector::BUILDER_ELEMENTOR || $builder === 'elementor') {
+            $metaQuery[] = [
+                'key'     => '_elementor_edit_mode',
+                'value'   => 'builder',
+                'compare' => '=',
+            ];
+        } elseif ($normalizedBuilder === TemplateBuilderDetector::BUILDER_HTML) {
+            $metaQuery[] = [
+                'key'     => '_notifal_builder',
+                'value'   => TemplateBuilderDetector::BUILDER_HTML,
+                'compare' => '=',
+            ];
+        } else {
+            $metaQuery[] = [
+                'key'     => '_elementor_edit_mode',
+                'compare' => 'NOT EXISTS',
+            ];
+            $metaQuery[] = [
+                'relation' => 'OR',
+                [
+                    'key'     => '_notifal_builder',
+                    'compare' => 'NOT EXISTS',
+                ],
+                [
+                    'key'     => '_notifal_builder',
+                    'value'   => TemplateBuilderDetector::BUILDER_HTML,
+                    'compare' => '!=',
+                ],
+            ];
+        }
+
+        return apply_filters(FilterHooks::TEMPLATES_BUILDER_META_QUERY, $metaQuery, $builder);
     }
 }

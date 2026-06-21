@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, marketing, popup builder, ecommerce, notification
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.3.10
+Stable tag: 2.4.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -26,8 +26,9 @@ Whether you want to promote a flash sale, grow your email list, announce new pro
 
 🎯 Create stunning, goal-driven notifications in minutes
 📊 Track performance with built-in advanced analytics
-🎨 Design freely with Elementor or WordPress Block Editor
+🎨 Design freely with Elementor, WordPress Block Editor, or the Notifal HTML Builder
 ⚡ Launch faster with 100+ ready-to-use templates
+🤖 Generate HTML templates with AI using built-in Notifal tags and your brand colors
 🧠 Smart Targeting for context-aware dynamic content on every page
 
 ## One Plugin. Endless Possibilities. ##
@@ -103,13 +104,15 @@ Data-driven decisions. Real results.
 
 ## Design Your Way. No Limits. ##
 
-Why learn a new builder when you can use the one you already love? Notifal integrates seamlessly with both Elementor and the WordPress Block Editor, giving you complete design freedom.
+Why learn a new builder when you can use the one you already love? Notifal integrates seamlessly with Elementor, the WordPress Block Editor, and its own **HTML Builder**, giving you complete design freedom.
 
 * **🎨 Elementor Users**: Build your popups and notifications using Elementor's powerful drag-and-drop interface. Use any widget you want. Forms, images, buttons, countdown timers, WooCommerce elements, and more. If you can build it in Elementor, you can put it in your popup.
 
 * **📝 Block Editor Users**: Don't use Elementor? No problem. Design stunning notifications using the native WordPress Block Editor. Add any block you need. Paragraphs, headings, images, buttons, columns, shortcodes, or third-party blocks. Full flexibility, zero limitations.
 
-Your favorite builder. Your creative control. Unlimited possibilities.
+* **💻 HTML Builder Users**: Prefer code, AI, or a lightweight workflow? Open the **Notifal HTML Builder** a fullscreen workspace where you paste self-contained HTML (with embedded styles), parse it, tweak text and colors visually, preview live, and save. No Elementor or Gutenberg required. Use the built-in **AI prompt** to generate ready-to-paste templates: it includes your brand color, Notifal dynamic tags (`{product_name}`, `{user_first_name}`, cart tags, and more), display-type guidance, and copy rules so tools like ChatGPT or Claude return HTML you can drop straight into the builder. Create once, attach the template to an on-page notification, and publish to your site in minutes.
+
+Your favorite builder or AI-assisted HTML. Your creative control. Unlimited possibilities.
 
 ## 🔗 With Dynamic Tags Create Once. Update Never. ##
 
@@ -253,6 +256,7 @@ Privacy Policy: https://notifal.com/privacy-policy/
 * Export Notification
 * Build Templates with Elementor
 * Build Templates with WordPress Block Editor
+* Build Templates with Notifal HTML Builder (paste HTML, visual text/color editing, live preview, AI prompt for Notifal tags and brand colors)
 * Import Templates
 * Export Templates
 * Device Visibility
@@ -379,7 +383,7 @@ Absolutely not. Notifal is built with performance in mind. The plugin loads only
 
 = Do I need Elementor to use Notifal? =
 
-No. While Notifal integrates beautifully with Elementor, it also works seamlessly with the native WordPress Block Editor. Use whichever builder you prefer, or simply pick a ready-made template and go live in clicks.
+No. While Notifal integrates beautifully with Elementor, it also works seamlessly with the native WordPress Block Editor and the **Notifal HTML Builder**, paste HTML, use the AI prompt to generate templates with your brand colors and Notifal dynamic tags, then publish. Use whichever builder you prefer, or simply pick a ready-made template and go live in clicks.
 
 = Does Notifal work with WooCommerce? =
 
@@ -417,8 +421,25 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 24. a Discounted Products Flaoting Bar that was created with Notifal and you can import it to your website from our library.
 25. a Discounted Products Flaoting Bar that was created with Notifal and you can import it to your website from our library.
 26. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
+27. Notifal HTML builder.
 
 == Changelog ==
+2.4.0 [2026-06-17]
+Added: HTML Builder - third template builder for pasting self-contained HTML with embedded styles and scripts; no Elementor or Gutenberg required.
+Added: Built-in AI prompt generator to create copy-ready HTML with your brand color, Notifal dynamic tags, and display-type guidance for external AI tools.
+Added: Fullscreen admin workspace with HTML input, text/color editors, live preview, Insert Tag modal, copy HTML, and AJAX save.
+Added: `HtmlTemplateSanitizer` with trusted/restricted capability paths, PHP tag stripping, and extensibility hooks for marketplace-safe HTML storage.
+Added: Frontend `HtmlTemplateRenderer` with full tag, class-placeholder, and shortcode pipeline for HTML Builder templates.
+Added: Import/export support for `notifal_html_builder` JSON payloads with image URL extraction.
+Improved: Template list/edit routing now opens HTML Builder templates in the dedicated builder screen instead of the block editor.
+Improved: Delay, exit intent, scroll, and other timed notifications now work reliably on more sites, including when a theme affects how notification data is loaded.
+
+2.3.11 [2026-06-15]
+Added: Per-button click tracking for action buttons — each click records button ID, action type (post-link, copy, custom, etc.), and button label for Pro analytics breakdown.
+Added: Stable tracking IDs for Block Editor action buttons (persisted `trackingId` attribute) and Elementor action buttons (widget-based ID).
+Added: Database support for per-button click stats (`notifal_onpage_button_click_stats` table) and optional button metadata on the analytics event queue.
+Improved: Frontend click events send button context through the existing Pro analytics tracking pipeline without extra requests.
+
 2.3.10 [2026-06-09]
 Added: All Users login status for Users display rules (requires Notifal Pro 2.3.6+), target both guests and logged-in visitors; optional visit-history filters still apply on the storefront.
 Added: Inactivity before return (hours) setting for the Return visitor visit-history filter (default 3 hours, range 1–168) with admin tooltip examples for same-day, next-day, and multi-day returns.
@@ -436,7 +457,6 @@ Fixed: Page targeting display rules (specific pages, post types, and legacy page
 Fixed: Variable products with on-sale variations now work correctly with Sale Products Only filters and product-page smart targeting.
 Fixed: Z-Index setting now works as expected. When two notifications overlap, the one with the higher value appears on top.
 
-
 2.3.9 [2026-06-09]
 Added: Cart Products content source filter in Product Restrictions (WooCommerce only), pull dynamic notification content from the visitor's live cart.
 Added: Four cart product source toggles within the Cart Products filter: cart line items, related products, upsells, and cross-sells (combined with OR logic inside the filter).
@@ -446,40 +466,6 @@ Improved: Revenue attribution for Post Link and Ajax Add to Cart action buttons,
 Improved: Post Link product clicks now store influence attribution before redirect, match variable product orders via parent product IDs, and use a strict 24-hour attribution window.
 Fixed: Influenced revenue is counted together with clicked revenue when a product click converts (clicked line subtotal plus full order influenced total).
 Fixed: Copy, custom link, and other non-product notification clicks no longer create false product-click revenue attribution.
-
-2.3.7 [2026-06-06]
-Added: Content source counter dynamic tags that respect notification content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (requires Notifal Pro 2.3.3+), and {custom_posttype_counter_{post_type}} (example: {custom_posttype_counter_book}).
-Added: Smart Targeting section in Content Source settings for context-aware dynamic content based on the visitor's current product, post, page, or archive (requires Notifal Pro).
-Added: Content source extensibility hooks and visitor page context pipeline for Smart Targeting integration, including contextual entity filters, scoped pool cache keys, and contextual pool resolution.
-Added: Frontend eligible API page context enrichment (page ID, post type, and product categories) for Smart Targeting storefront requests.
-Improved: Order counting is HPOS-safe and compatible with legacy WooCommerce shop_order post-type storage.
-Improved: Order attribution summary on WooCommerce and EDD order details and order list popup, compact summary card with influenced notifications, linkable clicked products, total clicked revenue, and total influenced revenue shown once, plus expandable per-notification details.
-Fixed: Duplicate "(unknown product)" attribution rows when the same notification already had a clicked product.
-Fixed: Delay-triggered on-page notifications with Prevent Multiple Instances no longer appear instantly when a blocking notification closes; deferred notifications now re-apply their configured delay for smoother UX.
-Fixed: Popup notification z-index now applies to both the backdrop and popup content, so the modal appears above the dimmed overlay instead of behind it.
-Fixed: "Always Show" frequency now re-triggers notifications on page refresh and navigation instead of showing only once per session.
-Improved: Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so admins can use negative values for precise placement.
-
-2.3.5 [2026-05-30]
-Added: WooCommerce cart display rules (when WooCommerce is active), target visitors by cart is empty or not empty, specific product in or not in cart, product category in cart, cart total, cart item count, or coupon applied.
-Added: WooCommerce cart dynamic tags for notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.
-Improved: Cart tag context and preview data now include WooCommerce cart snapshot values for more accurate frontend and editor rendering.
-Changed: Removed {cart_is_empty} from WooCommerce cart dynamic tags list.
-Added: Real-time cart rule evaluation on the storefront, notifications update after Ajax add-to-cart or cart changes without a full page refresh.
-Added: Users display rule visit history filters, target new visitors, return visitors, or first browser session alongside guest/logged-in and role targeting.
-Added: Content Source option, "Show duplicate source" (Content Source > Dynamic Content Restrictions). Default is OFF, so each visitor session avoids repeating the same dynamic source item (product/order/post/page/custom post type) until available items rotate; turn it ON to allow duplicates when needed.
-Added: Order list attribution badge and quick-view popup on WooCommerce and EDD order screens.
-Fixed: WooCommerce order attribution and influenced revenue no longer disappear when an on-hold or pending order is marked completed in admin.
-Fixed: On-page notification “Allow Re-trigger After Hide” now loads fresh dynamic content on every retrigger for all content sources.
-Fixed: Some reported performance issues.
-Improved: Deterministic pool selection and cache clearing on retrigger API requests for consistent alternate content.
-Improved: Display rules save automatically when you save the notification if you forgot to click Save Rule.
-Fixed: Prevent Multiple Instances now shows notifications one at a time, the next can appear after the previous closes.
-Improved: Display rules UI/logic now supports multiple rules as a list structure with unique rule IDs, including multiple rules for the same rule type  with AND/OR combination support in Pro.
-Added: New display rule visibility mode, "Show if" / "Don't show if", so admins can invert rule matching behavior while keeping AND/OR logic.
-Improved: Display rules edit experience, click a rule to edit, clear editing state, and save as update vs add-new with clearer inline guidance.
-Improved: Duplicate-prevention for display rules, exact duplicate rules are blocked in the admin with an informational message.
-Improved: Rule combination logic now consistently falls back to OR as the default when missing or invalid.
 
 [See changelog for all versions.](https://notifal.com/changelog/)
 

@@ -248,6 +248,34 @@ class FilterHooks {
      */
     public const TEMPLATES_BUILDER_META_QUERY = 'notifal/templates/builder/meta_query';
 
+    /**
+     * Filters raw HTML before HTML Builder sanitization runs.
+     *
+     * @param string $html Raw HTML pasted by the user.
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_SANITIZE_BEFORE = 'notifal/template/html/sanitize/before';
+
+    /**
+     * Filters sanitized HTML after HTML Builder sanitization runs.
+     *
+     * @param string   $html     Sanitized HTML.
+     * @param string[] $warnings Sanitizer warning messages.
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_SANITIZE_AFTER = 'notifal/template/html/sanitize/after';
+
+    /**
+     * Filters allowed HTML tags for restricted HTML Builder saves.
+     *
+     * @param array<string, array<string, bool>> $allowed wp_kses allowed tags array.
+     * @since 2.4.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_KSES_ALLOWED = 'notifal/template/html/kses/allowed';
+
 
     /**
      * Filters the AJAX search results before returning them.
@@ -2022,6 +2050,17 @@ class FilterHooks {
      */
     public const ANALYTICS_MONEY_JS_CONFIG = 'notifal/onpage/analytics/money_js_config';
 
+    /**
+     * Filter paginated button click analytics rows for a notification.
+     *
+     * @param array $rows     Button click breakdown rows.
+     * @param array $filters  Analytics filters (notification_id, date_range, …).
+     * @param array $pagination Pagination metadata (limit, offset, total, has_more).
+     * @return array Modified rows payload.
+     * @since 2.3.11
+     */
+    public const ONPAGE_BUTTON_CLICK_ANALYTICS_ROWS = 'notifal/onpage/analytics/button_click_rows';
+
     // =========================================================================
     // 📅 DATE TAG FILTER HOOKS
     // =========================================================================
@@ -2094,4 +2133,28 @@ class FilterHooks {
      * @since 2.0.0
      */
     public const IMAGE_SIZE_DROPDOWN_OPTIONS = 'notifal/image_size/dropdown_options';
+
+    // =========================================================================
+    // 🧩 TEMPLATE CLASS PLACEHOLDER FILTER HOOKS
+    // =========================================================================
+
+    /**
+     * Filter rendered template HTML before class-placeholder processing.
+     *
+     * @param string $html Rendered template HTML.
+     * @param array  $frontendContext Frontend context array.
+     * @return string Modified HTML.
+     * @since 2.3.12
+     */
+    public const ONPAGE_TEMPLATE_CLASS_PLACEHOLDERS_BEFORE = 'notifal/onpage/template/class_placeholders/before';
+
+    /**
+     * Filter rendered template HTML after class-placeholder processing.
+     *
+     * @param string $html Processed template HTML.
+     * @param array  $frontendContext Frontend context array.
+     * @return string Modified HTML.
+     * @since 2.3.12
+     */
+    public const ONPAGE_TEMPLATE_CLASS_PLACEHOLDERS_AFTER = 'notifal/onpage/template/class_placeholders/after';
 }

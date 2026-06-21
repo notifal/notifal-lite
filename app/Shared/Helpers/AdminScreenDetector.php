@@ -40,6 +40,14 @@ class AdminScreenDetector {
             return true;
         }
 
+        // HTML Builder hidden admin workspace.
+        if (
+            $screen->id === 'admin_page_notifal_html_builder'
+            || $screen->base === 'admin_page_notifal_html_builder'
+        ) {
+            return true;
+        }
+
         // Check for notifal settings page
         if (strpos($screen->id, 'notifal-settings') !== false) {
             return true;

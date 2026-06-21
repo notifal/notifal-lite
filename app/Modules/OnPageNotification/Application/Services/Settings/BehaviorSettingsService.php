@@ -51,7 +51,7 @@ class BehaviorSettingsService
         
         // Mobile Behavior
         'mobile_optimized' => true,
-        'swipe_to_dismiss' => true,
+        'swipe_to_dismiss' => false,
         'touch_friendly' => true,
         'prevent_zoom_on_touch' => true,
         
@@ -273,7 +273,7 @@ class BehaviorSettingsService
     {
         $config = [
             'mobile_optimized' => (bool) ($settings['mobile_optimized'] ?? true),
-            'swipe_to_dismiss' => $this->isProFeatureAllowed() ? (bool) ($settings['swipe_to_dismiss'] ?? true) : false,
+            'swipe_to_dismiss' => $this->isProFeatureAllowed() ? (bool) ($settings['swipe_to_dismiss'] ?? false) : false,
             'touch_friendly' => (bool) ($settings['touch_friendly'] ?? true),
             'prevent_zoom_on_touch' => (bool) ($settings['prevent_zoom_on_touch'] ?? true),
         ];

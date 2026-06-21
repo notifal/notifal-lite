@@ -277,16 +277,15 @@ class TagManager
         // Find all tags that start with this prefix using more precise pattern
         $pattern = '/\{' . preg_quote($prefix, '/') . '([a-zA-Z0-9_]+)\}/';
 
-        $content = preg_replace_callback($pattern, function($matches) use ($tag, $context, $prefix) {
+        $content = preg_replace_callback($pattern, function ($matches) use ($tag, $context, $prefix) {
             $fullMatch = $matches[0]; // e.g., "{order_meta_billing_first_name}"
             $dynamicKey = $matches[1]; // e.g., "billing_first_name"
             $actualTagKey = $prefix . $dynamicKey; // e.g., "order_meta_billing_first_name"
 
-            // Resolve the tag with the full key
+            // Resolve the tag with the full key.
             $value = $tag->resolve($context, $actualTagKey);
 
-            // Sanitize value to prevent HTML injection while preserving intended formatting
-            return TagsHelper::sanitizeTagValue($value);
+            return TagsHelper::formatRenderedTagValue($value, $fullMatch, $context);
 
         }, $content);
     }
@@ -306,11 +305,11 @@ class TagManager
         // Use more precise replacement to avoid accidental matches
         $pattern = '/\{' . preg_quote($tag->getKey(), '/') . '\}/';
 
-        $content = preg_replace_callback($pattern, function($matches) use ($tag, $context) {
+        $content = preg_replace_callback($pattern, function ($matches) use ($tag, $context) {
+            $placeholder = $matches[0];
             $value = $tag->resolve($context);
 
-            // Sanitize value to prevent HTML injection while preserving intended formatting
-            return TagsHelper::sanitizeTagValue($value);
+            return TagsHelper::formatRenderedTagValue($value, $placeholder, $context);
 
         }, $content);
     }

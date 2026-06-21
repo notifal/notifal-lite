@@ -53,6 +53,47 @@ class TagsHelper
     }
 
     /**
+     * Determine whether tag rendering runs in admin/builder preview mode.
+     *
+     * @param array<string, mixed> $context Tag resolution context.
+     * @return bool True when preview fallbacks should apply.
+     * @since 2.4.0
+     */
+    public static function isPreviewContext(array $context): bool
+    {
+        return isset($context['is_preview']) && $context['is_preview'] === true;
+    }
+
+    /**
+     * Sanitize a resolved tag value and preserve the placeholder in preview when empty.
+     *
+     * In the HTML Builder (and other previews), an empty resolved value should show
+     * the original tag token (e.g. `{cart_first_product_name}`) so editors can see
+     * which merge tags are present when sample data is unavailable.
+     *
+     * @param mixed                $value       Raw value returned by the tag resolver.
+     * @param string               $placeholder Full tag token from the template content.
+     * @param array<string, mixed> $context     Tag resolution context.
+     * @return string Value safe for HTML output, or the untouched placeholder in preview.
+     * @since 2.4.0
+     */
+    public static function formatRenderedTagValue($value, string $placeholder, array $context): string
+    {
+        // Normalize resolver output to a string before sanitization.
+        $stringValue = is_scalar($value) ? (string) $value : '';
+
+        // Apply standard output sanitization for non-empty values.
+        $sanitized = self::sanitizeTagValue($stringValue);
+
+        // In preview mode, keep the merge tag visible when no data was resolved.
+        if ($sanitized === '' && self::isPreviewContext($context)) {
+            return $placeholder;
+        }
+
+        return $sanitized;
+    }
+
+    /**
      * Group tags by their categories.
      *
      * This method provides a standardized way to group tags by category

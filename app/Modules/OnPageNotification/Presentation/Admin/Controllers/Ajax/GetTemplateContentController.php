@@ -2,9 +2,9 @@
 
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Modules\OnPageNotification\Application\Services\Tag\TagCategoryDetector;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Shared\Utils\Helper;
 use WP_Post;
 
@@ -96,12 +96,16 @@ class GetTemplateContentController
      */
     private static function getTemplateContent(WP_Post $template): string
     {
-        $isElementor = ElementorHelper::hasBuilder($template);
+        $builder = TemplateBuilderDetector::getBuilder($template);
 
-        if ($isElementor) {
-            return ContentExtractor::extractFromElementorTemplate($template);
-        } else {
-            return ContentExtractor::extractFromBlockTemplate($template);
+        if ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            return ContentExtractor::extractFromHtmlBuilderTemplate($template);
         }
+
+        if ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
+            return ContentExtractor::extractFromElementorTemplate($template);
+        }
+
+        return ContentExtractor::extractFromBlockTemplate($template);
     }
 } 

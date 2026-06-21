@@ -3,7 +3,7 @@
 /**
  * Template Creation Options Component
  *
- * Renders the available template creation options (Elementor, WordPress Editor, Import).
+ * Renders the available template creation options (Elementor, WordPress Editor, HTML Builder, Import).
  * This component is used both in modal and full-page contexts.
  *
  * @since 2.0.0
@@ -17,14 +17,33 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-// Variables should be available from parent context
-// $elementor_installed, $urls (install_elementor, create_editor, create_elementor, import_nonce)
+// Variables should be available from parent context.
+// $elementor_installed, $urls (install_elementor, create_editor, create_elementor, create_html_builder, import_nonce)
 
 ?>
 
-<div class="notifal-flex notifal-gap-20 notifal-mt-20 notifal-justify-center">
+<div class="notifal-builder-options-grid notifal-mt-20">
+
+    <!-- HTML Builder Option -->
+    <div class="notifal-card notifal-builder-option">
+        <div class="notifal-builder-option__icon">
+            <?php echo NotifalIconService::render('file-earmark-code', 32); ?>
+        </div>
+        <h3 class="notifal-text-base notifal-font-bold">
+            <?php esc_html_e('Build with HTML Builder', 'notifal'); ?>
+        </h3>
+        <p class="notifal-text-sm notifal-text-muted notifal-mt-10">
+            <?php esc_html_e('Paste HTML from AI or any source; no Elementor or Gutenberg required.', 'notifal'); ?>
+        </p>
+        <div class="notifal-mt-20">
+            <a href="<?php echo esc_url($urls['create_html_builder']); ?>" class="notifal-button">
+                <?php esc_html_e('Open HTML Builder', 'notifal'); ?>
+            </a>
+        </div>
+    </div>
+
     <!-- Elementor Builder Option -->
-    <div class="notifal-card notifal-builder-option notifal-width-50">
+    <div class="notifal-card notifal-builder-option">
         <div class="notifal-builder-option__icon">
             <?php echo NotifalIconService::render('elementor', 32); ?>
         </div>
@@ -39,11 +58,11 @@ if (!defined('ABSPATH')) {
             ?>
         </p>
         <div class="notifal-mt-20">
-            <?php if ($elementor_installed): ?>
+            <?php if ($elementor_installed) : ?>
                 <a href="<?php echo esc_url($urls['create_elementor']); ?>" class="notifal-button">
                     <?php esc_html_e('Create with Elementor', 'notifal'); ?>
                 </a>
-            <?php else: ?>
+            <?php else : ?>
                 <a href="<?php echo esc_url($urls['install_elementor']); ?>" class="notifal-button secondary">
                     <?php esc_html_e('Install Elementor', 'notifal'); ?>
                 </a>
@@ -52,7 +71,7 @@ if (!defined('ABSPATH')) {
     </div>
 
     <!-- WordPress Editor Option -->
-    <div class="notifal-card notifal-builder-option notifal-width-50">
+    <div class="notifal-card notifal-builder-option">
         <div class="notifal-builder-option__icon">
             <?php echo NotifalIconService::render('wordpress', 32); ?>
         </div>
@@ -70,7 +89,7 @@ if (!defined('ABSPATH')) {
     </div>
 
     <!-- Import Template Option -->
-    <div class="notifal-card notifal-builder-option notifal-direction-column notifal-align-center notifal-justify-center notifal-width-50">
+    <div class="notifal-card notifal-builder-option">
         <div class="notifal-builder-option__icon">
             <?php echo NotifalIconService::render('download', 32); ?>
         </div>

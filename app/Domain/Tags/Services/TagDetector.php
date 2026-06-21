@@ -226,6 +226,40 @@ class TagDetector
     }
 
     /**
+     * Check whether template content contains any known Notifal merge tags.
+     *
+     * Used by template static/dynamic classification in the admin picker.
+     *
+     * @param string $templateContent Raw template HTML or builder content.
+     * @return bool True when at least one Notifal tag pattern is present.
+     * @since 2.4.0
+     */
+    public static function hasAnyNotifalTags(string $templateContent): bool
+    {
+        if ($templateContent === '') {
+            return false;
+        }
+
+        // Decode entities so tags saved as &#123;product_name&#125; still match.
+        $content = html_entity_decode($templateContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        if (
+            self::hasUserTags($content)
+            || self::hasPostTags($content)
+            || self::hasPageTags($content)
+            || self::hasCommentTags($content)
+            || self::hasOrderTags($content)
+            || self::hasProductTags($content)
+            || self::hasCartTags($content)
+        ) {
+            return true;
+        }
+
+        // Custom post type counter tags, e.g. {custom_posttype_counter_book}.
+        return preg_match('/\{custom_posttype_counter_[a-zA-Z0-9_]+\}/i', $content) === 1;
+    }
+
+    /**
      * Get all tag counts for different entity types.
      *
      * @param string $templateContent Template content to analyze.

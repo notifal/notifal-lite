@@ -190,7 +190,18 @@ class AnalyticsTableController
             $html .= '<td>' . esc_html(number_format($notification['stats']['total_impressions'])) . '</td>';
             
             // Clicks column
-            $html .= '<td>' . esc_html(number_format($notification['stats']['total_clicks'])) . '</td>';
+            $clicksCellClass = apply_filters('notifal_pro_enhanced_analytics_allowed', false)
+                ? 'notifal-clicks-cell-clickable'
+                : '';
+            $html .= '<td class="' . esc_attr($clicksCellClass) . '"';
+            if ($clicksCellClass !== '') {
+                $html .= ' data-notifal-notification-id="' . esc_attr((string) (int) $notification['notification_id']) . '"';
+                $html .= ' data-notifal-notification-title="' . esc_attr($notification['title']) . '"';
+                $html .= ' data-notifal-clicks="' . esc_attr((string) (int) $notification['stats']['total_clicks']) . '"';
+                $html .= ' role="button" tabindex="0"';
+                $html .= ' title="' . esc_attr__('View button click breakdown', 'notifal') . '"';
+            }
+            $html .= '>' . esc_html(number_format($notification['stats']['total_clicks'])) . '</td>';
             
             // CTR column
             $html .= '<td>';

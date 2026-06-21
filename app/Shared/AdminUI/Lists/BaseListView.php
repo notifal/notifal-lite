@@ -916,13 +916,16 @@ class BaseListView
 
         // Edit action
         if (!$isTrash && current_user_can('edit_post', $post->ID)) {
-            // Detect if it's Elementor
-            $isElementor = ElementorHelper::hasBuilder($post);
-
-            // Build correct edit URL
-            $editLink = $isElementor
-                ? ElementorHelper::getEditUrl($post->ID)
-                : get_edit_post_link($post);
+            if ($this->postType === 'notifal_template') {
+                /** @var TemplateUrlService $urlService */
+                $urlService = notifal_app(TemplateUrlService::class);
+                $editLink = $urlService->getEditUrl($post);
+            } else {
+                $isElementor = ElementorHelper::hasBuilder($post);
+                $editLink = $isElementor
+                    ? ElementorHelper::getEditUrl($post->ID)
+                    : get_edit_post_link($post);
+            }
 
             if ($editLink) {
                 $actions['edit'] = sprintf(

@@ -11,7 +11,7 @@ use Notifal\Modules\Templates\Domain\DTO\PreviewDataDTO;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
 use Notifal\Infrastructure\WordPress\Admin\Settings\Services\PostTypeDiscoveryService;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
-use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
+use Notifal\Domain\Tags\Services\CartTagResolver;
 
 defined('ABSPATH') || exit;
 
@@ -83,6 +83,195 @@ class PreviewDataResolver
     }
 
     /**
+     * Build a full tag-render context for admin/builder previews.
+     *
+     * Shared by the HTML Builder AJAX preview, Elementor/Block previews, and
+     * PreviewDataDTO resolution so cart tags receive sample data when the
+     * visitor cart is empty in wp-admin.
+     *
+     * @param string|null $templateContent       Template HTML for tag detection.
+     * @param array       $contentSourceSettings Optional content source filters.
+     * @return array<string, mixed> Preview context for TagManager::render().
+     * @since 2.4.0
+     */
+    public function buildTagRenderContext(?string $templateContent = null, array $contentSourceSettings = []): array
+    {
+        // Detect which entity type the template focuses on.
+        $primaryContentType = $this->determinePrimaryContentType($templateContent);
+
+        // Prefer the logged-in editor user, then any sample user.
+        $currentUser = $this->userFetcher->getCurrent();
+        $user        = $currentUser ?: $this->userFetcher->getRandom();
+
+        // Seed base preview flags used by tag resolvers for sample output.
+        $context = [
+            'user'                    => $user,
+            'content_source_settings' => $contentSourceSettings,
+            'is_preview'              => true,
+        ];
+
+        // Load sample entities that tags may reference.
+        $post                = $this->contentSourceService->getRandomPost($contentSourceSettings);
+        $page                = $this->contentSourceService->getRandomPage($contentSourceSettings);
+        $comment             = $this->contentSourceService->getRandomComment($contentSourceSettings);
+        $order               = $this->contentSourceService->getRandomOrder($contentSourceSettings);
+        $product             = $this->getSmartProduct($templateContent, $contentSourceSettings);
+        $customPostTypeContext = $this->getCustomPostTypeContext($templateContent, $contentSourceSettings);
+
+        // Order entities by the dominant tag family in the template.
+        switch ($primaryContentType) {
+            case 'post':
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                break;
+
+            case 'page':
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                break;
+
+            case 'comment':
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                break;
+
+            case 'custom_post_type':
+                $context = array_merge($context, $customPostTypeContext);
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                break;
+
+            case 'order':
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                break;
+
+            case 'cart':
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                break;
+
+            case 'product':
+            default:
+                if ($product) {
+                    $context['product'] = $product;
+                }
+                if ($order) {
+                    $context['order'] = $order;
+                }
+                if ($post) {
+                    $context['post'] = $post;
+                }
+                if ($page) {
+                    $context['page'] = $page;
+                }
+                $context = array_merge($context, $customPostTypeContext);
+                if ($comment) {
+                    $context['comment'] = $comment;
+                }
+                break;
+        }
+
+        // Guarantee a product DTO exists for product/cart preview fallbacks.
+        if (empty($context['product'])) {
+            $fallbackProduct = $this->productFetcher->getRandom();
+            if ($fallbackProduct) {
+                $context['product'] = $fallbackProduct;
+            }
+        }
+
+        // Provide a cart snapshot with sample values when the session cart is empty.
+        if (PluginDetector::isWooCommerceActive()) {
+            $context['cart'] = CartTagResolver::resolvePreviewCartSnapshot($context);
+        }
+
+        return $context;
+    }
+
+    /**
      * Resolve preview data using a random product and fallback values.
      *
      * @param string|null $templateContent Optional template content (no longer used for dynamic tags).
@@ -93,101 +282,13 @@ class PreviewDataResolver
      */
     public function resolve(?string $templateContent = null, array $contentSourceSettings = []): ?PreviewDataDTO
     {
-        // Determine primary content type from template content
-        $primaryContentType = $this->determinePrimaryContentType($templateContent);
-        
-        // Use current user for preview, fallback to random if no current user
-        $currentUser = $this->userFetcher->getCurrent();
-        $user = $currentUser ?: $this->userFetcher->getRandom();
-        
-        // Build context based on primary content type priority
-        $context = [
-            'user' => $user,
-            'content_source_settings' => $contentSourceSettings,
-            'is_preview' => true,
-        ];
-        
-        // Get sample data for content types
-        $post = $this->contentSourceService->getRandomPost($contentSourceSettings);
-        $page = $this->contentSourceService->getRandomPage($contentSourceSettings);
-        $comment = $this->contentSourceService->getRandomComment($contentSourceSettings);
-        $order = $this->contentSourceService->getRandomOrder($contentSourceSettings);
-        $product = $this->getSmartProduct($templateContent, $contentSourceSettings);
-        
-        // Get sample data for custom post types that might be used in tags
-        $customPostTypeContext = $this->getCustomPostTypeContext($templateContent, $contentSourceSettings);
+        $context = $this->buildTagRenderContext($templateContent, $contentSourceSettings);
 
-        // Build context with priority based on primary content type
-        switch ($primaryContentType) {
-            case 'post':
-                if ($post) $context['post'] = $post;
-                if ($page) $context['page'] = $page;
-                $context = array_merge($context, $customPostTypeContext);
-                if ($comment) $context['comment'] = $comment;
-                if ($order) $context['order'] = $order;
-                if ($product) $context['product'] = $product;
-                break;
-                
-            case 'page':
-                if ($page) $context['page'] = $page;
-                if ($post) $context['post'] = $post;
-                $context = array_merge($context, $customPostTypeContext);
-                if ($comment) $context['comment'] = $comment;
-                if ($order) $context['order'] = $order;
-                if ($product) $context['product'] = $product;
-                break;
-                
-            case 'comment':
-                if ($comment) $context['comment'] = $comment;
-                if ($post) $context['post'] = $post;
-                if ($page) $context['page'] = $page;
-                $context = array_merge($context, $customPostTypeContext);
-                if ($order) $context['order'] = $order;
-                if ($product) $context['product'] = $product;
-                break;
-                
-            case 'custom_post_type':
-                $context = array_merge($context, $customPostTypeContext);
-                if ($post) $context['post'] = $post;
-                if ($page) $context['page'] = $page;
-                if ($comment) $context['comment'] = $comment;
-                if ($order) $context['order'] = $order;
-                if ($product) $context['product'] = $product;
-                break;
-                
-            case 'order':
-                if ($order) $context['order'] = $order;
-                if ($product) $context['product'] = $product;
-                if ($post) $context['post'] = $post;
-                if ($page) $context['page'] = $page;
-                $context = array_merge($context, $customPostTypeContext);
-                if ($comment) $context['comment'] = $comment;
-                break;
-                
-            case 'product':
-            default:
-                if ($product) $context['product'] = $product;
-                if ($order) $context['order'] = $order;
-                if ($post) $context['post'] = $post;
-                if ($page) $context['page'] = $page;
-                $context = array_merge($context, $customPostTypeContext);
-                if ($comment) $context['comment'] = $comment;
-                break;
-        }
-        
-        // Ensure we have at least a product for fallback compatibility
-        if (!$product) {
-            $product = $this->productFetcher->getRandom();
-            if (!$product) {
-                return null;
-            }
-            $context['product'] = $product;
+        if (empty($context['product'])) {
+            return null;
         }
 
-        // Attach cart snapshot for cart tag previews when WooCommerce is active.
-        if (PluginDetector::isWooCommerceActive()) {
-            $context['cart'] = WooCommerceCartContextBuilder::build();
-        }
+        $product = $context['product'];
 
         $resolvedTags = [];
         $allTags = $this->tagManager->allFiltered();
@@ -471,11 +572,12 @@ class PreviewDataResolver
         
         // Count tags for each content type to determine primary focus
         $tagCounts = [
-            'post' => 0,
-            'page' => 0,
-            'comment' => 0,
-            'order' => 0,
-            'product' => 0,
+            'post'             => 0,
+            'page'             => 0,
+            'comment'          => 0,
+            'order'            => 0,
+            'product'          => 0,
+            'cart'             => 0,
             'custom_post_type' => 0,
         ];
         
@@ -493,6 +595,9 @@ class PreviewDataResolver
         
         // Count product tags
         $tagCounts['product'] = preg_match_all('/\{product_[a-zA-Z_]+\}/i', $templateContent);
+
+        // Count WooCommerce cart tags
+        $tagCounts['cart'] = preg_match_all('/\{cart_[a-zA-Z_]+\}/i', $templateContent);
         
         // Count custom post type tags
         $customPostTypes = $this->postTypeDiscoveryService->getFilteredCustomPostTypeNames();

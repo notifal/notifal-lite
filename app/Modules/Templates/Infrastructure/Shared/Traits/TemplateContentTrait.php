@@ -4,6 +4,7 @@ namespace Notifal\Modules\Templates\Infrastructure\Shared\Traits;
 
 defined('ABSPATH') || exit;
 
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use WP_Post;
 
 /**
@@ -27,11 +28,37 @@ trait TemplateContentTrait
      */
     public static function hasTemplateContent(WP_Post $post, string $builder): bool
     {
+        $normalizedBuilder = TemplateBuilderDetector::normalizeBuilderSlug($builder);
+
+        if ($normalizedBuilder === TemplateBuilderDetector::BUILDER_HTML) {
+            return self::hasHtmlBuilderContent($post);
+        }
+
         if ($builder === 'elementor') {
             return self::hasElementorContent($post);
-        } else {
-            return self::hasBlockEditorContent($post);
         }
+
+        return self::hasBlockEditorContent($post);
+    }
+
+    /**
+     * Check if an HTML Builder template has meaningful content.
+     *
+     * @param WP_Post $post Template post object.
+     * @return bool True when post_content contains HTML markup.
+     * @since 2.4.0
+     */
+    private static function hasHtmlBuilderContent(WP_Post $post): bool
+    {
+        $content = trim((string) ($post->post_content ?? ''));
+
+        if ($content === '') {
+            return false;
+        }
+
+        $text = trim(wp_strip_all_tags($content));
+
+        return $text !== '' || strpos($content, '<') !== false;
     }
 
     /**

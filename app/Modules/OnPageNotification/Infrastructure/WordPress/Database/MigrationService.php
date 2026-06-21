@@ -81,6 +81,26 @@ class MigrationService
 
         dbDelta($sql);
 
+        // Table for per-button click statistics (aggregated daily, since 2.3.11)
+        $table_name = $wpdb->prefix . 'notifal_onpage_button_click_stats';
+        $sql = "CREATE TABLE $table_name (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            notification_id bigint(20) unsigned NOT NULL,
+            button_id varchar(100) NOT NULL DEFAULT '',
+            button_action varchar(50) NOT NULL DEFAULT '',
+            button_text varchar(255) NOT NULL DEFAULT '',
+            date date NOT NULL,
+            clicks int(11) unsigned NOT NULL DEFAULT 0,
+            created_at timestamp DEFAULT CURRENT_TIMESTAMP,
+            updated_at timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            UNIQUE KEY notification_button_date (notification_id, button_id, button_action, button_text, date),
+            KEY notification_id_date (notification_id, date),
+            KEY button_id (button_id)
+        ) $charset_collate;";
+
+        dbDelta($sql);
+
         // Table for daily statistics
         $table_name = $wpdb->prefix . 'notifal_onpage_daily_stats';
         $sql = "CREATE TABLE $table_name (
@@ -190,6 +210,9 @@ class MigrationService
             screen_resolution varchar(20),
             viewport_size varchar(20),
             processed tinyint(1) DEFAULT 0,
+            button_id varchar(100) DEFAULT NULL,
+            button_action varchar(50) DEFAULT NULL,
+            button_text varchar(255) DEFAULT NULL,
             created_at timestamp DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (id),
             KEY notification_id (notification_id),
@@ -300,6 +323,25 @@ class MigrationService
         // Add influenced_orders column: count of orders influenced by notifal
         if ( ! in_array( 'influenced_orders', $existingColumns, true ) ) {
             $wpdb->query( "ALTER TABLE `{$dailyStatsTable}` ADD COLUMN `influenced_orders` int(11) unsigned NOT NULL DEFAULT 0 AFTER `influenced_revenue`" );
+        }
+
+        // Event queue: optional button metadata for per-button click analytics (since 2.3.11)
+        $eventQueueTable = $wpdb->prefix . 'notifal_onpage_event_queue';
+
+        if ( $wpdb->get_var( "SHOW TABLES LIKE '{$eventQueueTable}'" ) === $eventQueueTable ) {
+            $queueColumns = $wpdb->get_col( "SHOW COLUMNS FROM `{$eventQueueTable}`" );
+
+            if ( ! in_array( 'button_id', $queueColumns, true ) ) {
+                $wpdb->query( "ALTER TABLE `{$eventQueueTable}` ADD COLUMN `button_id` varchar(100) DEFAULT NULL AFTER `processed`" );
+            }
+
+            if ( ! in_array( 'button_action', $queueColumns, true ) ) {
+                $wpdb->query( "ALTER TABLE `{$eventQueueTable}` ADD COLUMN `button_action` varchar(50) DEFAULT NULL AFTER `button_id`" );
+            }
+
+            if ( ! in_array( 'button_text', $queueColumns, true ) ) {
+                $wpdb->query( "ALTER TABLE `{$eventQueueTable}` ADD COLUMN `button_text` varchar(255) DEFAULT NULL AFTER `button_action`" );
+            }
         }
     }
 
@@ -548,6 +590,7 @@ class MigrationService
         $tables['onpage_event_queue'] = $wpdb->prefix . 'notifal_onpage_event_queue';
         $tables['onpage_product_clicks'] = $wpdb->prefix . 'notifal_onpage_product_clicks';
         $tables['onpage_conversions'] = $wpdb->prefix . 'notifal_onpage_conversions';
+        $tables['onpage_button_click_stats'] = $wpdb->prefix . 'notifal_onpage_button_click_stats';
 
         
         return $tables;
@@ -610,6 +653,7 @@ class MigrationService
             'event_queue' => $wpdb->prefix . 'notifal_onpage_event_queue',
             'product_clicks' => $wpdb->prefix . 'notifal_onpage_product_clicks',
             'conversions' => $wpdb->prefix . 'notifal_onpage_conversions',
+            'button_click_stats' => $wpdb->prefix . 'notifal_onpage_button_click_stats',
         ];
     }
 

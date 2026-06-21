@@ -11,8 +11,6 @@
 
 namespace Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain;
 
-use Notifal\Domain\Settings\Constants\Urls;
-
 defined('ABSPATH') || exit;
 
 /**
@@ -121,7 +119,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.3.7';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.4.0';
     }
 
     /**
@@ -186,162 +184,41 @@ class WhatsNewPopup
     /**
      * Get all version configs (used by getVersionConfig and changelog popup).
      *
+     * Only the latest four releases are kept in-plugin; older entries live on notifal.com/changelog/.
+     *
      * @return array<string, array> Map of version => config
      * @since 2.0.0
      */
     private function getAllVersionsConfig(): array
     {
-        $current_version = $this->getCurrentVersion();
-
         return [
+            '2.4.0' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.0'),
+                'content' => $this->getVersion240Content(),
+                'action_buttons' => [],
+            ],
+            '2.3.12' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.12'),
+                'content' => $this->getVersion2312Content(),
+                'action_buttons' => [],
+            ],
+            '2.3.11' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.11'),
+                'content' => $this->getVersion2311Content(),
+                'action_buttons' => [],
+            ],
             '2.3.10' => [
                 'show_popup' => true,
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.10'),
                 'content' => $this->getVersion2310Content(),
                 'action_buttons' => [],
-            ],
-            '2.3.9' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.9'),
-                'content' => $this->getVersion239Content(),
-                'action_buttons' => [],
-            ],
-            '2.3.7' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.7'),
-                'content' => $this->getVersion237Content(),
-                'action_buttons' => [],
-            ],
-            '2.3.5' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.5'),
-                'content' => $this->getVersion235Content(),
-                'action_buttons' => [],
-            ],
-            '2.3.1' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.1'),
-                'content' => $this->getVersion231Content(),
-                'action_buttons' => [],
-            ],
-            '2.3.0' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.3.0'),
-                'content' => $this->getVersion230Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.5' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.5'),
-                'content' => $this->getVersion225Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.4' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.4'),
-                'content' => $this->getVersion224Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.3' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.3'),
-                'content' => $this->getVersion223Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.2' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.2'),
-                'content' => $this->getVersion222Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.1' => [
-                'show_popup' => false,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.1'),
-                'content' => $this->getVersion221Content(),
-                'action_buttons' => [],
-            ],
-            '2.2.0' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.2.0'),
-                'content' => $this->getVersion220Content(),
-                'action_buttons' => [],
-            ],
-            '2.1.5' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.1.5'),
-                'content' => $this->getVersion215Content(),
-                'action_buttons' => [],
-            ],
-            '2.1.1' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.1.1'),
-                'content' => $this->getVersion211Content(),
-                'action_buttons' => [],
-            ],
-            '2.1.0' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.1.0'),
-                'content' => $this->getVersion210Content(),
-                'action_buttons' => [],
-            ],
-            '2.0.2' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.0.2'),
-                'content' => $this->getVersion202Content(),
-                'action_buttons' => [],
-            ],
-            '2.0.1' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.0.1'),
-                'content' => $this->getVersion201Content(),
-                'action_buttons' => [],
-            ],
-            '2.0.0' => [
-                'show_popup' => true,
-                'is_important' => true,
-                'title' => '🎉 ' . __('Notifal 2.0.0 - Complete Transformation!', 'notifal'),
-                'content' => $this->getVersion200Content(),
-                'action_buttons' => [
-                    [
-                        'id' => 'learn-fake-sales',
-                        'text' => __('Why Fake Sales Hurt Brands', 'notifal'),
-                        'url' => Urls::BLOG_FAKE_SALES,
-                        'icon' => 'dashicons-external',
-                        'external' => true,
-                        'primary' => true,
-                    ],
-                    [
-                        'id' => 'view-changelog',
-                        'text' => __('View Changelog', 'notifal'),
-                        'url' => Urls::withPluginUtm(Urls::CHANGELOG, 'whatsnew_popup', 'changelog'),
-                        'icon' => 'dashicons-list-view',
-                        'external' => true,
-                    ],
-                    [
-                        'id' => 'got-it',
-                        'text' => __('Got it', 'notifal'),
-                        'url' => '#',
-                        'icon' => 'dashicons-yes',
-                        'close' => true,
-                    ],
-                ],
             ],
         ];
     }
@@ -351,7 +228,7 @@ class WhatsNewPopup
      *
      * Used by the Changelog popup to build the version selector.
      *
-     * @return string[] Version strings, e.g. ['2.0.1', '2.0.0']
+     * @return string[] Version strings, e.g. ['2.3.11', '2.3.10']
      * @since 2.0.0
      */
     public function getAvailableChangelogVersions(): array
@@ -365,7 +242,7 @@ class WhatsNewPopup
     /**
      * Get title and content for a specific version (for Changelog popup).
      *
-     * @param string $version Version string, e.g. '2.0.0'
+     * @param string $version Version string, e.g. '2.3.11'
      * @return array{title: string, content: string}
      * @since 2.0.0
      */
@@ -390,384 +267,136 @@ class WhatsNewPopup
     }
 
     /**
-     * Get content for version 2.0.0
+     * Get content for version 2.4.0
      *
-     * @return string HTML content for version 2.0.0
-     * @since 2.0.0
+     * @return string HTML content for version 2.4.0
+     * @since 2.4.0
      */
-    private function getVersion200Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-intro">
-                <p class="notifal-whatsnew-lead">
-                    <?php esc_html_e('Welcome to Notifal 2.0.0 - A Complete Transformation!', 'notifal'); ?>
-                </p>
-                <p>
-                    <?php esc_html_e("We've completely rebuilt Notifal from the ground up with enhanced on-page notifications, advanced analytics, powerful template builder, and an improved tags system. This version brings you a more professional and effective way to engage your visitors.", 'notifal'); ?>
-                </p>
-            </div>
-
-            <div class="notifal-whatsnew-section notifal-whatsnew-highlight">
-                <h3><?php echo '🚫 ' . esc_html( __( 'Important: Fake Sales Notifications Removed', 'notifal' ) ); ?></h3>
-                <p><?php esc_html_e("We've removed the fake sales notification feature to focus on genuine, trust-building notifications that actually help your business grow. While many users found this feature useful, fake notifications can damage your brand credibility and hurt long-term customer relationships.", 'notifal'); ?></p>
-
-                <div class="notifal-whatsnew-callout">
-                    <p><strong><?php esc_html_e("Don't worry!", 'notifal'); ?></strong> <?php esc_html_e('Notifal now offers powerful alternatives that deliver real results:', 'notifal'); ?></p>
-                    <ul>
-                        <li><?php esc_html_e('Real-time social proof from actual customer activities', 'notifal'); ?></li>
-                        <li><?php esc_html_e('Engagement notifications that encourage interaction', 'notifal'); ?></li>
-                        <li><?php esc_html_e('Conversion-focused alerts that drive sales', 'notifal'); ?></li>
-                        <li><?php esc_html_e('Custom notifications tailored to your business needs', 'notifal'); ?></li>
-                    </ul>
-                </div>
-
-                <div class="notifal-whatsnew-callout notifal-whatsnew-support">
-                    <h4><?php echo '🛟 ' . esc_html( __( 'Need Help Transitioning?', 'notifal' ) ); ?></h4>
-                    <p><?php esc_html_e('If you want to replace your fake sales notifications with effective alternatives, our expert team is here to help you!', 'notifal'); ?></p>
-                    <div class="notifal-support-benefits">
-                        <p><strong><?php esc_html_e('Get FREE support:', 'notifal'); ?></strong></p>
-                        <ul>
-                            <li><?php esc_html_e('Personal website review and analysis', 'notifal'); ?></li>
-                            <li><?php esc_html_e('Custom notification recommendations for your business', 'notifal'); ?></li>
-                            <li><?php esc_html_e('Free setup and configuration of new notifications', 'notifal'); ?></li>
-                        </ul>
-                    </div>
-                    <p>
-                        <a target="_blank" href="<?php echo esc_url(Urls::SUPPORT_PAGE); ?>"
-                           class="notifal-whatsnew-link notifal-support-button">
-                            <?php esc_html_e('Open Support Ticket →', 'notifal'); ?>
-                        </a>
-                    </p>
-                </div>
-
-                <p>
-                    <a href="<?php echo esc_url(Urls::BLOG_FAKE_SALES); ?>"
-                       target="_blank"
-                       class="notifal-whatsnew-link notifal-whatsnew-external-link">
-                        <?php esc_html_e('Learn why fake notifications hurt brands →', 'notifal'); ?>
-                    </a>
-                </p>
-            </div>
-
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html( __( "What's New in 2.0.0", 'notifal' ) ); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📢</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Enhanced On-Page Notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Advanced customization options and smart targeting to maximize engagement.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Powerful Analytics', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Deep insights into notification performance and visitor behavior.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🎨</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Advanced Template Builder', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Create stunning notifications with our drag-and-drop builder.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🏷️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Enhanced Tags System', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Better organization and smarter notification targeting.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="notifal-whatsnew-section notifal-whatsnew-ready">
-                <h3><?php echo '🎯 ' . esc_html( __( 'Ready to Build Trust and Boost Conversions?', 'notifal' ) ); ?></h3>
-                <p><?php esc_html_e("Explore your new Notifal dashboard and discover how real, authentic notifications can transform your website's performance. Your customers will thank you for the genuine engagement!", 'notifal'); ?></p>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.1.0
-     *
-     * @return string HTML content for version 2.1.0
-     * @since 2.1.0
-     */
-    private function getVersion210Content(): string
+    private function getVersion240Content(): string
     {
         ob_start();
         ?>
         <div class="notifal-whatsnew-content">
             <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.1.0", 'notifal')); ?></h3>
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.0", 'notifal')); ?></h3>
                 <div class="notifal-whatsnew-features">
                     <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">👁️</span>
+                        <span class="notifal-feature-icon">🧱</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Preview on-page notifications before publishing', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('See how your notification will look on your live site before you publish it. Use the Preview button on the edit page or from the notifications list to open a preview on your site, so you can fine-tune design and placement with confidence.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔍</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Search for notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Search has been added to Explore Pre-created Notifications so you can find templates quickly.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">✨</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Appearance improvements', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Explore Pre-created Notifications has been updated with appearance improvements for a better experience.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🖼️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smarter featured images', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Featured Image Auto source now follows your template tags consistently in both the Block Editor and Elementor.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🎯</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More precise URL targeting [PRO]', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('URL targeting options in Pro now make it easier to show different campaigns and offers to visitors based on how they arrived on your site.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.1.5
-     *
-     * @return string HTML content for version 2.1.5
-     * @since 2.1.5
-     */
-    private function getVersion215Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.1.5", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Ajax Add to Cart (WooCommerce)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When WooCommerce is active, the Action Button now supports an "Ajax Add to Cart" link type. It adds the notification\'s product to the cart with a smoother, more modern experience.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⏳</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Friendlier loading state for Action Button', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('For Post Link and Custom Link actions, you can choose the text shown on the button while the page is changing, or keep it quiet and let the redirect happen after a short moment.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⚡</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smoother behavior on cached sites', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('On-page notifications have been adjusted to work more comfortably alongside page caching, so visitors still see your messages without affecting site performance.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📱</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Previews that match the live site', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('On-page notification previews now respect device-specific placement for mobile and tablet, helping you trust that what you see in preview is what visitors will see.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔁</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More natural repeats when notifications appear again', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When a notification is allowed to show again after being closed, its content is now refreshed more reliably so visitors are less likely to see the same item over and over, even on sites that use caching or offline support.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧹</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Automatic cache clearing for on-page notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('On-page notification caches are now cleared automatically when you save a notification, change its status from the list, or activate/update the plugin, so your latest changes appear on the frontend without extra manual refresh steps.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.0
-     *
-     * @return string HTML content for version 2.2.0
-     * @since 2.2.0
-     */
-    private function getVersion220Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.0", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📅</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Campaign Manager', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Create campaigns with their own start and end dates, assign on-page notifications to a campaign, and let one schedule keep every related message aligned — no need to duplicate dates on each notification.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Campaign Analytics Filters (Pro)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Available in Notifal Pro v2.1.0: see analytics (impressions, clicks, close rate, conversions, users) per campaign using event attribution for campaigns.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('HTML Builder', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Create templates by pasting self-contained HTML from AI tools or any source, no Elementor or Gutenberg required. Edit extracted text and colors, insert Notifal tags, and preview with the full frontend pipeline.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
                         <span class="notifal-feature-icon">⏱️</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Notification scheduling (start/end time)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Control when a notification becomes active and when it stops showing by using Start and End date/time fields. When a notification is not assigned to a campaign, these settings drive visibility.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('More reliable timed notifications', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Delay, exit intent, scroll, and other timed popups now work reliably on more WordPress sites, including setups where the active theme affects how notification data is loaded.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.12
+     *
+     * @return string HTML content for version 2.3.12
+     * @since 2.3.12
+     */
+    private function getVersion2312Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.12", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧩</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Class-based template placeholders', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Build templates in Elementor or the Block Editor without Notifal widgets or blocks. Add HTML with special classes and get the same behavior as the official components — featured image, close button, and action buttons.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🖼️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Featured image via class', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Use notifal-post-feature-image on any element to render the context-aware featured image — same resolver as the Product Image widget and block. Optional data-preview-image-source, data-image-resolution, and data-image-lazy-load attributes are supported.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✕</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Close button via class', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Add notifal-close-button to your own button or link to dismiss the notification and record close analytics — no Close Icon widget required.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
                         <span class="notifal-feature-icon">🖱️</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Close after an action button', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('In Behavior settings you can close the notification when someone clicks a template action button, and set how many seconds to wait before it closes.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('Action buttons via class', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Use notifal-action-button on custom HTML elements for full action button behavior: post/product links, copy, close, Ajax add to cart, custom URLs, and custom triggers. Set the type with data-notifal-action — tracking and Pro per-button analytics work the same as widgets.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔒</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Widget and block output unchanged', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Existing Elementor widgets and Block Editor blocks are not modified. Class placeholders are processed only on custom HTML elements, so current templates keep working exactly as before.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.3.11
+     *
+     * @return string HTML content for version 2.3.11
+     * @since 2.3.11
+     */
+    private function getVersion2311Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.11", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🖱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Per-button click tracking', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Action button clicks now record which button was clicked — including button label, action type (post link, copy, custom, and more), and a stable tracking ID for analytics.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
                         <span class="notifal-feature-icon">📊</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Clearer close numbers (Pro)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Analytics now counts a close only when a visitor actually dismisses the notification — not when it hides on its own, after a form, or from an automatic close.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('WooCommerce', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Fixed an issue with Ajax Add to Cart in notifications.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('Button click breakdown in Pro analytics (Pro)', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('In Notifal Pro, open OnPage Analytics and click the Clicks column for a notification to see a breakdown modal — which buttons received clicks, how many, and their action types. Load more rows when templates have many buttons.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
                         <span class="notifal-feature-icon">🧩</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Sticky header compatibility', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Improved “Above header” floating bar placement on sticky header themes so it no longer leaves gaps or overlaps after scrolling back to the top.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.1
-     *
-     * @return string HTML content for version 2.2.1
-     * @since 2.2.1
-     */
-    private function getVersion221Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.1", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">💬</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Online chat system update', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Improved online chat system in plugin backend.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.2
-     *
-     * @return string HTML content for version 2.2.2
-     * @since 2.2.2
-     */
-    private function getVersion222Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.2", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛠️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Reported issues improvements', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Some reported issues were fixed to improve overall stability and performance.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.5
-     *
-     * @return string HTML content for version 2.2.5
-     * @since 2.2.5
-     */
-    private function getVersion225Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.5", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔍</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Better SEO for templates', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Notifal templates are no longer included in search engine sitemaps.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('Stable IDs in Block Editor and Elementor', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Block Editor action buttons persist a trackingId attribute when inserted. Elementor action buttons use a widget-based tracking ID so the same button is counted consistently across page loads.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">✅</span>
+                        <span class="notifal-feature-icon">🗄️</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('WordPress 7.0 ready', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Tested with WordPress 7.0.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('Database support for button stats', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('A new analytics table stores per-button click aggregates. The event queue also accepts optional button metadata so Pro can aggregate clicks without extra frontend requests.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -902,405 +531,5 @@ class WhatsNewPopup
         <?php
         return ob_get_clean();
     }
-
-    /**
-     * Get content for version 2.3.7
-     *
-     * @return string HTML content for version 2.3.7
-     * @since 2.3.7
-     */
-    private function getVersion237Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.7", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧠</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smart Targeting [PRO]', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('A new Smart Targeting section in Content Source settings scopes dynamic content to the page your visitor is viewing, the current product, post, page, or archive, so notifications stay context-aware instead of pulling unrelated items from your catalog.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔢</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Content source counter tags', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Use counter tags that respect your content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (Pro), and {custom_posttype_counter_{post_type}}. Counts follow the same filters as your dynamic content pools (date range, status, categories, products, AND/OR rules, and more). Order counting is HPOS-safe and legacy-compatible.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Clearer order attribution summary', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('WooCommerce and EDD order details and the orders list popup now show a compact attribution summary: notifications influenced on the order, linkable clicked products (each on its own row), total clicked revenue, and total influenced revenue shown once. Expand Show details for per-notification breakdown. Duplicate "(unknown product)" rows are removed when a real product click already exists.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔔</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smoother notification timing and display', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('"Always Show" frequency now re-triggers on page refresh and navigation. Delay-triggered notifications with Prevent Multiple Instances wait for their configured delay after a blocking notification closes. Popup modals now render above the dimmed backdrop with correct z-index layering.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📐</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More flexible placement controls', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so you can use negative values for precise notification placement.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.3.5
-     *
-     * @return string HTML content for version 2.3.5
-     * @since 2.3.5
-     */
-    private function getVersion235Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.5", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('WooCommerce cart display rules', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When WooCommerce is active, target visitors by cart state: empty or not empty, specific product in or not in cart, product category, cart total, item count, or coupon applied. Rules update in real time after Ajax add-to-cart or cart changes, no full page refresh needed.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🏷️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('WooCommerce cart dynamic tags', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Use cart values in notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Order list attribution at a glance', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Spot Notifal-influenced orders faster in WooCommerce and EDD, and open a quick attribution summary from the orders list. Attribution and influenced revenue stay visible when an on-hold or pending order is marked completed in admin.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔁</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smarter retrigger after hide', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When Allow Re-trigger After Hide is enabled, each retrigger now shows fresh dynamic content for orders, products, posts, pages, and custom post types—not a repeat of the first notification.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📦</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Pool-based content rotation', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Notifications pre-load alternate pool variants for faster retriggers and more variety on the same page visit.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔄</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Show duplicate source (Content Source)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Under Content Source > Dynamic Content Restrictions, control whether the same product, order, post, page, or custom post type can appear again in a visitor session. Default is OFF so each session rotates through available items; turn it ON when you want duplicates allowed.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">👤</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Users rule visit history filters', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('The Users display rule now includes optional visit history targeting: new visitor for welcome offers, return visitor for re-engagement, and first browser session for entry-page nudges—alongside guest, logged-in, and role targeting.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🎯</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Display rules overhaul', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Multiple rules per notification with unique IDs, click-to-edit, Show if / Don\'t show if visibility mode, duplicate-rule prevention, and rules that save automatically when you save the notification.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔔</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Prevent Multiple Instances', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Notifications with this option now take turns, the next one can show after the previous closes.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.3.1
-     *
-     * @return string HTML content for version 2.3.1
-     * @since 2.3.1
-     */
-    private function getVersion231Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.1", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛠️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Reported issue fixed', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('A reported issue has been fixed to improve stability.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🎬</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Animation duration settings', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('In Appearance settings, Animation Duration (ms) is hidden only when both Show Animation and Hide Animation are set to No Animation. The duration value is ignored on the frontend in that case.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.3.0
-     *
-     * @return string HTML content for version 2.3.0
-     * @since 2.3.0
-     */
-    private function getVersion230Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.0", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">💰</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Improved influenced revenue tracking', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Guest checkout attribution is now more reliable with a persistent session cookie stored on checkout orders. Unpaid orders (on-hold and pending payment) now show pending influence and are counted in analytics revenue after payment.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Order attribution in WooCommerce and EDD admin', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('View influenced attribution in WooCommerce and Easy Digital Downloads order admin areas, including the orders list column and order details meta box (legacy and HPOS support for WooCommerce).', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('All Time range in OnPage analytics', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('A new All Time range lets you view analytics from the earliest available records through today. Influenced orders now show total influenced count with a paid-and-counted breakdown for clearer reporting.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📌</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('WordPress dashboard widget expanded', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('The dashboard widget now includes clicked revenue, influenced revenue, influenced orders, and active notifications in one place.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔄</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Faster analytics refresh workflow', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('OnPage analytics Refresh now processes pending analytics events first and then reloads the dashboard, so summary cards, tables, and charts update together with clearer refresh feedback.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔍</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Template SEO compatibility fix', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Notifal templates now remain compatible with Elementor editor loading while staying excluded from search engine sitemaps.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧩</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More accurate template tag detection and HTML widget rendering', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Template analysis now detects only valid Notifal tags (ignoring CSS/JS brace syntax), and frontend notifications now apply inline template styles and execute inline template scripts reliably for Elementor HTML widget content.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.4
-     *
-     * @return string HTML content for version 2.2.4
-     * @since 2.2.4
-     */
-    private function getVersion224Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.4", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">💱</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Analytics revenue in your store currency', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('OnPage analytics revenue totals and charts now use WooCommerce or Easy Digital Downloads currency settings, including custom symbols and formatting.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.2.3
-     *
-     * @return string HTML content for version 2.2.3
-     * @since 2.2.3
-     */
-    private function getVersion223Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.2.3", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛠️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Frontend template rendering fix', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Elementor template widgets now render correctly on frontend on-page notifications.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.1.1
-     *
-     * @return string HTML content for version 2.1.1
-     * @since 2.1.1
-     */
-    private function getVersion211Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.1.1", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📱</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More accurate on-page notification preview', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('On-page notification preview now correctly respects device-specific position settings for mobile and tablet viewports so your preview matches the live frontend.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.0.2
-     *
-     * @return string HTML content for version 2.0.2
-     * @since 2.0.2
-     */
-    private function getVersion202Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.0.2", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Audio Settings', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Default notification sounds in Appearance settings now work correctly.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.0.1
-     *
-     * @return string HTML content for version 2.0.1
-     * @since 2.0.1
-     */
-    private function getVersion201Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.0.1", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📋</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Request Your Preferred Builder for Any Template', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder. Submit your request from the template details; we will create it and notify you when it is ready.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⏱️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Cache Refresh Countdown', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('The pre-created notifications list now shows how long until the list refreshes, so you know when new or updated templates will appear.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⚡</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Faster OnPage List Page', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('The pre-created notifications section now loads in the background so the page is not blocked; improved loading state and timeout handling.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
 
 }

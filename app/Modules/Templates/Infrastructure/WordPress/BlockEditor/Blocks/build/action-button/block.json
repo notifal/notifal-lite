@@ -22,6 +22,10 @@
       "type": "string",
       "default": "Buy now"
     },
+    "trackingId": {
+      "type": "string",
+      "default": ""
+    },
     "linkType": {
       "type": "string",
       "default": "product"

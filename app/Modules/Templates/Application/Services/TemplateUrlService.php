@@ -3,7 +3,10 @@
 namespace Notifal\Modules\Templates\Application\Services;
 
 
+use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
+use Notifal\Modules\Templates\Presentation\Admin\Controllers\HtmlBuilderPageController;
 use WP_Post;
 
 defined('ABSPATH') || exit;
@@ -42,6 +45,64 @@ class TemplateUrlService
             'action'   => 'notifal_create_elementor_template',
             '_wpnonce' => $nonce,
         ], admin_url('admin.php'));
+    }
+
+    /**
+     * Get URL to create a new template with the HTML Builder.
+     *
+     * @return string
+     * @since 2.4.0
+     */
+    public function getCreateHtmlBuilderUrl(): string
+    {
+        $nonce = NonceManager::create('notifal_create_notifal_html_builder');
+
+        return add_query_arg([
+            'action'   => 'notifal_create_notifal_html_builder',
+            '_wpnonce' => $nonce,
+        ], admin_url('admin.php'));
+    }
+
+    /**
+     * Get URL to edit a template in the HTML Builder.
+     *
+     * @param int $templateId Template post ID.
+     * @return string
+     * @since 2.4.0
+     */
+    public function getEditHtmlBuilderUrl(int $templateId): string
+    {
+        return add_query_arg(
+            [
+                'page'        => HtmlBuilderPageController::PAGE_SLUG,
+                'template_id' => $templateId,
+            ],
+            admin_url('admin.php')
+        );
+    }
+
+    /**
+     * Resolve the correct edit URL for a template based on its builder.
+     *
+     * @param WP_Post $template Template post object.
+     * @return string Edit URL.
+     * @since 2.4.0
+     */
+    public function getEditUrl(WP_Post $template): string
+    {
+        $builder = TemplateBuilderDetector::getBuilder($template);
+
+        if ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            return $this->getEditHtmlBuilderUrl($template->ID);
+        }
+
+        if ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
+            return ElementorHelper::getEditUrl($template->ID);
+        }
+
+        $editLink = get_edit_post_link($template->ID, 'raw');
+
+        return $editLink ? $editLink : admin_url('post.php?post=' . $template->ID . '&action=edit');
     }
 
     /**

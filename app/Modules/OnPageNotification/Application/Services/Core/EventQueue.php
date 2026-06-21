@@ -201,27 +201,53 @@ class EventQueue
         global $wpdb;
         
         $table = $this->getQueueTableName();
+
+        // Normalize queue row so optional button metadata columns are always present.
+        $queueRow = [
+            'notification_id'   => (int) ($eventData['notification_id'] ?? 0),
+            'event_type'        => (string) ($eventData['event_type'] ?? ''),
+            'user_id'           => (int) ($eventData['user_id'] ?? 0),
+            'session_id'        => (string) ($eventData['session_id'] ?? ''),
+            'timestamp'         => (string) ($eventData['timestamp'] ?? current_time('mysql')),
+            'user_agent'        => (string) ($eventData['user_agent'] ?? ''),
+            'referrer'          => (string) ($eventData['referrer'] ?? ''),
+            'page_url'          => (string) ($eventData['page_url'] ?? ''),
+            'ip_address'        => (string) ($eventData['ip_address'] ?? ''),
+            'device_type'       => (string) ($eventData['device_type'] ?? 'desktop'),
+            'campaign_id'       => (int) ($eventData['campaign_id'] ?? 0),
+            'country_code'      => (string) ($eventData['country_code'] ?? ''),
+            'city'              => (string) ($eventData['city'] ?? ''),
+            'timezone'          => (string) ($eventData['timezone'] ?? ''),
+            'screen_resolution' => (string) ($eventData['screen_resolution'] ?? ''),
+            'viewport_size'     => (string) ($eventData['viewport_size'] ?? ''),
+            'button_id'         => (string) ($eventData['button_id'] ?? ''),
+            'button_action'     => (string) ($eventData['button_action'] ?? ''),
+            'button_text'       => (string) ($eventData['button_text'] ?? ''),
+        ];
         
         $result = $wpdb->insert(
             $table,
-            $eventData,
+            $queueRow,
             [
-                '%d', // notification_id
-                '%s', // event_type
-                '%d', // user_id
-                '%s', // session_id
-                '%s', // timestamp
-                '%s', // user_agent
-                '%s', // referrer
-                '%s', // page_url
-                '%s', // ip_address
-                '%s', // device_type
-                '%d', // campaign_id
-                '%s', // country_code
-                '%s', // city
-                '%s', // timezone
-                '%s', // screen_resolution
-                '%s', // viewport_size
+                '%d',
+                '%s',
+                '%d',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%d',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
+                '%s',
             ]
         );
         

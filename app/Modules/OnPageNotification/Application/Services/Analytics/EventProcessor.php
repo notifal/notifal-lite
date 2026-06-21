@@ -199,6 +199,9 @@ class EventProcessor
             'campaign_id' => isset($event['campaign_id']) ? (int) $event['campaign_id'] : 0,
             'country_code' => $event['country_code'],
             'city' => $event['city'],
+            'button_id' => isset($event['button_id']) ? (string) $event['button_id'] : '',
+            'button_action' => isset($event['button_action']) ? (string) $event['button_action'] : '',
+            'button_text' => isset($event['button_text']) ? (string) $event['button_text'] : '',
         ];
     }
 

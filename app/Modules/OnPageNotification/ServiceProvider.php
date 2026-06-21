@@ -57,6 +57,8 @@ use Notifal\Modules\OnPageNotification\Application\Services\Core\CronService;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\FrontendTemplateRenderer;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\ElementorTemplateRenderer;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\BlockEditorTemplateRenderer;
+use Notifal\Modules\OnPageNotification\Application\Services\Template\HtmlTemplateRenderer;
+use Notifal\Modules\OnPageNotification\Application\Services\Template\TemplateClassPlaceholderProcessor;
 use Notifal\Modules\OnPageNotification\Application\Services\Template\TemplateContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Tag\FrontendTagContextBuilder;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\WidgetContextProvider;
@@ -146,7 +148,9 @@ class ServiceProvider extends AbstractServiceProvider
         FrontendTemplateRenderer::class,
         ElementorTemplateRenderer::class,
         BlockEditorTemplateRenderer::class,
+        HtmlTemplateRenderer::class,
         TemplateContextBuilder::class,
+        TemplateClassPlaceholderProcessor::class,
         FrontendTagContextBuilder::class,
         WidgetContextProvider::class,
         CacheManager::class,

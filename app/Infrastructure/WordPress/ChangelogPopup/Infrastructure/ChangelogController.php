@@ -12,6 +12,7 @@
 
 namespace Notifal\Infrastructure\WordPress\ChangelogPopup\Infrastructure;
 
+use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\ChangelogPopup\Domain\ChangelogPopup;
 use Notifal\Shared\Helpers\AdminScreenDetector;
 use Notifal\Shared\Utils\Helper;
@@ -124,16 +125,24 @@ class ChangelogController
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <p class="notifal-changelog-popup-all-versions">
+                        <a href="<?php echo esc_url(Urls::CHANGELOG); ?>"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="notifal-changelog-popup-all-versions-link">
+                            <?php esc_html_e('See changelog for all versions.', 'notifal'); ?>
+                        </a>
+                    </p>
                     <div id="notifal-changelog-popup-loader" class="notifal-changelog-popup-loader notifal-hidden" aria-live="polite" aria-busy="false">
                         <span class="notifal-changelog-popup-loader-spinner" aria-hidden="true"></span>
                         <span class="notifal-changelog-popup-loader-text"></span>
                     </div>
                     <div class="notifal-changelog-popup-version-content">
-                        <div class="notifal-changelog-popup-version-title" id="notifal-changelog-version-title"><?php echo esc_html($first_content['title']); ?></div>
                         <div class="notifal-changelog-popup-version-body" id="notifal-changelog-version-body">
                             <?php echo wp_kses_post($first_content['content']); ?>
                         </div>
                     </div>
+                    
                 </div>
             </div>
         </div>

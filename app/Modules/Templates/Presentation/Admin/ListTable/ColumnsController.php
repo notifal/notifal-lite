@@ -5,8 +5,8 @@ namespace Notifal\Modules\Templates\Presentation\Admin\ListTable;
 
 defined('ABSPATH') || exit;
 
-use Notifal\Infrastructure\WordPress\Elementor\Helpers\ElementorHelper;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use WP_Post;
 
 /**
@@ -59,10 +59,15 @@ class ColumnsController
             return $content;
         }
 
-        // Determine builder type and return localized label
-        $builderLabel = ElementorHelper::hasBuilder($post)
-            ? __('Elementor', 'notifal')
-            : __('Block Editor', 'notifal');
+        $builder = TemplateBuilderDetector::getBuilder($post);
+
+        if ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            $builderLabel = __('HTML Builder', 'notifal');
+        } elseif ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
+            $builderLabel = __('Elementor', 'notifal');
+        } else {
+            $builderLabel = __('Block Editor', 'notifal');
+        }
 
         return esc_html($builderLabel);
     }

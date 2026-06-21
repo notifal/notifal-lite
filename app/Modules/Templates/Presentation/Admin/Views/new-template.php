@@ -38,6 +38,7 @@ $urls = [
     'install_elementor' => $url_service->getElementorInstallUrl(),
     'create_editor'     => $url_service->getCreateEditorUrl(),
     'create_elementor'  => $url_service->getCreateElementorUrl(),
+    'create_html_builder' => $url_service->getCreateHtmlBuilderUrl(),
     'import_nonce'      => $url_service->getImportNonce(),
 ];
 
@@ -47,7 +48,7 @@ $is_modal = isset($as_modal) && $as_modal === true;
 
 <?php if ($is_modal): ?>
     <div class="notifal-modal-backdrop" id="notifal-template-modal">
-        <div class="notifal-modal">
+        <div class="notifal-modal notifal-template-create-modal">
             <div class="notifal-modal-header">
                 <h2><?php esc_html_e('Create New Template', 'notifal'); ?></h2>
                 <button type="button" class="notifal-modal-close" aria-label="<?php esc_attr_e('Close', 'notifal'); ?>"><span class="notifal-icon notifal-icon-x-circle size-16"></span></button>
