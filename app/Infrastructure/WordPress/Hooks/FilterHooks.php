@@ -276,6 +276,59 @@ class FilterHooks {
      */
     public const TEMPLATE_HTML_KSES_ALLOWED = 'notifal/template/html/kses/allowed';
 
+    /**
+     * Filters HTML Builder AI prompt use case options passed to JavaScript.
+     *
+     * @param array<int, array{slug: string, label: string, description: string}> $options Use case rows.
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_USE_CASES = 'notifal/template/html_builder/use_cases';
+
+    /**
+     * Filters HTML Builder AI prompt display layout options passed to JavaScript.
+     *
+     * @param array<int, array{slug: string, label: string, description: string}> $options Layout rows.
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_DISPLAY_LAYOUTS = 'notifal/template/html_builder/display_layouts';
+
+    /**
+     * Filters HTML Builder AI prompt field-filling patterns passed to JavaScript.
+     *
+     * @param array<int, array<string, string>> $examples Pattern rows.
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_AI_PROMPT_EXAMPLES = 'notifal/template/html_builder/ai_prompt_examples';
+
+    /**
+     * Filters the default brand primary color used in HTML Builder and OnPage AI prompts.
+     *
+     * @param string $color Default hex color (e.g. #7e2bd2).
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_PRIMARY_COLOR = 'notifal/template/html_builder/primary_color';
+
+    /**
+     * Filters OnPage notification AI prompt configuration passed to JavaScript.
+     *
+     * @param array<string, mixed> $config Localized config array.
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_AI_PROMPT_CONFIG = 'notifal/onpage/ai_prompt/config';
+
+    /**
+     * Filters the export JSON sample embedded in the OnPage AI prompt.
+     *
+     * @param array<string, mixed> $sample Reference export array.
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_AI_PROMPT_EXPORT_SAMPLE = 'notifal/onpage/ai_prompt/export_sample';
 
     /**
      * Filters the AJAX search results before returning them.

@@ -23,7 +23,7 @@ if (!defined('ABSPATH')) {
 ?>
 
 <div class="notifal-html-builder-shell" id="notifal-html-builder-shell">
-    <?php LoaderRenderer::render(LoaderRenderer::HTML_BUILDER_LOADER_ID); ?>
+    <?php LoaderRenderer::render(LoaderRenderer::HTML_BUILDER_LOADER_ID, false, true); ?>
 
     <div id="notifal-html-builder-root" class="notifal-html-builder-root"></div>
 

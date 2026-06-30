@@ -24,14 +24,21 @@ class LoaderRenderer
      *
      * @param string $elementId DOM id for the overlay element.
      * @param bool   $showBrand Whether to render the NOTIFAL brand label.
+     * @param bool   $compact   Use the smaller loader variant (HTML Builder boot screen).
      * @return void
      * @since 2.4.0
      */
-    public static function render(string $elementId = self::HTML_BUILDER_LOADER_ID, bool $showBrand = false): void
+    public static function render(string $elementId = self::HTML_BUILDER_LOADER_ID, bool $showBrand = false, bool $compact = false): void
     {
+        // Sanitize the overlay id and build optional compact modifier class.
         $id = sanitize_html_class($elementId);
+        $overlay_class = 'notifal-loader-overlay';
+
+        if ($compact) {
+            $overlay_class .= ' notifal-loader-overlay--compact';
+        }
         ?>
-        <div class="notifal-loader-overlay" id="<?php echo esc_attr($id); ?>" role="status" aria-live="polite" aria-busy="true">
+        <div class="<?php echo esc_attr($overlay_class); ?>" id="<?php echo esc_attr($id); ?>" role="status" aria-live="polite" aria-busy="true">
             <div class="notifal-logo-stage">
                 <div class="notifal-loader-ring" aria-hidden="true"></div>
                 <div class="notifal-loader-ring" aria-hidden="true"></div>

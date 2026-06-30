@@ -146,19 +146,31 @@ class Importer
             ];
         }
 
-        // Validate builder type
-        $supportedBuilders = ['elementor', 'block_editor', 'gutenberg', 'block-editor']; // Accept both hyphen and underscore
-        $builder = Helper::sanitizeInput($data['builder'], 'key');
+        // Normalize builder slug (handles notifal_html_builder, html-builder, block-editor aliases).
+        $builder = TemplateBuilderDetector::normalizeBuilderSlug(
+            Helper::sanitizeInput($data['builder'], 'key')
+        );
+
+        // Validate builder type against canonical slugs.
+        $supportedBuilders = [
+            TemplateBuilderDetector::BUILDER_ELEMENTOR,
+            TemplateBuilderDetector::BUILDER_BLOCK_EDITOR,
+            TemplateBuilderDetector::BUILDER_HTML,
+        ];
+
         if (!in_array($builder, $supportedBuilders, true)) {
             return [
                 'valid' => false,
-                'error' => sprintf(__('Unsupported builder type: %s. Supported builders: %s', 'notifal'),
-                    $builder, implode(', ', $supportedBuilders))
+                'error' => sprintf(
+                    __('Unsupported builder type: %s. Supported builders: %s', 'notifal'),
+                    Helper::sanitizeInput($data['builder'], 'key'),
+                    implode(', ', $supportedBuilders)
+                ),
             ];
         }
 
-        // Validate content based on builder
-        if ($builder === 'elementor') {
+        // Validate content based on builder.
+        if ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
             $content = $data['content'];
             if (is_string($content)) {
                 $content = json_decode($content, true);
@@ -167,15 +179,23 @@ class Importer
             if (!is_array($content) || empty($content)) {
                 return [
                     'valid' => false,
-                    'error' => __('Invalid Elementor template content. Content must be a valid JSON array.', 'notifal')
+                    'error' => __('Invalid Elementor template content. Content must be a valid JSON array.', 'notifal'),
                 ];
             }
-        } elseif (in_array($builder, ['block_editor', 'gutenberg', 'block-editor'], true)) {
+        } elseif ($builder === TemplateBuilderDetector::BUILDER_BLOCK_EDITOR) {
             $content = $data['content'];
             if (!is_string($content) && !is_array($content)) {
                 return [
                     'valid' => false,
-                    'error' => __('Invalid content format for block editor. Content must be a string or array.', 'notifal')
+                    'error' => __('Invalid content format for block editor. Content must be a string or array.', 'notifal'),
+                ];
+            }
+        } elseif ($builder === TemplateBuilderDetector::BUILDER_HTML) {
+            $content = $data['content'];
+            if (!is_string($content) || trim($content) === '') {
+                return [
+                    'valid' => false,
+                    'error' => __('Invalid HTML Builder template content. Content must be a non-empty HTML string.', 'notifal'),
                 ];
             }
         }
@@ -228,7 +248,9 @@ class Importer
             $templateData['title'] ?? __('Imported Template', 'notifal'),
             'text'
         );
-        $builder = Helper::sanitizeInput($templateData['builder'], 'key');
+        $builder = TemplateBuilderDetector::normalizeBuilderSlug(
+            Helper::sanitizeInput($templateData['builder'], 'key')
+        );
 
         // Apply filter for custom title logic
         $title = apply_filters(FilterHooks::TEMPLATE_DEFAULT_TITLE, $title, $templateData);
@@ -281,11 +303,8 @@ class Importer
 
         // Content hash is now saved below with error checking
 
-        // Normalize builder name (convert 'block-editor' to 'block_editor' for consistency)
-        $normalizedBuilder = $builder === 'block-editor' ? 'block_editor' : $builder;
-
-        // Save builder metadata
-        update_post_meta($postId, '_notifal_builder', $normalizedBuilder);
+        // Save builder metadata using the normalized slug.
+        update_post_meta($postId, '_notifal_builder', $builder);
 
         // Save content hash for future duplicate detection
         $contentHash = md5(serialize($templateData['content']));
@@ -309,17 +328,23 @@ class Importer
     private static function saveTemplateContent(int $postId, string $builder, $content): array
     {
         try {
-            if ($builder === 'elementor') {
+            $builder = TemplateBuilderDetector::normalizeBuilderSlug($builder);
+
+            if ($builder === TemplateBuilderDetector::BUILDER_ELEMENTOR) {
                 return self::saveElementorContent($postId, $content);
-            } elseif (in_array($builder, ['block_editor', 'gutenberg', 'block-editor'], true)) {
+            }
+
+            if ($builder === TemplateBuilderDetector::BUILDER_BLOCK_EDITOR) {
                 return self::saveBlockEditorContent($postId, $content);
-            } elseif (TemplateBuilderDetector::normalizeBuilderSlug($builder) === TemplateBuilderDetector::BUILDER_HTML) {
+            }
+
+            if ($builder === TemplateBuilderDetector::BUILDER_HTML) {
                 return self::saveHtmlBuilderContent($postId, $content);
             }
 
             return [
                 'success' => false,
-                'error' => sprintf(__('Unsupported builder type: %s', 'notifal'), $builder)
+                'error' => sprintf(__('Unsupported builder type: %s', 'notifal'), $builder),
             ];
         } catch (\Exception $e) {
             return [

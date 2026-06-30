@@ -532,6 +532,10 @@ class BaseListView
                 echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-import-precreated-button">'
                     . NotifalIconService::render('search', 20) . esc_html__('Import Pre-Created Notifications', 'notifal') . '</button>';
                 
+                // Generate with AI button (full notification JSON prompt)
+                echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-generate-ai-button">'
+                    . NotifalIconService::render('ai', 20) . esc_html__('Generate with AI', 'notifal') . '</button>';
+
                 // Import Manually button (existing import functionality)
                 echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-import-button">'
                     . NotifalIconService::render('cloud-download', 20) . esc_html__('Import Manually', 'notifal') . '</button>';

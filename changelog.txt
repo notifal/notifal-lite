@@ -1,0 +1,235 @@
+== Changelog ==
+
+2.4.1 [2026-06-29]
+Added: Paste JSON directly when importing OnPage Notifications, with size validation, export structure checks, and a trusted-source confirmation step.
+Added: Generate with AI on the OnPage Notifications list, copy a prompt for ChatGPT or Claude, then import the full notification JSON (template plus settings) in one step.
+Fixed: Order attribution "Total clicked revenue" now shows the sum of clicked product line subtotals (price × quantity) when clicked products are listed but stored clicked revenue was zero.
+Improved: Clicked revenue backfill and pending snapshot conversions resolve variable product parent/child IDs against WooCommerce order line items.
+Improved: Checkout pending snapshots now record clicked revenue when product clicks were validated at checkout, even if live click lookup fails after delayed payment.
+Improved: New templates ask whether you have HTML or want to generate with AI before pasting.
+Improved: Edit link URLs from the Content panel when an anchor is selected.
+Improved: AI prompt includes a use case selector with goal-specific guidance.
+Improved: AI prompt includes display layout selector synced with notification Appearance settings.
+Improved: AI prompt accepts a free-text industry or niche to tailor design and copy.
+Improved: AI prompt includes field-filling patterns that show how to write industry, goal, and layout details for better AI output.
+
+2.4.0 [2026-06-17]
+Added: HTML Builder - third template builder for pasting self-contained HTML with embedded styles and scripts; no Elementor or Gutenberg required.
+Added: Built-in AI prompt generator to create copy-ready HTML with your brand color, Notifal dynamic tags, and display-type guidance for external AI tools.
+Added: Fullscreen admin workspace with HTML input, text/color editors, live preview, Insert Tag modal, copy HTML, and AJAX save.
+Added: `HtmlTemplateSanitizer` with trusted/restricted capability paths, PHP tag stripping, and extensibility hooks for marketplace-safe HTML storage.
+Added: Frontend `HtmlTemplateRenderer` with full tag, class-placeholder, and shortcode pipeline for HTML Builder templates.
+Added: Import/export support for `notifal_html_builder` JSON payloads with image URL extraction.
+Improved: Template list/edit routing now opens HTML Builder templates in the dedicated builder screen instead of the block editor.
+Improved: Delay, exit intent, scroll, and other timed notifications now work reliably on more sites, including when a theme affects how notification data is loaded.
+
+2.3.11 [2026-06-15]
+Added: Per-button click tracking for action buttons, each click records button ID, action type (post-link, copy, custom, etc.), and button label for Pro analytics breakdown.
+Added: Stable tracking IDs for Block Editor action buttons (persisted `trackingId` attribute) and Elementor action buttons (widget-based ID).
+Added: Database support for per-button click stats (`notifal_onpage_button_click_stats` table) and optional button metadata on the analytics event queue.
+Improved: Frontend click events send button context through the existing Pro analytics tracking pipeline without extra requests.
+
+2.3.10 [2026-06-09]
+Added: All Users login status for Users display rules (requires Notifal Pro 2.3.6+), target both guests and logged-in visitors; optional visit-history filters still apply on the storefront.
+Added: Inactivity before return (hours) setting for the Return visitor visit-history filter (default 3 hours, range 1–168) with admin tooltip examples for same-day, next-day, and multi-day returns.
+Improved: Return visitor display rule now uses inactivity-based detection instead of a simple prior-visit flag, so browsing multiple pages in the same session no longer counts as a return visit.
+Improved: Visitor activity timestamp resets on page views and throttled user interaction (click, scroll, keypress, touch, tab focus) for accurate return-visitor targeting on cached sites.
+Improved: Client-side guest and logged-in Users rule checks use a cached fresh rules index so full-page cache, session restore, and maintain-state behavior stay accurate.
+Improved: Cached Users rule index for active notifications (object cache, cleared when a notification is saved).
+Improved: Variable product notifications show the matching variation name, sale price, and product link; total sales still show the full product count.
+Improved: Client-side page context resolution falls back to WordPress body classes when localized page ID is missing, keeping page targeting accurate on dynamic storefront views.
+Improved: Eligible notification API requests now bypass browser cache to avoid stale notification lists after cart or page context changes.
+Fixed: Guests Only Users rule could still appear for logged-in visitors when maintain-state session data or cached payloads were stale.
+Fixed: Maintain state on refresh no longer treats display-rule mismatches as a user close, so changing Users rules in the same session works correctly.
+Fixed: Some reported bugs
+Fixed: Page targeting display rules (specific pages, post types, and legacy page/post/product rules) are now re-evaluated in the browser before show and exit-intent triggers, so notifications no longer appear on the wrong page when cart or other client-side rules still match.
+Fixed: Variable products with on-sale variations now work correctly with Sale Products Only filters and product-page smart targeting.
+Fixed: Z-Index setting now works as expected. When two notifications overlap, the one with the higher value appears on top.
+
+2.3.9 [2026-06-09]
+Added: Cart Products content source filter in Product Restrictions (WooCommerce only), pull dynamic notification content from the visitor's live cart.
+Added: Four cart product source toggles within the Cart Products filter: cart line items, related products, upsells, and cross-sells (combined with OR logic inside the filter).
+Added: Real-time cart product pool refresh on the storefront when the WooCommerce cart changes via Ajax, so notifications can switch to updated cart-based products without a full page reload.
+Added: Cart Products filter is available only when WooCommerce is active; Product Restrictions are hidden automatically when WooCommerce is not installed.
+Improved: Revenue attribution for Post Link and Ajax Add to Cart action buttons, clicked revenue uses the matched product line subtotal (price × quantity) and influenced revenue uses the full order total on the same attributed order.
+Improved: Post Link product clicks now store influence attribution before redirect, match variable product orders via parent product IDs, and use a strict 24-hour attribution window.
+Fixed: Influenced revenue is counted together with clicked revenue when a product click converts (clicked line subtotal plus full order influenced total).
+Fixed: Copy, custom link, and other non-product notification clicks no longer create false product-click revenue attribution.
+
+2.3.7 [2026-06-06]
+Added: Content source counter dynamic tags that respect notification content source restrictions: {order_counter}, {product_counter}, {post_counter}, {page_counter}, {comment_counter} (requires Notifal Pro 2.3.3+), and {custom_posttype_counter_{post_type}} (example: {custom_posttype_counter_book}).
+Added: Smart Targeting section in Content Source settings for context-aware dynamic content based on the visitor's current product, post, page, or archive (requires Notifal Pro).
+Added: Content source extensibility hooks and visitor page context pipeline for Smart Targeting integration, including contextual entity filters, scoped pool cache keys, and contextual pool resolution.
+Added: Frontend eligible API page context enrichment (page ID, post type, and product categories) for Smart Targeting storefront requests.
+Improved: Order counting is HPOS-safe and compatible with legacy WooCommerce shop_order post-type storage.
+Improved: Order attribution summary on WooCommerce and EDD order details and order list popup, compact summary card with influenced notifications, linkable clicked products, total clicked revenue, and total influenced revenue shown once, plus expandable per-notification details.
+Fixed: Duplicate "(unknown product)" attribution rows when the same notification already had a clicked product.
+Fixed: Delay-triggered on-page notifications with Prevent Multiple Instances no longer appear instantly when a blocking notification closes; deferred notifications now re-apply their configured delay for smoother UX.
+Fixed: Popup notification z-index now applies to both the backdrop and popup content, so the modal appears above the dimmed overlay instead of behind it.
+Fixed: "Always Show" frequency now re-triggers notifications on page refresh and navigation instead of showing only once per session.
+Improved: Appearance position distance fields (desktop/mobile top, bottom, left, right, and bar offsets) no longer enforce min/max limits, so admins can use negative values for precise placement.
+
+2.3.5 [2026-05-30]
+Added: WooCommerce cart display rules (when WooCommerce is active), target visitors by cart is empty or not empty, specific product in or not in cart, product category in cart, cart total, cart item count, or coupon applied.
+Added: WooCommerce cart dynamic tags for notifications and templates, including {cart_total}, {cart_subtotal}, {cart_discount}, {cart_item_count}, {cart_unique_products}, {cart_coupons}, {cart_url}, {cart_checkout_url}, and {cart_first_product_name}.
+Improved: Cart tag context and preview data now include WooCommerce cart snapshot values for more accurate frontend and editor rendering.
+Changed: Removed {cart_is_empty} from WooCommerce cart dynamic tags list.
+Added: Real-time cart rule evaluation on the storefront, notifications update after Ajax add-to-cart or cart changes without a full page refresh.
+Added: Users display rule visit history filters, target new visitors, return visitors, or first browser session alongside guest/logged-in and role targeting.
+Added: Content Source option, "Show duplicate source" (Content Source > Dynamic Content Restrictions). Default is OFF, so each visitor session avoids repeating the same dynamic source item (product/order/post/page/custom post type) until available items rotate; turn it ON to allow duplicates when needed.
+Added: Order list attribution badge and quick-view popup on WooCommerce and EDD order screens.
+Fixed: WooCommerce order attribution and influenced revenue no longer disappear when an on-hold or pending order is marked completed in admin.
+Fixed: On-page notification “Allow Re-trigger After Hide” now loads fresh dynamic content on every retrigger for all content sources.
+Fixed: Some reported performance issues.
+Improved: Deterministic pool selection and cache clearing on retrigger API requests for consistent alternate content.
+Improved: Display rules save automatically when you save the notification if you forgot to click Save Rule.
+Fixed: Prevent Multiple Instances now shows notifications one at a time, the next can appear after the previous closes.
+Improved: Display rules UI/logic now supports multiple rules as a list structure with unique rule IDs, including multiple rules for the same rule type  with AND/OR combination support in Pro.
+Added: New display rule visibility mode, "Show if" / "Don't show if", so admins can invert rule matching behavior while keeping AND/OR logic.
+Improved: Display rules edit experience, click a rule to edit, clear editing state, and save as update vs add-new with clearer inline guidance.
+Improved: Duplicate-prevention for display rules, exact duplicate rules are blocked in the admin with an informational message.
+Improved: Rule combination logic now consistently falls back to OR as the default when missing or invalid.
+
+2.3.1 [2026-05-29]
+Fixed: Reported issue.
+Fixed: Action Button hash links (#section) no longer show loading; clicks are still tracked.
+Improved: On-page notification animation settings in Appearance.
+
+2.3.0 [2026-05-27]
+Added: All Time date range in OnPage analytics to view data from earliest available records through today.
+Added: Influenced revenue and order attribution on WooCommerce and Easy Digital Downloads order admin screens (order list column and order meta box).
+Added: Pending influence display for unpaid orders (on-hold, pending payment) with tooltip explaining they are not counted in analytics revenue until paid.
+Improved: Influenced orders metric now shows total influenced orders and how many are paid and counted in revenue.
+Improved: Guest checkout revenue attribution using a persistent session cookie stored on the order at checkout.
+Added: WordPress dashboard widget now shows clicked revenue, influenced revenue, influenced orders, and active notifications.
+Added: WooCommerce order attribution on single order edit page and Notifal column on orders list (legacy + HPOS support).
+Improved: Analytics dashboard Refresh now processes pending analytics events immediately and reloads the page so cards, table, and chart show the latest data in one action.
+Fixed: Per-notification influenced revenue calculation now falls back to WooCommerce order totals when conversion rows have empty total values.
+Fixed: Notifal templates remain compatible with Elementor editor loading while being excluded from search engine sitemaps.
+Improved: Dynamic tag detection in template analysis now ignores CSS/JS curly-brace blocks and JavaScript template literals, so only valid Notifal tags are detected.
+Improved: Frontend rendering of Elementor HTML widget content now executes inline template scripts after DOM insertion and applies inline template styles consistently.
+
+2.2.5 [2026-05-23]
+Improved: Notifal templates are excluded from sitemaps.
+Improved: Tested with WordPress 7.0.
+
+2.2.4 [2026-05-12]
+Fixed: OnPage analytics revenue now respects WooCommerce and Easy Digital Downloads store currency and formatting in the dashboard, AJAX table rows, and revenue chart axis labels.
+
+2.2.3 [2026-04-15]
+Fixed: Elementor template widgets now render correctly on frontend on-page notifications.
+
+2.2.2 [2026-04-14]
+Fixed: Some reported bugs fixed.
+
+2.2.1 [2026-04-07]
+Improved: Online chat system in plugin backend.
+
+2.2.0 [2026-03-20]
+Added: Campaign Manager: create campaigns with start/end date windows, assign on-page notifications to a campaign, and use the campaign schedule to control when those notifications are active.
+Added: Campaign analytics filters (Pro): campaign metrics (impressions, clicks, close rate, conversions, users) are available in Notifal Pro v2.1.0 using event-time attribution for campaigns that are currently active.
+Added: Notification scheduling: Start/End date and time fields on each notification to control when it is active (when not driven by a campaign).
+Added: Optional “close after action button”: in Behavior settings you can close the notification when someone clicks a template action button, and choose how long to wait before it closes.
+Improved: Pro analytics: “Close” is counted only when a visitor actually dismisses the notification (not when it hides on a timer, after a form, or automatically).
+Fixed: An issue with Ajax Add to Cart for WooCommerce notifications.
+Fixed: “Above header” top bar placement on sticky headers no longer leaves a white gap or overlaps the site header after scrolling back to the top.
+
+2.1.5 [2025-03-09]
+Added: Customizable loading text for Action Button when link type is Post Link or Custom Link, you can set the text shown while redirecting (default "Loading..."); leave empty to show no loading text and redirect after a short delay. Available in both Elementor and Block Editor.
+Added: Ajax Add to Cart (WooCommerce), new Action Button link type when WooCommerce is active. Adds the notification's product to the cart via AJAX with settings for quantity, redirect after add (stay on page, cart, or checkout), and success text.
+Improved: On-page notifications now work better with page caching and clear their internal caches when you save settings, toggle status, or activate/update the plugin, so changes are reflected without extra steps.
+Fixed: On-page notification preview now correctly respects device-specific position settings for mobile and tablet viewports so previews match the live frontend behavior.
+Fixed: On-page notifications that are set to appear again after being closed now refresh their content more reliably, even on sites using caching.
+
+2.1.0 [2025-02-26]
+Added: On-page notification preview: see how your notification will look on your site before publishing. Use the Preview button on the edit page or in the notifications list to open a live preview on your site and fine-tune design and placement with confidence.
+Added: Search for notifications in Explore Pre-created Notifications.
+Added: URL targeting options in Pro now support more precise campaign and traffic-source conditions.
+Fixed: Improved reliability of template selection and listing for on-page notifications.
+Fixed: Ensured Elementor and Block Editor template sections only show templates relevant to each builder.
+Fixed: Template previews now look and behave the same as your live notifications on the frontend.
+Fixed: When a notification is set to show immediately on page load, the product or post image in the notification now appears correctly.
+Improved: Appearance improvements in Explore Pre-created Notifications.
+Improved: Featured Image Auto source now follows template tags in Block Editor and Elementor.
+Improved: Notifications that use templates now load styles and scripts from your theme and builders more reliably, so third‑party widgets (like countdown timers) work correctly inside notifications.
+Improved: Better handling of template assets across different themes to keep everything compatible and fast.
+Improved: WooCommerce and other plugin shortcodes now render correctly inside notification templates.
+
+2.0.2 [2025-02-19]
+Fixed: Audio Settings, default notification sounds now work correctly.
+
+2.0.1 [2025-02-14]
+Added: In Explore Pre-created Notifications, you can request an Elementor or Block Editor version for any template that does not yet support your preferred builder; submit the request from the template details and we will create it and notify you when it is ready.
+Added: The pre-created notifications list now shows how long until the list refreshes (cache countdown), so you know when new or updated templates will appear.
+Improved: OnPage Notifications list page no longer waits for the pre-created section to load; the section loads in the background with an improved loading state and timeout handling.
+
+2.0.0 [2025-02-08]
+Important: Complete code transformation from 1.x. All previous notifications will be removed after upgrade. Create your notifications again (you can import new notifications with a simple click from the template library). If you need your previous notifications, we recommend backing up your database before updating.
+Added: Enhanced on-page notifications with advanced customization and smart targeting.
+Added: Powerful analytics with deep insights into notification performance and visitor behavior.
+Added: Create notification templates with Elementor (when installed) or the WordPress Block Editor.
+Added: Template library updated daily with new ready-to-use templates (topbars, popups, floating boxes); browse in the backend and import any template with one click.
+Added: Enhanced tags system for better organization and smarter notification targeting.
+Removed: Fake sales notifications feature (replaced by real social proof and conversion-focused alternatives).
+Improved: Plugin rebuilt from the ground up for a more professional and effective experience.
+
+1.3.2 [2025-07-07]
+Improved: Security compliance updates.
+
+1.3.1 [2025-5-26]
+Fixed: Issue with the frontend display of notifications
+Improved: Display update popup only for major version changes.
+
+1.3.0 [2025-5-23]
+Added: New pre-created notifications using Elementor templates
+Added: Notification preview feature before activation
+Added: New notification template available for free in the Lite version
+Added: Tutorial videos added to the backend
+Added: Live chat support integrated into the backend
+Improved: Backend user experience (UX) for better usability
+Fixed: Issues related to Elementor templates
+
+1.2.1 [2025-4-13]
+Fixed: Various reported bugs for improved performance.
+
+1.2.0 [2025-3-8]
+Added: Ability to create new notification templates using Elementor.
+Added: Support for rendering shortcodes in notification text.
+Added: Setting to display in-stock or out-of-stock products.
+Added: Mobile position settings.
+Fixed: Various reported bugs for improved performance.
+
+1.1.8 [2025-01-29]
+Improved: Replacement of {product_link} tag in <a> elements.
+
+1.1.7 [2025-01-21]
+Added: Translations added for multiple languages.
+
+1.1.6 [2025-01-07]
+Fixed: some reported bugs for better performance.
+
+1.1.5 [2024-12-31]
+Added: Additional templates added.
+
+1.1.4 [2024-12-26]
+Fixed: Some reported bugs fixed.
+
+1.1.3 [2024-12-25]
+Enhanced: Addressed and resolved various security vulnerabilities to improve overall plugin safety and reliability.
+
+1.1.2 [2024-12-23]
+Enhanced: Addressed and resolved various security vulnerabilities to improve overall plugin safety and reliability.
+
+1.1.1 [2024-12-19]
+- Fixed: Some analytics reports have been fixed.
+
+1.1.0 [2024-12-11]
+- Added: A new analytics dashboard to track notification metrics, including impressions, clicks, closes, and sales.
+- Improved: Frontend data handling for better performance and reliability.
+- Fixed: Issue with clicking the action button on notifications.
+
+1.0.1 [2024-12-03]
+- Fixed: PHP translation issue causing notices in certain environments.
+
+1.0.0 [2024-11-28]
+- Initial release.

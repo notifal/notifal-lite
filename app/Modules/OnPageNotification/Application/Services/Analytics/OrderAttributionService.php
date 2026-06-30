@@ -1028,8 +1028,8 @@ class OrderAttributionService
         // Remove duplicate cookie-influence rows when a product click exists for the same notification
         $rows = $this->normalizeAttributionRows($rows);
 
-        // Backfill display revenue for pending rows from order line items when possible
-        $rows = $this->backfillPendingDisplayRevenue($orderId, $rows);
+        // Backfill clicked revenue from order line items when stored revenue is missing
+        $rows = $this->backfillDisplayProductRevenue($orderId, $rows);
 
         /**
          * Filter the order attribution data before it is displayed.
@@ -1089,64 +1089,180 @@ class OrderAttributionService
     }
 
     /**
-     * Backfill product revenue on pending rows for admin display only.
+     * Backfill product revenue on attribution rows for admin display.
      *
-     * Pending snapshots store product_revenue as 0 until payment is completed.
+     * Covers pending snapshots and paid conversions where product_id is set but
+     * product_revenue was stored as zero (for example after delayed payment when
+     * live click lookup no longer matches). Resolves parent/variation ID differences.
      *
      * @param int   $orderId WooCommerce order ID or EDD payment ID
      * @param array $rows    Attribution rows
      * @return array Rows with display revenue when applicable
      * @since 2.3.7
+     * @since 2.4.1 Backfills all verified product-click rows, not only pending snapshots
      * @author Hossein <hossein@notifal.com>
      */
-    private function backfillPendingDisplayRevenue(int $orderId, array $rows): array
+    private function backfillDisplayProductRevenue(int $orderId, array $rows): array
     {
+        // Skip when there is nothing to enrich or the order ID is invalid
         if (empty($rows) || $orderId <= 0) {
             return $rows;
         }
 
-        // Build a map of product line totals from the WooCommerce order when available
-        $lineTotals = [];
+        // Build a map of order line subtotals keyed by product and variation IDs
+        $lineTotals = $this->buildOrderLineTotalsMap($orderId);
 
-        if (function_exists('wc_get_order')) {
-            $order = wc_get_order($orderId);
-
-            if ($order) {
-                foreach ($order->get_items() as $item) {
-                    if (!($item instanceof \WC_Order_Item_Product)) {
-                        continue;
-                    }
-
-                    $productId = (int) $item->get_product_id();
-                    $variationId = (int) $item->get_variation_id();
-                    $resolvedId = $variationId > 0 ? $variationId : $productId;
-
-                    if ($resolvedId <= 0) {
-                        continue;
-                    }
-
-                    $lineTotals[$resolvedId] = (float) $item->get_total();
-                }
-            }
+        if (empty($lineTotals)) {
+            return $rows;
         }
 
         foreach ($rows as &$row) {
-            $productId      = (int) ($row['product_id'] ?? 0);
-            $productRevenue = (float) ($row['product_revenue'] ?? 0);
-            $isPending      = !empty($row['is_pending']);
-
-            // Only backfill pending rows that represent a real product click
-            if (!$isPending || $productId <= 0 || $productRevenue > 0) {
+            // Only enrich rows that represent a real clicked product attribution
+            if (!$this->isClickedProductAttributionRow($row)) {
                 continue;
             }
 
-            if (isset($lineTotals[$productId])) {
-                $row['product_revenue'] = $lineTotals[$productId];
+            $productId      = (int) ($row['product_id'] ?? 0);
+            $productRevenue = (float) ($row['product_revenue'] ?? 0);
+
+            // Keep rows that already have a stored clicked revenue value
+            if ($productId <= 0 || $productRevenue > 0) {
+                continue;
+            }
+
+            // Resolve line subtotal (price × quantity) from the order items
+            $resolvedRevenue = $this->resolveOrderLineTotalForProductId($productId, $lineTotals);
+
+            if ($resolvedRevenue > 0) {
+                $row['product_revenue'] = $resolvedRevenue;
             }
         }
         unset($row);
 
         return $rows;
+    }
+
+    /**
+     * Determine whether an attribution row represents a clicked product conversion.
+     *
+     * Cookie and fallback influence rows must not receive clicked revenue backfill.
+     *
+     * @param array $row Attribution row
+     * @return bool True when the row is a verified product-click attribution
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function isClickedProductAttributionRow(array $row): bool
+    {
+        $productId = (int) ($row['product_id'] ?? 0);
+
+        if ($productId <= 0) {
+            return false;
+        }
+
+        $attributionType = (string) ($row['attribution_type'] ?? '');
+
+        // Cookie/session and fallback rows are influence-only, not product clicks
+        if ($attributionType === 'fallback' || $attributionType === 'pending_cookie') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Build a map of WooCommerce order line subtotals keyed by product and variation IDs.
+     *
+     * @param int $orderId WooCommerce order ID
+     * @return array<int, float> Map of product ID to line subtotal
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function buildOrderLineTotalsMap(int $orderId): array
+    {
+        $lineTotals = [];
+
+        if (!function_exists('wc_get_order')) {
+            return $lineTotals;
+        }
+
+        $order = wc_get_order($orderId);
+
+        if (!$order) {
+            return $lineTotals;
+        }
+
+        foreach ($order->get_items() as $item) {
+            if (!($item instanceof \WC_Order_Item_Product)) {
+                continue;
+            }
+
+            $productId   = (int) $item->get_product_id();
+            $variationId = (int) $item->get_variation_id();
+            $resolvedId  = $variationId > 0 ? $variationId : $productId;
+            $lineTotal   = (float) $item->get_total();
+
+            if ($resolvedId <= 0) {
+                continue;
+            }
+
+            // Index by variation/simple ID and parent ID for cross-lookup
+            $lineTotals[$resolvedId] = $lineTotal;
+
+            if ($productId > 0) {
+                $lineTotals[$productId] = $lineTotal;
+            }
+        }
+
+        return $lineTotals;
+    }
+
+    /**
+     * Resolve an order line subtotal for a product or variation ID.
+     *
+     * @param int              $productId  Product or variation ID from attribution data
+     * @param array<int,float> $lineTotals Map from buildOrderLineTotalsMap()
+     * @return float Line subtotal or 0 when not found
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function resolveOrderLineTotalForProductId(int $productId, array $lineTotals): float
+    {
+        if ($productId <= 0 || empty($lineTotals)) {
+            return 0.0;
+        }
+
+        if (isset($lineTotals[$productId])) {
+            return (float) $lineTotals[$productId];
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return 0.0;
+        }
+
+        $product = wc_get_product($productId);
+
+        if ($product && $product->is_type('variation')) {
+            $parentId = (int) $product->get_parent_id();
+
+            if ($parentId > 0 && isset($lineTotals[$parentId])) {
+                return (float) $lineTotals[$parentId];
+            }
+        }
+
+        foreach ($lineTotals as $orderProductId => $lineTotal) {
+            $orderProduct = wc_get_product((int) $orderProductId);
+
+            if (!$orderProduct || !$orderProduct->is_type('variation')) {
+                continue;
+            }
+
+            if ((int) $orderProduct->get_parent_id() === $productId) {
+                return (float) $lineTotal;
+            }
+        }
+
+        return 0.0;
     }
 
     /**
