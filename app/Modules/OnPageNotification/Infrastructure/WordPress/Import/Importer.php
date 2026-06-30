@@ -7,6 +7,7 @@ use Notifal\Modules\OnPageNotification\Application\Services\Settings\AppearanceS
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
+use Notifal\Modules\OnPageNotification\Application\Services\OnPageImportSettingsNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesDataNormalizer;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\DisplayRulesService;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationSaveService;
@@ -29,6 +30,41 @@ defined('ABSPATH') || exit;
  */
 class Importer
 {
+    /**
+     * Import a single notification from a decoded JSON array (pasted JSON flow).
+     *
+     * @since 2.4.1
+     * @param array $json Decoded Notifal export JSON.
+     * @return array Import result with success, failed, errors, and first_title keys.
+     */
+    public static function importFromJsonArray(array $json): array
+    {
+        // Sanitize title for response metadata only; importer sanitizes all stored fields.
+        $firstTitle = Helper::sanitizeInput($json['notification']['title'] ?? __('Imported Notification', 'notifal'), 'text');
+
+        // Run the shared single-notification import pipeline.
+        $importResult = self::importFromData($json);
+
+        // Map importer result to the standard import response shape.
+        if (!empty($importResult['success'])) {
+            return [
+                'success' => 1,
+                'failed' => 0,
+                'errors' => [],
+                'first_title' => $firstTitle,
+                'is_zip' => false,
+            ];
+        }
+
+        return [
+            'success' => 0,
+            'failed' => 1,
+            'errors' => [$importResult['error'] ?? __('Import failed.', 'notifal')],
+            'first_title' => '',
+            'is_zip' => false,
+        ];
+    }
+
     /**
      * Import one or more notifications from a file path.
      * Detects file type (JSON or ZIP), and imports accordingly.
@@ -283,6 +319,9 @@ class Importer
             $contentSourceService = notifal_app(ContentSourceService::class);
             $displayRulesService = notifal_app(DisplayRulesService::class);
 
+            // Normalize AI-shaped or inconsistent settings before service sanitization.
+            $settings = OnPageImportSettingsNormalizer::normalize($settings);
+
             // Get content source settings and update template reference to the (existing or new) imported template
             $contentSourceSettings = $settings['content_source'] ?? [];
             if ($importedTemplateId) {
@@ -321,7 +360,11 @@ class Importer
 
             // Save additional postmeta that should be set during import
             update_post_meta($postId, '_notifal_notif_enabled', 0); // Disable imported notifications by default for safety
-            update_post_meta($postId, '_notifal_content_source_type', $settings['content_source_type'] ?? 'dynamic');
+            update_post_meta(
+                $postId,
+                '_notifal_content_source_type',
+                $validatedSettings['content_source_settings']['content_source_type'] ?? 'dynamic'
+            );
 
             return ['success' => true];
         } catch (Exception $e) {

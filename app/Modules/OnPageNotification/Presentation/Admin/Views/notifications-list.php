@@ -93,6 +93,9 @@ do_action(ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_BEFORE, $notification_total, $
 <!-- Pre-created Notifications Modal -->
 <?php include_once __DIR__ . '/components/precreated-notifications-modal.php'; ?>
 
+<!-- OnPage AI Prompt Modal -->
+<?php include_once __DIR__ . '/components/onpage-ai-prompt-modal.php'; ?>
+
 <!-- Import Modal -->
 <div class="notifal-modal-backdrop" id="notifal-import-modal">
     <div class="notifal-modal">
@@ -103,7 +106,7 @@ do_action(ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_BEFORE, $notification_total, $
 
         <div class="notifal-modal-body">
             <p class="notifal-text-center notifal-text-muted">
-                <?php esc_html_e('Upload a JSON or ZIP file to import notifications. Make sure the file was exported from a trusted source.', 'notifal'); ?>
+                <?php esc_html_e('Import notifications from a JSON or ZIP file, or paste exported JSON directly. Only use data from a trusted Notifal export.', 'notifal'); ?>
             </p>
 
             <form id="notifal-import-form" enctype="multipart/form-data" class="notifal-mt-20">
@@ -112,37 +115,95 @@ do_action(ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_BEFORE, $notification_total, $
                 wp_nonce_field('notifal_import_onpage_notification_ajax_nonce', '_wpnonce', false);
                 ?>
                 <input type="hidden" name="action" value="notifal_import_onpage_notification_ajax">
+                <input type="hidden" name="notifal_import_source" id="notifal_import_source" value="file">
 
-                <div class="notifal-form-group">
-                    <div class="notifal-file-upload-area" id="notifal-file-upload-area">
-                        <div class="notifal-file-upload-icon">
-                            <?php echo NotifalIconService::render('cloud-arrow-up', 48); ?>
+                <div class="notifal-import-mode-switch" role="tablist" aria-label="<?php esc_attr_e('Import method', 'notifal'); ?>">
+                    <button type="button"
+                            class="notifal-import-mode-btn is-active"
+                            id="notifal-import-mode-file"
+                            role="tab"
+                            aria-selected="true"
+                            aria-controls="notifal-import-panel-file"
+                            data-notifal-import-mode="file">
+                        <?php esc_html_e('Upload file', 'notifal'); ?>
+                    </button>
+                    <button type="button"
+                            class="notifal-import-mode-btn"
+                            id="notifal-import-mode-json"
+                            role="tab"
+                            aria-selected="false"
+                            aria-controls="notifal-import-panel-json"
+                            data-notifal-import-mode="json">
+                        <?php esc_html_e('Paste JSON', 'notifal'); ?>
+                    </button>
+                </div>
+
+                <div class="notifal-import-panel" id="notifal-import-panel-file" role="tabpanel" aria-labelledby="notifal-import-mode-file">
+                    <div class="notifal-form-group">
+                        <div class="notifal-file-upload-area" id="notifal-file-upload-area">
+                            <div class="notifal-file-upload-icon">
+                                <?php echo NotifalIconService::render('cloud-arrow-up', 48); ?>
+                            </div>
+                            <div class="notifal-file-upload-text">
+                                <span class="notifal-file-upload-title"><?php esc_html_e('Drop your file here', 'notifal'); ?></span>
+                                <span class="notifal-file-upload-subtitle"><?php esc_html_e('or click to browse', 'notifal'); ?></span>
+                            </div>
+                            <div class="notifal-file-upload-formats">
+                                <?php esc_html_e('Supported formats: JSON, ZIP (max 10MB)', 'notifal'); ?>
+                            </div>
+                            <input type="file"
+                                   id="notifal_import_file"
+                                   name="notifal_import_file"
+                                   accept=".json,.zip"
+                                   class="notifal-file-input">
                         </div>
-                        <div class="notifal-file-upload-text">
-                            <span class="notifal-file-upload-title"><?php esc_html_e('Drop your file here', 'notifal'); ?></span>
-                            <span class="notifal-file-upload-subtitle"><?php esc_html_e('or click to browse', 'notifal'); ?></span>
+
+                        <div class="notifal-file-info notifal-hidden" id="notifal-file-info">
+                            <div class="notifal-file-info-content">
+                                <span class="notifal-file-info-icon">
+                                    <?php echo NotifalIconService::render('file-earmark1', 20); ?>
+                                </span>
+                                <span class="notifal-file-info-name" id="notifal-file-name"></span>
+                                <button type="button" class="notifal-file-remove" id="notifal-file-remove" aria-label="<?php esc_attr_e('Remove file', 'notifal'); ?>">
+                                    <?php echo NotifalIconService::render('x-circle', 16); ?>
+                                </button>
+                            </div>
                         </div>
-                        <div class="notifal-file-upload-formats">
-                            <?php esc_html_e('Supported formats: JSON, ZIP (max 10MB)', 'notifal'); ?>
-                        </div>
-                        <input type="file"
-                               id="notifal_import_file"
-                               name="notifal_import_file"
-                               accept=".json,.zip"
-                               class="notifal-file-input"
-                               required>
                     </div>
+                </div>
 
-                    <div class="notifal-file-info notifal-hidden" id="notifal-file-info">
-                        <div class="notifal-file-info-content">
-                            <span class="notifal-file-info-icon">
-                                <?php echo NotifalIconService::render('file-earmark1', 20); ?>
-                            </span>
-                            <span class="notifal-file-info-name" id="notifal-file-name"></span>
-                            <button type="button" class="notifal-file-remove" id="notifal-file-remove" aria-label="Remove file">
-                                <?php echo NotifalIconService::render('x-circle', 16); ?>
-                            </button>
+                <div class="notifal-import-panel notifal-hidden" id="notifal-import-panel-json" role="tabpanel" aria-labelledby="notifal-import-mode-json">
+                    <div class="notifal-form-group">
+                        <div class="notifal-alert notifal-info notifal-import-ai-bridge-notice notifal-hidden" id="notifal-import-ai-bridge-notice" role="status">
+                            <p><?php esc_html_e('Paste the full notification JSON from your AI assistant below. Confirm it is from a trusted source, then import. The notification will be saved as a disabled draft for your review.', 'notifal'); ?></p>
+                            <div class="notifal-import-ai-bridge-actions">
+                                <button type="button" class="notifal-button secondary" id="notifal-import-ai-bridge-dismiss">
+                                    <?php esc_html_e('Dismiss', 'notifal'); ?>
+                                </button>
+                            </div>
                         </div>
+
+                        <div class="notifal-alert notifal-info notifal-import-security-notice" role="note">
+                            <p><?php esc_html_e('Security notice: Only paste JSON that you exported from a trusted reference. Untrusted data may contain harmful scripts or settings. Imported notifications are saved as disabled drafts so you can review them before publishing.', 'notifal'); ?></p>
+                        </div>
+
+                        <label class="notifal-label" for="notifal_import_json"><?php esc_html_e('Exported JSON', 'notifal'); ?></label>
+                        <textarea id="notifal_import_json"
+                                  name="notifal_import_json"
+                                  class="notifal-input notifal-import-json-textarea"
+                                  rows="10"
+                                  spellcheck="false"
+                                  autocomplete="off"
+                                  placeholder="<?php esc_attr_e('Paste your exported notification JSON here...', 'notifal'); ?>"></textarea>
+                        <span class="notifal-help-text"><?php esc_html_e('Paste a single notification JSON export. ZIP bundles with media must be uploaded as a file.', 'notifal'); ?></span>
+
+                        <label class="notifal-import-json-confirm">
+                            <input type="checkbox"
+                                   id="notifal_import_json_confirmed"
+                                   name="notifal_import_json_confirmed"
+                                   value="1">
+                            <span><?php esc_html_e('I confirm this JSON is from a trusted source and I have reviewed it for safety.', 'notifal'); ?></span>
+                        </label>
                     </div>
                 </div>
 

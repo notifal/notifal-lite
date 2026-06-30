@@ -252,7 +252,7 @@ class ConversionTracker
                 'product_click_id' => $mostRecentClick['id'],
                 'order_id' => $orderId,
                 'product_id' => $productId,
-                'product_revenue' => $data['item_total'],
+                'product_revenue' => $this->resolveOrderProductLineTotal((int) $productId, $productData),
                 'total_order_value' => $this->resolveOrderTotalValue($order),
                 'currency' => $order->get_currency(),
                 'click_timestamp' => $mostRecentClick['click_timestamp'],
@@ -759,10 +759,10 @@ class ConversionTracker
             $date = current_time('Y-m-d');
             $this->databaseRepository->updateDailyStats($conversionData['notification_id'], 'conversion', $date);
 
-            // Clicked revenue: line subtotal (price × qty) for the matched product click only.
-            $revenue = (float)($conversionData['product_revenue'] ?? 0);
-            $productClickId = (int) ($conversionData['product_click_id'] ?? 0);
-            if ($revenue > 0 && $productClickId > 0) {
+            // Clicked revenue: line subtotal (price × qty) for verified product-click conversions only
+            $revenue        = (float) ($conversionData['product_revenue'] ?? 0);
+            $productId      = (int) ($conversionData['product_id'] ?? 0);
+            if ($revenue > 0 && $productId > 0) {
                 $this->updateDailyRevenue($conversionData['notification_id'], $revenue, $date);
             }
 
@@ -1165,10 +1165,8 @@ class ConversionTracker
                 continue;
             }
 
-            // Resolve line revenue from the current order totals
-            $itemTotal = $productId > 0 && isset($productData[$productId])
-                ? (float) $productData[$productId]['item_total']
-                : 0.0;
+            // Resolve line revenue from order totals (handles parent/variation ID differences)
+            $itemTotal = $this->resolveOrderProductLineTotal($productId, $productData);
 
             $clickId          = 0;
             $clickTimestamp   = current_time('mysql');
@@ -1193,13 +1191,20 @@ class ConversionTracker
                 $clickTimestamp = $this->resolveStoredAttributionClickTimestamp($order, $notificationId);
             }
 
+            // Checkout snapshot rows with pending_product_click were validated at checkout
+            $isVerifiedProductClick = $productId > 0
+                && (
+                    $clickId > 0
+                    || $attributionType === 'pending_product_click'
+                    || $attributionType === 'woocommerce'
+                );
+
             if (!$this->recordProductConversion([
                 'notification_id' => $notificationId,
                 'product_click_id' => $clickId,
                 'order_id' => $orderId,
                 'product_id' => $productId,
-                // Keep clicked revenue strict: only rows tied to a stored product click can add it.
-                'product_revenue' => $clickId > 0 ? $itemTotal : 0.0,
+                'product_revenue' => ($isVerifiedProductClick && $itemTotal > 0) ? $itemTotal : 0.0,
                 'total_order_value' => $this->resolveOrderTotalValue($order),
                 'currency' => $order->get_currency(),
                 'click_timestamp' => $clickTimestamp,
@@ -1703,6 +1708,61 @@ class ConversionTracker
         }
 
         return [];
+    }
+
+    /**
+     * Resolve the WooCommerce order line subtotal for a product or variation ID.
+     *
+     * Matches parent product IDs when clicks were stored against a variable parent
+     * but the order line contains a variation ID (or the reverse).
+     *
+     * @param int   $productId   Product or variation ID from attribution data
+     * @param array $productData Order line map keyed by product ID with item_total and quantity
+     * @return float Line subtotal (price × quantity) or 0 when not found
+     * @since 2.4.1
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function resolveOrderProductLineTotal(int $productId, array $productData): float
+    {
+        // Reject invalid product IDs or empty order line maps
+        if ($productId <= 0 || empty($productData)) {
+            return 0.0;
+        }
+
+        // Direct match against the order line product or variation ID
+        if (isset($productData[$productId]['item_total'])) {
+            return (float) $productData[$productId]['item_total'];
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return 0.0;
+        }
+
+        // Attribution may reference a variation while the click stored the parent ID
+        $product = wc_get_product($productId);
+
+        if ($product && $product->is_type('variation')) {
+            $parentId = (int) $product->get_parent_id();
+
+            if ($parentId > 0 && isset($productData[$parentId]['item_total'])) {
+                return (float) $productData[$parentId]['item_total'];
+            }
+        }
+
+        // Attribution may reference the parent while the order line uses a variation ID
+        foreach ($productData as $orderProductId => $data) {
+            $orderProduct = wc_get_product((int) $orderProductId);
+
+            if (!$orderProduct || !$orderProduct->is_type('variation')) {
+                continue;
+            }
+
+            if ((int) $orderProduct->get_parent_id() === $productId) {
+                return (float) ($data['item_total'] ?? 0);
+            }
+        }
+
+        return 0.0;
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Assets;
 
+use Notifal\Modules\OnPageNotification\Application\Services\OnPageAiPromptConfig;
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
@@ -64,6 +65,7 @@ class ListAssets
 
         // Enqueue assets
         self::enqueueImportAssets();
+        self::enqueueAiPromptAssets();
         self::enqueueStatusToggleAssets();
         self::enqueueArchiveAssets();
 
@@ -84,21 +86,55 @@ class ListAssets
      */
     private static function enqueueImportAssets(): void
     {
-        // Load import translations
+        // Load import translations for the list screen.
         $importTranslations = LangLoader::load(__NAMESPACE__, 'import.php');
 
-        // Localize import translations for shared admin script
+        // Localize import translations for shared admin script.
         wp_localize_script(
             'notifal-shared-admin-js',
             'notifalL10n',
             $importTranslations
         );
 
-        // Localize AJAX configuration for import functionality
+        // Localize AJAX configuration for import functionality.
         wp_localize_script(
             'notifal-shared-admin-js',
             'NotifalOnPageImportAjax',
             self::getImportAjaxConfig()
+        );
+    }
+
+    /**
+     * Enqueue AI prompt generator assets for the OnPage notifications list screen.
+     * Loads script, styles, translations, and prompt configuration.
+     *
+     * @return void
+     * @since 2.4.1
+     */
+    private static function enqueueAiPromptAssets(): void
+    {
+        notifal_enqueue_style(
+            'notifal-onpage-ai-prompt',
+            Paths::cssAdminBuildUrl() . 'OnPageAiPromptStyle.css',
+            ['notifal-shared-admin-css']
+        );
+
+        notifal_enqueue_script(
+            'notifal-onpage-ai-prompt',
+            Paths::jsAdminBuildUrl() . 'OnPageAiPromptScript.js',
+            ['notifal-shared-admin-js']
+        );
+
+        wp_localize_script(
+            'notifal-onpage-ai-prompt',
+            'notifalOnPageAiPromptL10n',
+            LangLoader::load(__NAMESPACE__, 'ai-prompt.php')
+        );
+
+        wp_localize_script(
+            'notifal-onpage-ai-prompt',
+            'NotifalOnPageAiPromptConfig',
+            OnPageAiPromptConfig::getConfig()
         );
     }
 
