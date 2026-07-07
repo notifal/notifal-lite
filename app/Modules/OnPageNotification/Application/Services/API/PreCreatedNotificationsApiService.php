@@ -6,6 +6,7 @@ use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\HttpClientTrait;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationBuilderTypes;
 use Notifal\Shared\Utils\Helper;
 
 /**
@@ -170,22 +171,22 @@ class PreCreatedNotificationsApiService
     }
 
     /**
-     * Submit a template request to notifal.com for a builder type (Elementor or Block Editor).
-     * Used when a template does not yet have a file for that builder; the request is stored
-     * on the server, info@notifal.com is notified, and the user receives a confirmation email.
+     * Submit a template request to notifal.com for a builder type.
+     *
+     * Disabled: template request flow is not used in the client plugin for now.
      *
      * @since 2.0.0
      * @param int    $notificationId Notification (template) ID on notifal.com
-     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
+     * @param string $builderType    Builder type: elementor, block-editor, or html-builder
      * @return array<string, mixed>  Result with 'success' and optional 'error' or 'message'
      */
+    /*
     public function submitTemplateRequest(int $notificationId, string $builderType): array
     {
-        $validTypes = ['elementor', 'block-editor'];
-        if (!in_array($builderType, $validTypes, true)) {
+        if (!PreCreatedNotificationBuilderTypes::isValidImportFileType($builderType)) {
             return [
                 'success' => false,
-                'error'   => __('Invalid builder type. Must be elementor or block-editor.', 'notifal'),
+                'error'   => __('Invalid builder type.', 'notifal'),
             ];
         }
 
@@ -216,7 +217,6 @@ class PreCreatedNotificationsApiService
             ],
         ];
 
-        /** This filter is documented in makeApiRequest. */
         $args = apply_filters(FilterHooks::PRE_CREATED_NOTIFICATIONS_API_REQUEST_ARGS, $args, $url, $body);
 
         $response = wp_remote_post($url, $args);
@@ -233,7 +233,6 @@ class PreCreatedNotificationsApiService
             return [
                 'success' => false,
                 'error'   => sprintf(
-                    /* translators: %d: HTTP status code */
                     __('Request failed with status %d. Please try again later.', 'notifal'),
                     $code
                 ),
@@ -260,6 +259,7 @@ class PreCreatedNotificationsApiService
             'message' => isset($data['message']) ? $data['message'] : __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),
         ];
     }
+    */
 
     /**
      * Get taxonomy terms for filtering options from notifal.com API.
@@ -715,16 +715,15 @@ class PreCreatedNotificationsApiService
      *
      * @since 2.0.0
      * @param int    $notificationId Notification ID
-     * @param string $fileType       File type: 'elementor' or 'block-editor'
+     * @param string $fileType       File type: elementor, block-editor, or html-builder
      * @return array<string, mixed>  API response with download URL or error
      */
     public function getDownloadUrl(int $notificationId, string $fileType): array
     {
-        $validTypes = ['elementor', 'block-editor'];
-        if (!in_array($fileType, $validTypes, true)) {
+        if (!PreCreatedNotificationBuilderTypes::isValidImportFileType($fileType)) {
             return [
                 'success' => false,
-                'error'   => __('Invalid file type. Must be elementor or block-editor.', 'notifal'),
+                'error'   => __('Invalid file type.', 'notifal'),
             ];
         }
 

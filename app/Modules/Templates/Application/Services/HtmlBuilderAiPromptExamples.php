@@ -109,6 +109,21 @@ class HtmlBuilderAiPromptExamples
                 ),
                 'primary_color' => '#0D9488',
             ),
+            array(
+                'id'            => 'pattern-popup-multistep',
+                'title'         => __('Popup — multi-step offer or opt-in', 'notifal'),
+                'layout_slug'   => 'popup',
+                'use_case_slug' => 'grow-email-list',
+                'industry'      => __(
+                    'Describe your niche and what you are promoting. Examples: "WooCommerce skincare store", "Online coaching for freelancers", "Local gym with trial memberships".',
+                    'notifal'
+                ),
+                'user_goal'     => __(
+                    'Describe a 2–3 step flow inside one popup. Example structure: Step 1 — short yes/no question or teaser offer with a custom-trigger button. Step 2 — email field or coupon reveal. Step 3 (optional) — thank-you or copy-code CTA. Ask the AI to wrap each step in unique notifal-* classes, hide later steps with CSS, and use data-notifal-action="custom-trigger" with data-hide-elements / data-show-elements on step-advancing buttons. Tone: friendly and low pressure.',
+                    'notifal'
+                ),
+                'primary_color' => '#7e2bd2',
+            ),
         );
 
         /**

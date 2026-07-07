@@ -393,4 +393,324 @@ class AnalyticsHelper
         // Require a stable identifier or action type so rows remain distinguishable.
         return ($buttonMeta['button_id'] ?? '') !== '' || ($buttonMeta['button_action'] ?? '') !== '';
     }
+
+    /**
+     * Default WooCommerce order status slugs treated as paid for conversion analytics.
+     *
+     * @var string[]
+     * @since 2.4.2
+     */
+    private static $defaultPaidWooOrderStatuses = ['processing', 'completed'];
+
+    /**
+     * Return WooCommerce order status slugs that count as paid for conversion tracking and revenue.
+     *
+     * Filterable via {@see FilterHooks::ONPAGE_CONVERSION_PAID_ORDER_STATUSES}.
+     *
+     * @return string[] Sanitized unique status slugs without the `wc-` prefix.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function getPaidWooCommerceOrderStatuses(): array
+    {
+        // Allow developers to register custom gateway or store-specific paid statuses.
+        $statuses = apply_filters(
+            FilterHooks::ONPAGE_CONVERSION_PAID_ORDER_STATUSES,
+            self::$defaultPaidWooOrderStatuses
+        );
+
+        if (!is_array($statuses)) {
+            $statuses = self::$defaultPaidWooOrderStatuses;
+        }
+
+        $sanitized = [];
+
+        foreach ($statuses as $status) {
+            // Normalize each slug the same way WooCommerce stores order status keys.
+            $slug = sanitize_key((string) $status);
+
+            if ($slug !== '') {
+                $sanitized[$slug] = $slug;
+            }
+        }
+
+        if (empty($sanitized)) {
+            return self::$defaultPaidWooOrderStatuses;
+        }
+
+        return array_values($sanitized);
+    }
+
+    /**
+     * Whether a WooCommerce order status slug counts as paid for Notifal conversion analytics.
+     *
+     * @param string $status Order status slug (without `wc-` prefix).
+     * @return bool True when the status is in the paid list.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function isPaidWooCommerceOrderStatus(string $status): bool
+    {
+        return in_array(sanitize_key($status), self::getPaidWooCommerceOrderStatuses(), true);
+    }
+
+    /**
+     * Whether a WooCommerce order has reached a paid status for conversion analytics.
+     *
+     * @param int $orderId WooCommerce order ID.
+     * @return bool True when the order exists and its status is paid.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function isPaidWooCommerceOrder(int $orderId): bool
+    {
+        if ($orderId <= 0 || !function_exists('wc_get_order')) {
+            return false;
+        }
+
+        $order = wc_get_order($orderId);
+
+        if (!$order instanceof \WC_Order) {
+            return false;
+        }
+
+        return self::isPaidWooCommerceOrderStatus((string) $order->get_status());
+    }
+
+    /**
+     * Resolve a WooCommerce order line subtotal from a checkout product map.
+     *
+     * Handles parent/variation ID differences between stored clicks and order lines.
+     *
+     * @param int   $productId   Product or variation ID from attribution data.
+     * @param array $productData Map keyed by product ID with an item_total key.
+     * @return float Line subtotal (price × quantity) or 0 when not found.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function resolveOrderLineTotalFromProductData(int $productId, array $productData): float
+    {
+        // Reject invalid product IDs or empty order line maps.
+        if ($productId <= 0 || empty($productData)) {
+            return 0.0;
+        }
+
+        // Direct match against the order line product or variation ID.
+        if (isset($productData[$productId]['item_total'])) {
+            return (float) $productData[$productId]['item_total'];
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return 0.0;
+        }
+
+        // Attribution may reference a variation while the click stored the parent ID.
+        $product = wc_get_product($productId);
+
+        if ($product && $product->is_type('variation')) {
+            $parentId = (int) $product->get_parent_id();
+
+            if ($parentId > 0 && isset($productData[$parentId]['item_total'])) {
+                return (float) $productData[$parentId]['item_total'];
+            }
+        }
+
+        // Attribution may reference the parent while the order line uses a variation ID.
+        foreach ($productData as $orderProductId => $data) {
+            $orderProduct = wc_get_product((int) $orderProductId);
+
+            if (!$orderProduct || !$orderProduct->is_type('variation')) {
+                continue;
+            }
+
+            if ((int) $orderProduct->get_parent_id() === $productId) {
+                return (float) ($data['item_total'] ?? 0);
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Build a map of WooCommerce order line subtotals keyed by product and variation IDs.
+     *
+     * @param int $orderId WooCommerce order ID.
+     * @return array<int, float> Map of product ID to line subtotal.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function buildWooOrderLineTotalsMap(int $orderId): array
+    {
+        // Default to an empty map when WooCommerce is unavailable.
+        $lineTotals = [];
+
+        if ($orderId <= 0 || !function_exists('wc_get_order')) {
+            return $lineTotals;
+        }
+
+        // Load the order object from WooCommerce.
+        $order = wc_get_order($orderId);
+
+        if (!$order) {
+            return $lineTotals;
+        }
+
+        // Walk each product line and index totals by variation/simple and parent IDs.
+        foreach ($order->get_items() as $item) {
+            if (!($item instanceof \WC_Order_Item_Product)) {
+                continue;
+            }
+
+            $productId   = (int) $item->get_product_id();
+            $variationId = (int) $item->get_variation_id();
+            $resolvedId  = $variationId > 0 ? $variationId : $productId;
+            $lineTotal   = (float) $item->get_total();
+
+            if ($resolvedId <= 0) {
+                continue;
+            }
+
+            $lineTotals[$resolvedId] = $lineTotal;
+
+            if ($productId > 0) {
+                $lineTotals[$productId] = $lineTotal;
+            }
+        }
+
+        return $lineTotals;
+    }
+
+    /**
+     * Resolve an order line subtotal for a product or variation ID.
+     *
+     * @param int              $productId  Product or variation ID from attribution data.
+     * @param array<int,float> $lineTotals Map from buildWooOrderLineTotalsMap().
+     * @return float Line subtotal or 0 when not found.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function resolveWooOrderLineTotalForProductId(int $productId, array $lineTotals): float
+    {
+        // Reject invalid IDs or empty lookup maps.
+        if ($productId <= 0 || empty($lineTotals)) {
+            return 0.0;
+        }
+
+        // Direct match against the indexed order line ID.
+        if (isset($lineTotals[$productId])) {
+            return (float) $lineTotals[$productId];
+        }
+
+        if (!function_exists('wc_get_product')) {
+            return 0.0;
+        }
+
+        // Match a stored parent ID against a variation line item.
+        $product = wc_get_product($productId);
+
+        if ($product && $product->is_type('variation')) {
+            $parentId = (int) $product->get_parent_id();
+
+            if ($parentId > 0 && isset($lineTotals[$parentId])) {
+                return (float) $lineTotals[$parentId];
+            }
+        }
+
+        // Match a stored parent ID against any variation on the order.
+        foreach ($lineTotals as $orderProductId => $lineTotal) {
+            $orderProduct = wc_get_product((int) $orderProductId);
+
+            if (!$orderProduct || !$orderProduct->is_type('variation')) {
+                continue;
+            }
+
+            if ((int) $orderProduct->get_parent_id() === $productId) {
+                return (float) $lineTotal;
+            }
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Determine whether an attribution row represents a clicked product conversion.
+     *
+     * Cookie and fallback influence rows without a product ID must not receive clicked revenue.
+     * Legacy fallback rows that incorrectly stored an order product ID are still eligible for display backfill.
+     *
+     * @param array $row Attribution row.
+     * @return bool True when the row is a verified or recoverable product-click attribution.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function isClickedProductAttributionRow(array $row): bool
+    {
+        // Rows without a product ID are influence-only attribution.
+        $productId = (int) ($row['product_id'] ?? 0);
+
+        if ($productId <= 0) {
+            return false;
+        }
+
+        $attributionType = (string) ($row['attribution_type'] ?? '');
+
+        // Cookie/session influence rows never qualify as clicked revenue.
+        if ($attributionType === 'pending_cookie') {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Backfill product revenue on attribution rows from WooCommerce order line items.
+     *
+     * Used when conversions were stored with product_id but zero product_revenue
+     * (for example after cookie fallback or delayed payment reconciliation).
+     *
+     * @param int   $orderId WooCommerce order ID or EDD payment ID.
+     * @param array $rows    Attribution rows.
+     * @return array Rows with display revenue when applicable.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function backfillAttributionProductRevenue(int $orderId, array $rows): array
+    {
+        // Skip when there is nothing to enrich or the order ID is invalid.
+        if (empty($rows) || $orderId <= 0) {
+            return $rows;
+        }
+
+        // Build a map of order line subtotals keyed by product and variation IDs.
+        $lineTotals = self::buildWooOrderLineTotalsMap($orderId);
+
+        if (empty($lineTotals)) {
+            return $rows;
+        }
+
+        foreach ($rows as &$row) {
+            // Only enrich rows that represent a real clicked product attribution.
+            if (!self::isClickedProductAttributionRow($row)) {
+                continue;
+            }
+
+            $productId      = (int) ($row['product_id'] ?? 0);
+            $productRevenue = (float) ($row['product_revenue'] ?? 0);
+
+            // Keep rows that already have a stored clicked revenue value.
+            if ($productId <= 0 || $productRevenue > 0) {
+                continue;
+            }
+
+            // Resolve line subtotal (price × quantity) from the order items.
+            $resolvedRevenue = self::resolveWooOrderLineTotalForProductId($productId, $lineTotals);
+
+            if ($resolvedRevenue > 0) {
+                $row['product_revenue'] = $resolvedRevenue;
+            }
+        }
+        unset($row);
+
+        return $rows;
+    }
 }

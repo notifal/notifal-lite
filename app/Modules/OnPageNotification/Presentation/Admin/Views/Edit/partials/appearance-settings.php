@@ -501,18 +501,21 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             if ($is_pro_active):
                 // Generate unique ID for CSS selectors (use existing ID or 'NEW' for new notifications)
                 $notification_id = $is_edit ? $notification_id : 'NEW';
-                // Generate placeholder text showing both ID and class selector examples
+                // Generate placeholder text showing ID/class selectors and @media usage.
                 $css_placeholder = sprintf(
-                    "/* You can use either ID or class selector:\n" .
-                    "#notifal-onpage-notification-%s { /* your styles */ }\n" .
-                    ".notifal-onpage-notification-%s { /* your styles */ } */",
+                    "/* @media example:\n" .
+                    "@media (max-width: 780px) {\n" .
+                    "  #notifal-onpage-notification-%s { width: 95%%; }\n" .
+                    "}\n" .
+                    "/* Or direct selector:\n" .
+                    "#notifal-onpage-notification-%s { /* your styles */ } */",
                     $notification_id,
                     $notification_id
                 );
 
-                // Create tooltip explaining selector usage and security restrictions
+                // Create tooltip explaining selector usage, @media support, and security restrictions.
                 $css_tooltip = sprintf(
-                    __('Custom CSS can use either "#notifal-onpage-notification-%s" (ID selector) or ".notifal-onpage-notification-%s" (class selector). Both will work and target the same notification element. For security, only selectors starting with these prefixes are allowed.', 'notifal'),
+                    __('Custom CSS can use either "#notifal-onpage-notification-%s" (ID selector) or ".notifal-onpage-notification-%s" (class selector). @media queries are supported when inner rules use these prefixes. For security, only scoped selectors are allowed.', 'notifal'),
                     $notification_id,
                     $notification_id
                 );

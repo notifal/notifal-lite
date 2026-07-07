@@ -411,6 +411,7 @@ class TemplateClassPlaceholderProcessor
                 case 'custom-trigger':
                     $node->setAttribute('data-action', 'custom-trigger');
                     $node->setAttribute('href', '#');
+                    self::applyCustomTriggerSelectorAttributes($node);
                     break;
 
                 case 'ajax-add-to-cart':
@@ -461,6 +462,32 @@ class TemplateClassPlaceholderProcessor
             }
 
             $node->setAttribute('data-notifal-class-placeholder', 'action-button');
+        }
+    }
+
+    /**
+     * Sanitize and preserve custom-trigger show/hide selector attributes.
+     *
+     * @param \DOMElement $node Button element.
+     * @return void
+     * @since 2.4.2
+     */
+    private static function applyCustomTriggerSelectorAttributes(\DOMElement $node): void
+    {
+        // Read hide selector list from the author-provided data attribute
+        $hideElements = sanitize_text_field((string) $node->getAttribute('data-hide-elements'));
+
+        // Persist sanitized hide selectors when the author supplied them
+        if ($hideElements !== '') {
+            $node->setAttribute('data-hide-elements', esc_attr($hideElements));
+        }
+
+        // Read show selector list from the author-provided data attribute
+        $showElements = sanitize_text_field((string) $node->getAttribute('data-show-elements'));
+
+        // Persist sanitized show selectors when the author supplied them
+        if ($showElements !== '') {
+            $node->setAttribute('data-show-elements', esc_attr($showElements));
         }
     }
 

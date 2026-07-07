@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, popup builder, woocommerce, marketing, conversion
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.4.1
+Stable tag: 2.4.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -436,6 +436,23 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 27. Notifal HTML builder.
 
 == Changelog ==
+2.4.3 [2026-07-06]
+Added: Pre-created notification import now supports HTML Builder.
+Added: Pre-created notification library now checks each template's minimum Notifal version before import.
+Improved: Import buttons in the pre-created notification popup use shared click handling for archive and modal views.
+Improved: Archive cards and the details popup show when your installed Notifal version is too old, with a link to update from Plugins.
+Improved: Import requests are blocked server-side when the template requires a newer Notifal version.
+
+2.4.2 [2026-07-05]
+Fixed: HTML Builder Insert Tag modal now supports dynamic tags with an available-keys picker and copies tags to the clipboard without closing the modal.
+Improved: HTML Builder and OnPage Generate with AI prompts now document full class-placeholder attributes for notifal-action-button, including copy (`data-notifal-action="copy"` and required `data-copy-text`) and Ajax add to cart (`data-notifal-action="ajax-add-to-cart"` with quantity, redirect, and product ID attributes).
+Improved: AI prompts include explicit rules for when to use copy, Ajax add to cart, or post-link CTAs so generated templates produce working buttons.
+Improved: HTML Builder and OnPage Generate with AI prompts now document multi-step templates built with custom-trigger action buttons (`data-hide-elements` / `data-show-elements`) so AI can generate progressive reveal flows inside one notification.
+Improved: HTML Builder AI prompt examples include a multi-step popup pattern for guided opt-ins and reveal-offer flows.
+Improved: HTML Builder class-placeholder processing now sanitizes custom-trigger hide and show selector attributes at render time.
+Fixed: OnPage Custom CSS validation now accepts `@media` queries when inner rules use the notification ID or class prefix, so responsive styles no longer trigger false validation errors.
+Fixed: OnPage Tab Badge Behavior (with Notifal Pro) now restores the browser tab title when the visitor switches away, including custom text and inactive-tab-only display mode.
+
 2.4.1 [2026-06-29]
 Added: Paste JSON directly when importing OnPage Notifications, with size validation, export structure checks, and a trusted-source confirmation step.
 Added: Generate with AI on the OnPage Notifications list, copy a prompt for ChatGPT or Claude, then import the full notification JSON (template plus settings) in one step.
@@ -458,29 +475,6 @@ Added: Frontend `HtmlTemplateRenderer` with full tag, class-placeholder, and sho
 Added: Import/export support for `notifal_html_builder` JSON payloads with image URL extraction.
 Improved: Template list/edit routing now opens HTML Builder templates in the dedicated builder screen instead of the block editor.
 Improved: Delay, exit intent, scroll, and other timed notifications now work reliably on more sites, including when a theme affects how notification data is loaded.
-
-2.3.11 [2026-06-15]
-Added: Per-button click tracking for action buttons, each click records button ID, action type (post-link, copy, custom, etc.), and button label for Pro analytics breakdown.
-Added: Stable tracking IDs for Block Editor action buttons (persisted `trackingId` attribute) and Elementor action buttons (widget-based ID).
-Added: Database support for per-button click stats (`notifal_onpage_button_click_stats` table) and optional button metadata on the analytics event queue.
-Improved: Frontend click events send button context through the existing Pro analytics tracking pipeline without extra requests.
-
-2.3.10 [2026-06-09]
-Added: All Users login status for Users display rules (requires Notifal Pro 2.3.6+), target both guests and logged-in visitors; optional visit-history filters still apply on the storefront.
-Added: Inactivity before return (hours) setting for the Return visitor visit-history filter (default 3 hours, range 1–168) with admin tooltip examples for same-day, next-day, and multi-day returns.
-Improved: Return visitor display rule now uses inactivity-based detection instead of a simple prior-visit flag, so browsing multiple pages in the same session no longer counts as a return visit.
-Improved: Visitor activity timestamp resets on page views and throttled user interaction (click, scroll, keypress, touch, tab focus) for accurate return-visitor targeting on cached sites.
-Improved: Client-side guest and logged-in Users rule checks use a cached fresh rules index so full-page cache, session restore, and maintain-state behavior stay accurate.
-Improved: Cached Users rule index for active notifications (object cache, cleared when a notification is saved).
-Improved: Variable product notifications show the matching variation name, sale price, and product link; total sales still show the full product count.
-Improved: Client-side page context resolution falls back to WordPress body classes when localized page ID is missing, keeping page targeting accurate on dynamic storefront views.
-Improved: Eligible notification API requests now bypass browser cache to avoid stale notification lists after cart or page context changes.
-Fixed: Guests Only Users rule could still appear for logged-in visitors when maintain-state session data or cached payloads were stale.
-Fixed: Maintain state on refresh no longer treats display-rule mismatches as a user close, so changing Users rules in the same session works correctly.
-Fixed: Some reported bugs
-Fixed: Page targeting display rules (specific pages, post types, and legacy page/post/product rules) are now re-evaluated in the browser before show and exit-intent triggers, so notifications no longer appear on the wrong page when cart or other client-side rules still match.
-Fixed: Variable products with on-sale variations now work correctly with Sale Products Only filters and product-page smart targeting.
-Fixed: Z-Index setting now works as expected. When two notifications overlap, the one with the higher value appears on top.
 
 [See changelog for all versions.](https://notifal.com/changelog/)
 

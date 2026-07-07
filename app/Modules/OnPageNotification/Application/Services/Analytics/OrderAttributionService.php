@@ -10,6 +10,7 @@ use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Shared\Config\Paths;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\DatabaseRepository;
 
 defined('ABSPATH') || exit;
@@ -47,6 +48,14 @@ class OrderAttributionService
      * @since 2.3.0
      */
     private static $renderedOrderMetaBoxes = [];
+
+    /**
+     * Tracks paid-order conversion reconciliation attempts per request.
+     *
+     * @var array<int, bool>
+     * @since 2.4.2
+     */
+    private static $reconciledPaidOrderIds = [];
 
     /**
      * Database repository instance.
@@ -319,7 +328,7 @@ class OrderAttributionService
         $title           = $this->truncateNotificationTitle($rawTitle !== '' ? $rawTitle : __('(deleted notification)', 'notifal'));
         $extraCount      = count($notificationIds) - 1;
         $tooltip         = $this->buildOrderListAttributionTooltip($notificationIds);
-        $isPendingOnly   = $this->isPendingAttributionOnly($attributionData);
+        $isPendingOnly   = $this->isPendingAttributionOnly($attributionData, $orderId);
 
         if ($isPendingOnly) {
             $tooltip .= "\n\n" . __(
@@ -489,7 +498,7 @@ class OrderAttributionService
                 . esc_html__('This order was not influenced by any Notifal notification.', 'notifal')
                 . '</p>';
         } else {
-            if ($this->isPendingAttributionOnly($attributionData)) {
+            if ($this->isPendingAttributionOnly($attributionData, $orderId)) {
                 echo '<p class="notifal-order-meta-pending-notice">'
                     . esc_html__(
                         'This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed.',
@@ -899,7 +908,7 @@ class OrderAttributionService
         echo '<div class="edd-order-overview-addresses__title">' . esc_html__('Notifal Attribution', 'notifal') . '</div>';
         echo '<div class="edd-order-overview-addresses__address">';
 
-        if ($this->isPendingAttributionOnly($attributionData)) {
+        if ($this->isPendingAttributionOnly($attributionData, $paymentId)) {
             echo '<p class="notifal-order-meta-pending-notice">'
                 . esc_html__(
                     'This order was influenced by Notifal but is not paid yet. It will be counted in analytics revenue once payment is completed.',
@@ -968,6 +977,9 @@ class OrderAttributionService
             return [];
         }
 
+        // Finalize attribution when a paid order was never converted (missed status hook, plugin update, etc.)
+        $this->maybeReconcilePaidOrderConversion($orderId);
+
         global $wpdb;
 
         $tables = $this->databaseRepository->getTableNames();
@@ -991,6 +1003,9 @@ class OrderAttributionService
                 $rows = [];
             }
         }
+
+        // Reconcile pending snapshot from live product clicks for unpaid orders (admin + async click race)
+        $this->maybeRefreshPendingAttributionSnapshot($orderId, $rows);
 
         // Merge pending attribution stored at checkout for unpaid orders (on-hold, pending, etc.)
         $rows = $this->mergePendingAttributionRows($orderId, $rows);
@@ -1029,7 +1044,7 @@ class OrderAttributionService
         $rows = $this->normalizeAttributionRows($rows);
 
         // Backfill clicked revenue from order line items when stored revenue is missing
-        $rows = $this->backfillDisplayProductRevenue($orderId, $rows);
+        $rows = AnalyticsHelper::backfillAttributionProductRevenue($orderId, $rows);
 
         /**
          * Filter the order attribution data before it is displayed.
@@ -1086,183 +1101,6 @@ class OrderAttributionService
         }
 
         return $normalized;
-    }
-
-    /**
-     * Backfill product revenue on attribution rows for admin display.
-     *
-     * Covers pending snapshots and paid conversions where product_id is set but
-     * product_revenue was stored as zero (for example after delayed payment when
-     * live click lookup no longer matches). Resolves parent/variation ID differences.
-     *
-     * @param int   $orderId WooCommerce order ID or EDD payment ID
-     * @param array $rows    Attribution rows
-     * @return array Rows with display revenue when applicable
-     * @since 2.3.7
-     * @since 2.4.1 Backfills all verified product-click rows, not only pending snapshots
-     * @author Hossein <hossein@notifal.com>
-     */
-    private function backfillDisplayProductRevenue(int $orderId, array $rows): array
-    {
-        // Skip when there is nothing to enrich or the order ID is invalid
-        if (empty($rows) || $orderId <= 0) {
-            return $rows;
-        }
-
-        // Build a map of order line subtotals keyed by product and variation IDs
-        $lineTotals = $this->buildOrderLineTotalsMap($orderId);
-
-        if (empty($lineTotals)) {
-            return $rows;
-        }
-
-        foreach ($rows as &$row) {
-            // Only enrich rows that represent a real clicked product attribution
-            if (!$this->isClickedProductAttributionRow($row)) {
-                continue;
-            }
-
-            $productId      = (int) ($row['product_id'] ?? 0);
-            $productRevenue = (float) ($row['product_revenue'] ?? 0);
-
-            // Keep rows that already have a stored clicked revenue value
-            if ($productId <= 0 || $productRevenue > 0) {
-                continue;
-            }
-
-            // Resolve line subtotal (price × quantity) from the order items
-            $resolvedRevenue = $this->resolveOrderLineTotalForProductId($productId, $lineTotals);
-
-            if ($resolvedRevenue > 0) {
-                $row['product_revenue'] = $resolvedRevenue;
-            }
-        }
-        unset($row);
-
-        return $rows;
-    }
-
-    /**
-     * Determine whether an attribution row represents a clicked product conversion.
-     *
-     * Cookie and fallback influence rows must not receive clicked revenue backfill.
-     *
-     * @param array $row Attribution row
-     * @return bool True when the row is a verified product-click attribution
-     * @since 2.4.1
-     * @author Hossein <hossein@notifal.com>
-     */
-    private function isClickedProductAttributionRow(array $row): bool
-    {
-        $productId = (int) ($row['product_id'] ?? 0);
-
-        if ($productId <= 0) {
-            return false;
-        }
-
-        $attributionType = (string) ($row['attribution_type'] ?? '');
-
-        // Cookie/session and fallback rows are influence-only, not product clicks
-        if ($attributionType === 'fallback' || $attributionType === 'pending_cookie') {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * Build a map of WooCommerce order line subtotals keyed by product and variation IDs.
-     *
-     * @param int $orderId WooCommerce order ID
-     * @return array<int, float> Map of product ID to line subtotal
-     * @since 2.4.1
-     * @author Hossein <hossein@notifal.com>
-     */
-    private function buildOrderLineTotalsMap(int $orderId): array
-    {
-        $lineTotals = [];
-
-        if (!function_exists('wc_get_order')) {
-            return $lineTotals;
-        }
-
-        $order = wc_get_order($orderId);
-
-        if (!$order) {
-            return $lineTotals;
-        }
-
-        foreach ($order->get_items() as $item) {
-            if (!($item instanceof \WC_Order_Item_Product)) {
-                continue;
-            }
-
-            $productId   = (int) $item->get_product_id();
-            $variationId = (int) $item->get_variation_id();
-            $resolvedId  = $variationId > 0 ? $variationId : $productId;
-            $lineTotal   = (float) $item->get_total();
-
-            if ($resolvedId <= 0) {
-                continue;
-            }
-
-            // Index by variation/simple ID and parent ID for cross-lookup
-            $lineTotals[$resolvedId] = $lineTotal;
-
-            if ($productId > 0) {
-                $lineTotals[$productId] = $lineTotal;
-            }
-        }
-
-        return $lineTotals;
-    }
-
-    /**
-     * Resolve an order line subtotal for a product or variation ID.
-     *
-     * @param int              $productId  Product or variation ID from attribution data
-     * @param array<int,float> $lineTotals Map from buildOrderLineTotalsMap()
-     * @return float Line subtotal or 0 when not found
-     * @since 2.4.1
-     * @author Hossein <hossein@notifal.com>
-     */
-    private function resolveOrderLineTotalForProductId(int $productId, array $lineTotals): float
-    {
-        if ($productId <= 0 || empty($lineTotals)) {
-            return 0.0;
-        }
-
-        if (isset($lineTotals[$productId])) {
-            return (float) $lineTotals[$productId];
-        }
-
-        if (!function_exists('wc_get_product')) {
-            return 0.0;
-        }
-
-        $product = wc_get_product($productId);
-
-        if ($product && $product->is_type('variation')) {
-            $parentId = (int) $product->get_parent_id();
-
-            if ($parentId > 0 && isset($lineTotals[$parentId])) {
-                return (float) $lineTotals[$parentId];
-            }
-        }
-
-        foreach ($lineTotals as $orderProductId => $lineTotal) {
-            $orderProduct = wc_get_product((int) $orderProductId);
-
-            if (!$orderProduct || !$orderProduct->is_type('variation')) {
-                continue;
-            }
-
-            if ((int) $orderProduct->get_parent_id() === $productId) {
-                return (float) $lineTotal;
-            }
-        }
-
-        return 0.0;
     }
 
     /**
@@ -1345,6 +1183,73 @@ class OrderAttributionService
     }
 
     /**
+     * Rebuild pending attribution on unpaid orders when product clicks are missing.
+     *
+     * @param int   $orderId        WooCommerce order ID
+     * @param array $conversionRows Paid conversion rows when available
+     * @return void
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function maybeRefreshPendingAttributionSnapshot(int $orderId, array $conversionRows): void
+    {
+        if ($orderId <= 0 || !function_exists('wc_get_order')) {
+            return;
+        }
+
+        $order = wc_get_order($orderId);
+
+        if (!$order instanceof \WC_Order) {
+            return;
+        }
+
+        // Skip when paid conversions were finalized for this order
+        if ($order->get_meta('_notifal_conversion_processed', true) && !empty($conversionRows)) {
+            return;
+        }
+
+        // Paid orders must rely on conversion rows, not rebuilt checkout snapshots
+        if (AnalyticsHelper::isPaidWooCommerceOrderStatus((string) $order->get_status())) {
+            return;
+        }
+
+        if (count($order->get_items()) <= 0) {
+            return;
+        }
+
+        $pending = $order->get_meta('_notifal_pending_attribution', true);
+
+        if (is_string($pending)) {
+            $pending = json_decode($pending, true);
+        }
+
+        $needsRefresh = !is_array($pending) || empty($pending);
+
+        if (!$needsRefresh) {
+            $hasProductClickRow = false;
+
+            foreach ($pending as $pendingRow) {
+                if (!is_array($pendingRow)) {
+                    continue;
+                }
+
+                if ((int) ($pendingRow['product_id'] ?? 0) > 0) {
+                    $hasProductClickRow = true;
+                    break;
+                }
+            }
+
+            $needsRefresh = !$hasProductClickRow;
+        }
+
+        if (!$needsRefresh) {
+            return;
+        }
+
+        notifal_app(ConversionTracker::class)->refreshPendingAttributionSnapshot($order);
+    }
+
+    /**
      * Merge pending checkout attribution with paid conversion rows.
      *
      * @param int   $orderId WooCommerce order ID
@@ -1365,7 +1270,12 @@ class OrderAttributionService
             return $rows;
         }
 
-        // Skip pending data only when paid conversions exist or were fully processed with rows
+        // Paid orders must display finalized conversion rows only (never stale checkout pending rows)
+        if (AnalyticsHelper::isPaidWooCommerceOrderStatus((string) $order->get_status())) {
+            return $rows;
+        }
+
+        // Skip pending merge when unpaid conversions were already stored
         if ($order->get_meta('_notifal_conversion_processed', true) && !empty($rows)) {
             return $rows;
         }
@@ -1432,13 +1342,19 @@ class OrderAttributionService
      * Whether attribution rows are pending only (not yet counted in revenue).
      *
      * @param array $attributionData Attribution rows for the order
+     * @param int   $orderId         WooCommerce order ID or EDD payment ID
      * @return bool
      * @since 2.3.0
      * @author Hossein <hossein@notifal.com>
      */
-    private function isPendingAttributionOnly(array $attributionData): bool
+    private function isPendingAttributionOnly(array $attributionData, int $orderId = 0): bool
     {
         if (empty($attributionData)) {
+            return false;
+        }
+
+        // WooCommerce processing/completed orders are paid — never show the unpaid notice
+        if ($orderId > 0 && $this->isWooCommerceOrderPaid($orderId)) {
             return false;
         }
 
@@ -1449,6 +1365,59 @@ class OrderAttributionService
         }
 
         return true;
+    }
+
+    /**
+     * Whether a WooCommerce order has reached a paid status slug.
+     *
+     * @param int $orderId WooCommerce order ID
+     * @return bool
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function isWooCommerceOrderPaid(int $orderId): bool
+    {
+        return AnalyticsHelper::isPaidWooCommerceOrder($orderId);
+    }
+
+    /**
+     * Run conversion tracking for paid orders that were never finalized.
+     *
+     * Covers missed woocommerce_order_status_changed events (gateway quirks, plugin updates,
+     * orders paid before Notifal was active, or orders placed before 2.4.2 reconciliation).
+     *
+     * @param int $orderId WooCommerce order ID
+     * @return void
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    private function maybeReconcilePaidOrderConversion(int $orderId): void
+    {
+        if ($orderId <= 0 || !function_exists('wc_get_order')) {
+            return;
+        }
+
+        if (isset(self::$reconciledPaidOrderIds[$orderId])) {
+            return;
+        }
+
+        self::$reconciledPaidOrderIds[$orderId] = true;
+
+        $order = wc_get_order($orderId);
+
+        if (!$order instanceof \WC_Order) {
+            return;
+        }
+
+        if (!AnalyticsHelper::isPaidWooCommerceOrder($orderId)) {
+            return;
+        }
+
+        if ($order->get_meta('_notifal_conversion_processed', true)) {
+            return;
+        }
+
+        notifal_app(ConversionTracker::class)->trackWooCommerceConversion($orderId);
     }
 
     /**

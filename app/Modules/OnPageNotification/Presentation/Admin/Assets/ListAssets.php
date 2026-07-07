@@ -242,6 +242,8 @@ class ListAssets
         return [
             'nonce' => NonceManager::create('notifal_admin_ajax_nonce'),
             'ajax_url' => UrlHelper::baseAjax(),
+            'notifal_version' => defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '0.0.0',
+            'plugins_url' => admin_url('plugins.php'),
             'archive_fragment_action' => 'notifal_precreated_archive_fragment',
             'archive_load_timeout_sec' => 25,
             'archive_load_timeout_modal_sec' => 45,
@@ -265,24 +267,34 @@ class ListAssets
                 'importPartialSuccess' => $translations['importPartialSuccess'] ?? __('Import completed: {success} succeeded, {failed} failed.', 'notifal'),
                 'importFailed' => $translations['importFailed'] ?? __('Import failed.', 'notifal'),
                 'networkError' => $translations['networkError'] ?? __('Network error. Please try again.', 'notifal'),
+                'minVersionRequired' => __(
+                    'This template requires Notifal {min_version} or higher. You are running {current_version}. Please update Notifal from Plugins to import this template.',
+                    'notifal'
+                ),
+                'requiresNotifalVersion' => __('Requires Notifal %s+', 'notifal'),
+                'goToPlugins' => __('Go to Plugins', 'notifal'),
                 'timeoutError' => __('Loading took too long. The marketplace may be slow, please try again.', 'notifal'),
-                'requestHere' => __('Request here', 'notifal'),
-                'requesting' => __('Requesting...', 'notifal'),
-                'requestSubmitted' => __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),
-                'requestAlreadySubmitted' => self::getRequestAlreadySubmittedMessage(),
-                'requestFailed' => __('Request could not be submitted. Please try again.', 'notifal'),
+                // Template request strings disabled for now.
+                // 'requestHere' => __('Request here', 'notifal'),
+                // 'requesting' => __('Requesting...', 'notifal'),
+                // 'requestSubmitted' => __('We got your request. We will create the template within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal'),
+                // 'requestAlreadySubmitted' => self::getRequestAlreadySubmittedMessage(),
+                // 'requestFailed' => __('Request could not be submitted. Please try again.', 'notifal'),
             ],
             'user_has_elementor' => PluginDetector::isElementorActive(),
-            'requested_templates' => self::getRequestedTemplatesForCurrentUser(),
+            // 'requested_templates' => self::getRequestedTemplatesForCurrentUser(),
         ];
     }
 
     /**
      * Get the localized "request already submitted" message, with admin email when available.
      *
+     * Disabled: template request flow is not used in the client plugin for now.
+     *
      * @since 2.0.0
      * @return string Message safe for use in JS (email is sanitized; wp_localize_script escapes for JS).
      */
+    /*
     private static function getRequestAlreadySubmittedMessage(): string
     {
         $email = self::getRequestNotifyEmail();
@@ -295,27 +307,12 @@ class ListAssets
         return __('Request already submitted. We will notify you when it is ready.', 'notifal');
     }
 
-    /**
-     * Get the email address that will be notified when a requested template is ready.
-     * Matches the admin email sent with template requests to the API.
-     *
-     * @since 2.0.0
-     * @return string Sanitized email, or empty string if not set.
-     */
     private static function getRequestNotifyEmail(): string
     {
         $email = get_option('admin_email', '');
         return is_string($email) ? sanitize_email($email) : '';
     }
 
-    /**
-     * Get list of template requests already submitted by the current user.
-     * Each item is [ 'notification_id' => int, 'builder_type' => 'elementor'|'block-editor' ].
-     * Used to prevent duplicate requests and to show "Request submitted" in the UI.
-     *
-     * @since 2.0.0
-     * @return array<int, array{notification_id: int, builder_type: string}>
-     */
     private static function getRequestedTemplatesForCurrentUser(): array
     {
         $userId = get_current_user_id();
@@ -329,7 +326,7 @@ class ListAssets
         }
 
         $valid = [];
-        $validTypes = ['elementor', 'block-editor'];
+        $validTypes = PreCreatedNotificationBuilderTypes::getImportFileTypes();
         foreach ($raw as $item) {
             if (!is_array($item)) {
                 continue;
@@ -346,4 +343,5 @@ class ListAssets
 
         return $valid;
     }
+    */
 } 

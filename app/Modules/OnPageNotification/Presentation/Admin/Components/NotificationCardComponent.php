@@ -1,5 +1,6 @@
 <?php
 
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationRequirementsHelper;
 use Notifal\Shared\Services\NotifalIconService;
 
 if (!defined('ABSPATH')) exit;
@@ -105,6 +106,10 @@ function render_notification_card(array $notification, int $max_badges = 5, stri
 
     $layout_class = notifal_get_notification_layout_class($notification_taxonomies);
 
+    // Evaluate minimum Notifal version requirement for archive card badge.
+    $versionRequirement = PreCreatedNotificationRequirementsHelper::evaluateNotifalVersionRequirement($notification);
+    $showVersionBadge = !$versionRequirement['meets_notifal_version'] && $versionRequirement['min_notifal_version'] !== '';
+
     ?>
     <div class="notification-card">
         <div class="notification-card-content">
@@ -142,6 +147,19 @@ function render_notification_card(array $notification, int $max_badges = 5, stri
 
             <!-- Badges Container -->
             <div class="badges-container">
+                <?php if ($showVersionBadge) : ?>
+                    <span class="badge badge--version-required">
+                        <?php
+                        echo esc_html(
+                            sprintf(
+                                /* translators: %s: minimum required Notifal version */
+                                __('Requires Notifal %s+', 'notifal'),
+                                $versionRequirement['min_notifal_version']
+                            )
+                        );
+                        ?>
+                    </span>
+                <?php endif; ?>
                 <?php foreach ($all_terms as $term) : ?>
                     <span class="badge">
                         <?php echo esc_html($term['name']); ?>
