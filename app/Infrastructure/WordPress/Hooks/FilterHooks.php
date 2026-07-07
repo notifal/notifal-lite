@@ -1854,6 +1854,27 @@ class FilterHooks {
     public const ONPAGE_CONVERSION_ATTRIBUTION_WINDOW = 'notifal/onpage/conversion/attribution_window';
 
     /**
+     * Filters WooCommerce order statuses that count as paid for conversion tracking and revenue analytics.
+     *
+     * Default: `processing`, `completed`. Return an array of order status slugs (without the `wc-` prefix).
+     * Used when recording conversions, reconciling paid orders in admin, and calculating influenced revenue.
+     *
+     * Example:
+     * ```php
+     * add_filter( FilterHooks::ONPAGE_CONVERSION_PAID_ORDER_STATUSES, function ( $statuses ) {
+     *     $statuses[] = 'custom-paid';
+     *     return $statuses;
+     * } );
+     * ```
+     *
+     * @param string[] $statuses Default paid status slugs.
+     * @return string[] Modified paid status slugs.
+     * @since 2.4.2
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const ONPAGE_CONVERSION_PAID_ORDER_STATUSES = 'notifal/onpage/conversion/paid_order_statuses';
+
+    /**
      * Filters the analytics data for OnPage notifications.
      *
      * Allows Pro plugin to restrict detailed analytics for lite users

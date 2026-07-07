@@ -3,7 +3,9 @@
 namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax;
 
 use Notifal\Modules\OnPageNotification\Application\Services\API\PreCreatedNotificationsApiService;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationBuilderTypes;
 use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationFilterHelper;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationRequirementsHelper;
 
 defined('ABSPATH') || exit;
 
@@ -30,7 +32,8 @@ class PreCreatedNotificationsAjaxController
         add_action('wp_ajax_notifal_load_more_precreated_notifications', [self::class, 'loadMoreNotifications']);
         add_action('wp_ajax_notifal_filter_precreated_notifications', [self::class, 'filterNotifications']);
         add_action('wp_ajax_notifal_get_single_precreated_notification', [self::class, 'getSingleNotification']);
-        add_action('wp_ajax_notifal_submit_template_request', [self::class, 'submitTemplateRequest']);
+        // Template request disabled for now (marketplace still supports requests server-side).
+        // add_action('wp_ajax_notifal_submit_template_request', [self::class, 'submitTemplateRequest']);
         add_action('wp_ajax_notifal_precreated_archive_fragment', [self::class, 'archiveFragment']);
 
         // Register import controller
@@ -209,7 +212,13 @@ class PreCreatedNotificationsAjaxController
             }
 
             // Extract notification data from API response
-            $notificationData = $apiResponse['data'] ?? [];
+            $notificationData = is_array($apiResponse['data'] ?? null) ? $apiResponse['data'] : [];
+
+            // Evaluate minimum Notifal version requirement for import eligibility.
+            $versionRequirement = PreCreatedNotificationRequirementsHelper::evaluateNotifalVersionRequirement($notificationData);
+            $requirements = isset($notificationData['requirements']) && is_array($notificationData['requirements'])
+                ? $notificationData['requirements']
+                : [];
 
             // Format data structure for popup display
             $formattedData = [
@@ -217,9 +226,16 @@ class PreCreatedNotificationsAjaxController
                 'title' => $notificationData['title'] ?? '',
                 'content' => $notificationData['content'] ?? '',
                 'taxonomies' => $notificationData['taxonomies'] ?? [],
+                'requirements' => $requirements,
+                'min_notifal_version' => $versionRequirement['min_notifal_version'],
+                'meets_notifal_version' => $versionRequirement['meets_notifal_version'],
+                'version_requirement_message' => $versionRequirement['message'],
+                'current_notifal_version' => PreCreatedNotificationRequirementsHelper::getCurrentNotifalVersion(),
+                'plugins_url' => admin_url('plugins.php'),
                 'files' => $notificationData['files'] ?? [
                     'elementor_available' => false,
                     'block_editor_available' => false,
+                    'html_builder_available' => false,
                 ],
                 'images' => [
                     'desktop' => [
@@ -243,12 +259,12 @@ class PreCreatedNotificationsAjaxController
     /**
      * Handle submit template request AJAX.
      *
-     * Submits a request to notifal.com for a template to be created with Elementor or Block Editor.
-     * The server stores the request, and sends a confirmation email to the user.
+     * Disabled: template request flow is not used in the client plugin for now.
      *
      * @since 2.0.0
      * @return void
      */
+    /*
     public static function submitTemplateRequest(): void
     {
         try {
@@ -262,8 +278,7 @@ class PreCreatedNotificationsAjaxController
                 return;
             }
 
-            $validTypes = ['elementor', 'block-editor'];
-            if (!in_array($builderType, $validTypes, true)) {
+            if (!PreCreatedNotificationBuilderTypes::isValidImportFileType($builderType)) {
                 notifal_json_error(__('Invalid builder type.', 'notifal'));
                 return;
             }
@@ -291,22 +306,8 @@ class PreCreatedNotificationsAjaxController
         }
     }
 
-    /**
-     * User meta key for storing template requests (notification_id + builder_type per request).
-     *
-     * @since 2.0.0
-     * @var string
-     */
     private const USER_META_TEMPLATE_REQUESTS = '_notifal_template_requests';
 
-    /**
-     * Check if the current user has already submitted a request for this template and builder type.
-     *
-     * @since 2.0.0
-     * @param int    $notificationId Notification (template) ID
-     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
-     * @return bool
-     */
     private static function hasUserAlreadyRequestedTemplate(int $notificationId, string $builderType): bool
     {
         $userId = get_current_user_id();
@@ -319,7 +320,7 @@ class PreCreatedNotificationsAjaxController
             return false;
         }
 
-        $validTypes = ['elementor', 'block-editor'];
+        $validTypes = PreCreatedNotificationBuilderTypes::getImportFileTypes();
         foreach ($raw as $item) {
             if (!is_array($item)) {
                 continue;
@@ -334,12 +335,6 @@ class PreCreatedNotificationsAjaxController
         return false;
     }
 
-    /**
-     * Get the error message for duplicate template request (with email when available).
-     *
-     * @since 2.0.0
-     * @return string
-     */
     private static function getDuplicateRequestMessage(): string
     {
         $email = get_option('admin_email', '');
@@ -353,14 +348,6 @@ class PreCreatedNotificationsAjaxController
         return __('Request already submitted. We will notify you when it is ready.', 'notifal');
     }
 
-    /**
-     * Store that the current user has submitted a template request for this notification and builder type.
-     *
-     * @since 2.0.0
-     * @param int    $notificationId Notification (template) ID
-     * @param string $builderType    Builder type: 'elementor' or 'block-editor'
-     * @return void
-     */
     private static function markTemplateRequestedForUser(int $notificationId, string $builderType): void
     {
         $userId = get_current_user_id();
@@ -385,6 +372,7 @@ class PreCreatedNotificationsAjaxController
 
         update_user_meta($userId, self::USER_META_TEMPLATE_REQUESTS, $list);
     }
+    */
 
     /**
      * Handle AJAX request for pre-created archive HTML fragment.

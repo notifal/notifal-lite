@@ -262,8 +262,7 @@ if ($cacheExpiresAt > 0) {
             </button>
             <?php render_notification_detail_popup_footer('archive'); ?>
         </div>
-        <!-- Template request note (below footer, shown when template has no builder file) -->
-        <?php render_notification_detail_popup_request_note('archive'); ?>
+        <?php // Template request note disabled for now. render_notification_detail_popup_request_note('archive'); ?>
     </div>
 <?php if (!$hideWrapper) : ?>
 </div>

@@ -4,6 +4,8 @@ namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\API\PreCreatedNotificationsApiService;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationBuilderTypes;
+use Notifal\Modules\OnPageNotification\Helpers\PreCreatedNotificationRequirementsHelper;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Import\Importer;
 use Notifal\Shared\Controllers\Ajax\BaseImportController;
 
@@ -138,15 +140,31 @@ class PreCreatedNotificationsImportController extends BaseImportController
                 throw new \Exception(__('Invalid notification ID.', 'notifal'));
             }
 
-            // Get file type (prefer elementor, fallback to block-editor)
-            $fileType = sanitize_text_field($_POST['file_type'] ?? 'elementor');
-            $validTypes = ['elementor', 'block-editor'];
-            if (!in_array($fileType, $validTypes, true)) {
-                $fileType = 'elementor';
+            // Resolve builder file type from POST (elementor, block-editor, or html-builder).
+            $fileType = sanitize_text_field($_POST['file_type'] ?? PreCreatedNotificationBuilderTypes::ELEMENTOR);
+            if (!PreCreatedNotificationBuilderTypes::isValidImportFileType($fileType)) {
+                $fileType = PreCreatedNotificationBuilderTypes::ELEMENTOR;
+            }
+
+            // Load notification details and validate minimum Notifal version before download.
+            $apiService = notifal_app(PreCreatedNotificationsApiService::class);
+            $singleResponse = $apiService->getSingleNotification($notificationId);
+
+            if (isset($singleResponse['success']) && $singleResponse['success'] === false) {
+                throw new \Exception($singleResponse['error'] ?? __('Failed to load notification requirements.', 'notifal'));
+            }
+
+            $notificationData = is_array($singleResponse['data'] ?? null) ? $singleResponse['data'] : [];
+            $versionRequirement = PreCreatedNotificationRequirementsHelper::evaluateNotifalVersionRequirement($notificationData);
+
+            if (!$versionRequirement['meets_notifal_version']) {
+                $requirementMessage = $versionRequirement['message'] !== ''
+                    ? $versionRequirement['message']
+                    : __('This template requires a newer version of Notifal.', 'notifal');
+                throw new \Exception($requirementMessage);
             }
 
             // Get download URL from API
-            $apiService = notifal_app(PreCreatedNotificationsApiService::class);
             $downloadResponse = $apiService->getDownloadUrl($notificationId, $fileType);
 
             if (isset($downloadResponse['success']) && !$downloadResponse['success']) {

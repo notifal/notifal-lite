@@ -550,6 +550,7 @@ class FrontendAssetsRegistrar
             'nonce' => wp_create_nonce('wp_rest'),
             'productClickNonce' => wp_create_nonce('notifal_product_click_tracking'),
             'url' => UrlHelper::baseAjax(),
+            'sessionId' => Helper::getSessionId(),
             'debug' => defined('WP_DEBUG') && WP_DEBUG,
             'locale' => get_locale(),
             'rtl' => is_rtl(),

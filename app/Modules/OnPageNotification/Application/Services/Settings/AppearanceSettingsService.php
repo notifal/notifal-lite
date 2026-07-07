@@ -279,55 +279,92 @@ class AppearanceSettingsService
             return '';
         }
 
-        // Split CSS into rules
-        $rules = $this->parseCSSRules($css);
-        $validRules = [];
-
-        foreach ($rules as $rule) {
-            $selector = $rule['selector'] ?? '';
-
-            // Validate selector starts with required prefix
-            if ($this->validateCSSSelector($selector)) {
-                $validRules[] = $rule;
-            }
-        }
-
-        // Reconstruct valid CSS
-        $validCSS = '';
-        foreach ($validRules as $rule) {
-            $validCSS .= $rule['selector'] . ' { ' . $rule['declarations'] . ' }' . "\n";
-        }
-
-        return trim($validCSS);
+        // Keep only selectors scoped to this notification; preserve @media wrappers when valid.
+        return trim($this->filterValidCSSBlocks($css));
     }
 
     /**
-     * Parse CSS into individual rules.
+     * Recursively filter CSS blocks, allowing @media wrappers with scoped inner rules.
      *
-     * @since 2.0.0
-     * @param string $css CSS string
-     * @return array Array of rules with selector and declarations
+     * @since 2.4.2
+     * @param string $css CSS string to filter.
+     * @return string Filtered CSS containing only allowed selectors.
      */
-    private function parseCSSRules(string $css): array
+    private function filterValidCSSBlocks(string $css): string
     {
-        $rules = [];
-        
-        // Match CSS rules: selector { declarations }
-        preg_match_all('/([^{]+)\s*\{([^}]+)\}/', $css, $matches, PREG_SET_ORDER);
-        
-        foreach ($matches as $match) {
-            $selector = trim($match[1]);
-            $declarations = trim($match[2]);
-            
-            if (!empty($selector) && !empty($declarations)) {
-                $rules[] = [
-                    'selector' => $selector,
-                    'declarations' => $declarations
-                ];
+        $output = '';
+        $length = strlen($css);
+        $position = 0;
+
+        while ($position < $length) {
+            // Skip whitespace between blocks.
+            while ($position < $length && ctype_space($css[$position])) {
+                $position++;
+            }
+
+            if ($position >= $length) {
+                break;
+            }
+
+            $braceStart = strpos($css, '{', $position);
+            if ($braceStart === false) {
+                break;
+            }
+
+            $selector = trim(substr($css, $position, $braceStart - $position));
+            $block = $this->extractCSSBlock($css, $braceStart);
+            $position = $block['end'];
+
+            if ($selector === '') {
+                continue;
+            }
+
+            // @media is allowed as a wrapper; inner rules must still use the notification prefix.
+            if (stripos($selector, '@media') === 0) {
+                $innerCss = $this->filterValidCSSBlocks($block['content']);
+                if ($innerCss !== '') {
+                    $output .= $selector . ' { ' . $innerCss . ' }' . "\n";
+                }
+                continue;
+            }
+
+            if ($this->validateCSSSelector($selector)) {
+                $output .= $selector . ' { ' . trim($block['content']) . ' }' . "\n";
             }
         }
-        
-        return $rules;
+
+        return $output;
+    }
+
+    /**
+     * Extract the inner content of a CSS block starting at an opening brace.
+     *
+     * @since 2.4.2
+     * @param string $css Full CSS string.
+     * @param int $openBrace Index of the opening "{" character.
+     * @return array{content: string, end: int} Block content and index after the closing "}".
+     */
+    private function extractCSSBlock(string $css, int $openBrace): array
+    {
+        $depth = 0;
+        $length = strlen($css);
+        $contentStart = $openBrace + 1;
+
+        for ($index = $openBrace; $index < $length; $index++) {
+            if ($css[$index] === '{') {
+                $depth++;
+            } elseif ($css[$index] === '}') {
+                $depth--;
+                if ($depth === 0) {
+                    return [
+                        'content' => substr($css, $contentStart, $index - $contentStart),
+                        'end' => $index + 1,
+                    ];
+                }
+            }
+        }
+
+        return ['content' => '', 'end' => $length];
     }
 
     /**
@@ -365,7 +402,7 @@ class AppearanceSettingsService
     public function getCSSValidationMessage(): string
     {
         return sprintf(
-            __("Custom CSS must start with either \"#notifal-onpage-notification-{ID}\" (ID selector) or \".notifal-onpage-notification-{ID}\" (class selector) to ensure styles only apply to this specific notification. Any selectors that don't start with these prefixes will be ignored for security reasons.", 'notifal')
+            __("Custom CSS selectors must start with either \"#notifal-onpage-notification-{ID}\" (ID selector) or \".notifal-onpage-notification-{ID}\" (class selector). @media queries are supported when the rules inside use these prefixes. Any other selectors will be ignored for security reasons.", 'notifal')
         );
     }
 

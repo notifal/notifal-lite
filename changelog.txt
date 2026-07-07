@@ -1,5 +1,22 @@
 == Changelog ==
 
+2.4.3 [2026-07-06]
+Added: Pre-created notification import now supports HTML Builder.
+Added: Pre-created notification library now checks each template's minimum Notifal version before import.
+Improved: Import buttons in the pre-created notification popup use shared click handling for archive and modal views.
+Improved: Archive cards and the details popup show when your installed Notifal version is too old, with a link to update from Plugins.
+Improved: Import requests are blocked server-side when the template requires a newer Notifal version.
+
+2.4.2 [2026-07-05]
+Fixed: HTML Builder Insert Tag modal now supports dynamic tags with an available-keys picker and copies tags to the clipboard without closing the modal.
+Improved: HTML Builder and OnPage Generate with AI prompts now document full class-placeholder attributes for notifal-action-button, including copy (`data-notifal-action="copy"` and required `data-copy-text`) and Ajax add to cart (`data-notifal-action="ajax-add-to-cart"` with quantity, redirect, and product ID attributes).
+Improved: AI prompts include explicit rules for when to use copy, Ajax add to cart, or post-link CTAs so generated templates produce working buttons.
+Improved: HTML Builder and OnPage Generate with AI prompts now document multi-step templates built with custom-trigger action buttons (`data-hide-elements` / `data-show-elements`) so AI can generate progressive reveal flows inside one notification.
+Improved: HTML Builder AI prompt examples include a multi-step popup pattern for guided opt-ins and reveal-offer flows.
+Improved: HTML Builder class-placeholder processing now sanitizes custom-trigger hide and show selector attributes at render time.
+Fixed: OnPage Custom CSS validation now accepts `@media` queries when inner rules use the notification ID or class prefix, so responsive styles no longer trigger false validation errors.
+Fixed: OnPage Tab Badge Behavior (with Notifal Pro) now restores the browser tab title when the visitor switches away, including custom text and inactive-tab-only display mode.
+
 2.4.1 [2026-06-29]
 Added: Paste JSON directly when importing OnPage Notifications, with size validation, export structure checks, and a trusted-source confirmation step.
 Added: Generate with AI on the OnPage Notifications list, copy a prompt for ChatGPT or Claude, then import the full notification JSON (template plus settings) in one step.

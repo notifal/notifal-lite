@@ -21,6 +21,7 @@ if (!defined('ABSPATH')) exit;
  * @return void
  *
  * @since 2.0.0
+ * @since 2.4.3 Added minimum Notifal version notice in popup body.
  */
 function render_notification_detail_popup(string $context = 'archive'): void {
     $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
@@ -101,6 +102,17 @@ function render_notification_detail_popup(string $context = 'archive'): void {
         <!-- Taxonomy Badges -->
         <div class="notifal-popup-badges"></div>
 
+        <!-- Minimum Notifal version notice (shown by JS when import is blocked) -->
+        <div class="notifal-popup-version-requirement notifal-hidden" id="<?php echo esc_attr($id_prefix); ?>PopupVersionRequirement" role="alert">
+            <div class="notifal-popup-version-requirement-inner">
+                <?php echo NotifalIconService::render('exclamation-triangle', 18); ?>
+                <p class="notifal-popup-version-requirement-text"></p>
+                <a href="<?php echo esc_url(admin_url('plugins.php')); ?>" class="notifal-button secondary notifal-popup-version-update-link">
+                    <?php esc_html_e('Go to Plugins', 'notifal'); ?>
+                </a>
+            </div>
+        </div>
+
         <!-- Description -->
         <div class="notifal-popup-description"></div>
     </div>
@@ -120,12 +132,13 @@ function render_notification_detail_popup(string $context = 'archive'): void {
 
 /**
  * Render notification detail popup footer (import buttons only).
- * Buttons are disabled by JS when the template has no corresponding file.
+ * Buttons without a marketplace file are hidden via JS (notifal-hidden).
  *
  * @param string $context Context identifier for element IDs (e.g., 'modal', 'archive')
  * @return void
  *
  * @since 2.0.0
+ * @since 2.4.3 button are hidden if there is no marketplace file
  */
 function render_notification_detail_popup_footer(string $context = 'archive'): void {
     $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
@@ -146,6 +159,10 @@ function render_notification_detail_popup_footer(string $context = 'archive'): v
             <?php echo NotifalIconService::render('cloud-download', 16); ?>
             <?php esc_html_e('Import Block Editor', 'notifal'); ?>
         </button>
+        <button type="button" class="notifal-popup-import-btn notifal-popup-import-html-builder" id="<?php echo esc_attr($id_prefix); ?>PopupImportHtmlBuilderBtn" data-file-type="html-builder">
+            <?php echo NotifalIconService::render('cloud-download', 16); ?>
+            <?php esc_html_e('Import HTML Builder', 'notifal'); ?>
+        </button>
     </div>
     <?php
 }
@@ -160,6 +177,10 @@ function render_notification_detail_popup_footer(string $context = 'archive'): v
  * @since 2.0.0
  */
 function render_notification_detail_popup_request_note(string $context = 'archive'): void {
+    // Template request UI disabled for now.
+    return;
+
+    /*
     $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
     $note_classes = 'notifal-popup-template-request-note notifal-popup-hidden';
     if ($context === 'modal') {
@@ -192,6 +213,19 @@ function render_notification_detail_popup_request_note(string $context = 'archiv
                 <?php esc_html_e('Request here', 'notifal'); ?>
             </button>
         </div>
+        <div class="notifal-popup-request-note-item notifal-popup-hidden" data-builder="html-builder" id="<?php echo esc_attr($id_prefix); ?>PopupRequestNoteHtmlBuilder">
+            <p class="notifal-popup-request-note-text">
+                <?php
+                echo esc_html(
+                    __('This template is not created with HTML Builder yet. You can request it here, we will create it within two days so you can check again and import it. We will send you an email when it is ready.', 'notifal')
+                );
+                ?>
+            </p>
+            <button type="button" class="notifal-button link notifal-template-request-btn" data-builder="html-builder">
+                <?php esc_html_e('Request here', 'notifal'); ?>
+            </button>
+        </div>
     </div>
     <?php
+    */
 }

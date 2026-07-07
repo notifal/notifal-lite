@@ -32,6 +32,7 @@ return [
         'close'               => __('Close', 'notifal'),
         'html_copied'         => __('HTML copied to clipboard!', 'notifal'),
         'tag_inserted'        => __('Tag inserted at cursor.', 'notifal'),
+        'tag_copied'          => __('Tag copied to clipboard.', 'notifal'),
         'save_success'        => __('Template saved successfully.', 'notifal'),
         'save_error'          => __('Failed to save template. Please try again.', 'notifal'),
         'preview_error'       => __('Failed to refresh preview. Please try again.', 'notifal'),

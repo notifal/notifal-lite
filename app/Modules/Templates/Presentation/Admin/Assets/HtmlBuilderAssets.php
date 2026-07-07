@@ -10,6 +10,7 @@ use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderAiPromptExamples;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderDisplayLayouts;
+use Notifal\Domain\Tags\Infrastructure\WordPress\Registration\DynamicKeysApiRegistrar;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderUseCases;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TagsPanelTrait;
@@ -53,8 +54,16 @@ class HtmlBuilderAssets
 
         do_action(ActionHooks::TEMPLATE_HTML_BUILDER_ASSETS_BEFORE);
 
+        // Ensure the dynamic-keys REST route is registered for tag key popups.
+        // @since 2.4.2
+        DynamicKeysApiRegistrar::register();
+
         self::ensureBaseAssets();
         wp_enqueue_media();
+
+        // REST nonce required by TagsAdminScript dynamic keys fetch.
+        // @since 2.4.2
+        wp_enqueue_script('wp-api');
 
         $cssUrl = Paths::cssAdminBuildUrl();
         $jsUrl = Paths::jsAdminBuildUrl();
@@ -83,6 +92,12 @@ class HtmlBuilderAssets
             ['notifal-shared-admin-css']
         );
 
+        notifal_enqueue_style(
+            'notifal-tooltip-css',
+            $cssUrl . 'TooltipAdminStyle.css',
+            ['notifal-shared-admin-css']
+        );
+
         $tagsStrings = LangLoader::load('Notifal\\Modules\\Templates');
         wp_localize_script('notifal-tags-js', 'notifalTagsStrings', $tagsStrings);
 
@@ -100,7 +115,7 @@ class HtmlBuilderAssets
         notifal_enqueue_script(
             'notifal-html-builder-script',
             $jsUrl . 'HtmlBuilderScript.js',
-            ['notifal-shared-admin-js', 'notifal-tags-js', 'notifal-html-builder-boot', 'media-upload', 'media-views'],
+            ['notifal-shared-admin-js', 'notifal-tags-js', 'notifal-html-builder-boot', 'wp-api', 'media-upload', 'media-views'],
             [],
             null
         );
@@ -147,7 +162,7 @@ class HtmlBuilderAssets
             notifal_enqueue_script(
                 'notifal-tags-js',
                 $jsUrl . 'TagsAdminScript.js',
-                []
+                ['wp-api']
             );
         }
 

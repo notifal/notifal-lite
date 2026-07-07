@@ -1413,7 +1413,7 @@ class AnalyticsService
             }
 
             // Only use live order total for paid statuses when no locked value exists
-            if (in_array($order->get_status(), ['processing', 'completed'], true)) {
+            if (AnalyticsHelper::isPaidWooCommerceOrderStatus((string) $order->get_status())) {
                 $total += (float) $order->get_total('edit');
             }
         }
