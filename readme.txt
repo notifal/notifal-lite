@@ -1,9 +1,9 @@
-=== Notifal - Popup Builder & CRO Engine: Sales Notifications, Social Proof & Exit Intent Popups ===
+=== Notifal - AI Popup Builder & CRO Engine: Sales Notifications, Social Proof & Exit Intent Popups ===
 Contributors: notifal,hosseinalehabib
 Tags: popup, popup builder, woocommerce, marketing, conversion
 Requires at least: 5.6
 Tested up to: 7.0
-Stable tag: 2.4.3
+Stable tag: 2.4.4
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -436,6 +436,14 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 27. Notifal HTML builder.
 
 == Changelog ==
+2.4.4 [2026-07-11]
+Fixed: HTML Builder HTML tab now keeps style attribute edits when you remove CSS properties and click Update HTML, without restoring stylesheet-matched rules as inline styles.
+Added: Content Source now shows an info note for cart tags explaining that cart tag limits are not available, matching the user tags behavior.
+Improved: HTML Source modal now opens with indented, readable HTML (including CSS in style tags) instead of a single minified line.
+Added: HTML Source modal search with highlighted matches, scroll-to-first result, and previous/next navigation.
+Improved: Properties panel HTML tab now opens with indented element markup and the same find-in-HTML search with previous/next navigation.
+Added: Notifal countdown placeholder (`notifal-countdown`) with AI prompt guidance, Content panel minutes/seconds and when-timer-ends settings in HTML Builder, and frontend timer runtime.
+
 2.4.3 [2026-07-06]
 Added: Pre-created notification import now supports HTML Builder.
 Added: Pre-created notification library now checks each template's minimum Notifal version before import.
@@ -465,16 +473,6 @@ Improved: AI prompt includes a use case selector with goal-specific guidance.
 Improved: AI prompt includes display layout selector synced with notification Appearance settings.
 Improved: AI prompt accepts a free-text industry or niche to tailor design and copy.
 Improved: AI prompt includes field-filling patterns that show how to write industry, goal, and layout details for better AI output.
-
-2.4.0 [2026-06-17]
-Added: HTML Builder - third template builder for pasting self-contained HTML with embedded styles and scripts; no Elementor or Gutenberg required.
-Added: Built-in AI prompt generator to create copy-ready HTML with your brand color, Notifal dynamic tags, and display-type guidance for external AI tools.
-Added: Fullscreen admin workspace with HTML input, text/color editors, live preview, Insert Tag modal, copy HTML, and AJAX save.
-Added: `HtmlTemplateSanitizer` with trusted/restricted capability paths, PHP tag stripping, and extensibility hooks for marketplace-safe HTML storage.
-Added: Frontend `HtmlTemplateRenderer` with full tag, class-placeholder, and shortcode pipeline for HTML Builder templates.
-Added: Import/export support for `notifal_html_builder` JSON payloads with image URL extraction.
-Improved: Template list/edit routing now opens HTML Builder templates in the dedicated builder screen instead of the block editor.
-Improved: Delay, exit intent, scroll, and other timed notifications now work reliably on more sites, including when a theme affects how notification data is loaded.
 
 [See changelog for all versions.](https://notifal.com/changelog/)
 
