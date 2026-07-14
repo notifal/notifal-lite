@@ -16,6 +16,7 @@ defined('ABSPATH') || exit;
  *   - notifal-post-feature-image
  *   - notifal-close-button
  *   - notifal-action-button
+ *   - notifal-countdown
  *
  * @package Notifal\Modules\OnPageNotification\Application\Services\Template
  * @since 2.3.12
@@ -37,6 +38,13 @@ class TemplateClassPlaceholderProcessor
      * CSS class for action button placeholders.
      */
     public const CLASS_ACTION_BUTTON = 'notifal-action-button';
+
+    /**
+     * CSS class for countdown timer placeholders.
+     *
+     * @since 2.4.4
+     */
+    public const CLASS_COUNTDOWN = 'notifal-countdown';
 
     /**
      * Process rendered template HTML and hydrate class-based placeholders.
@@ -81,6 +89,7 @@ class TemplateClassPlaceholderProcessor
         self::processFeaturedImagePlaceholders($document, $root, $frontendContext);
         self::processCloseButtonPlaceholders($document, $root);
         self::processActionButtonPlaceholders($document, $root, $actionContextMeta);
+        self::processCountdownPlaceholders($document, $root);
 
         // Serialize the processed fragment back to HTML
         $processedHtml = self::extractRootInnerHtml($document, $root);
@@ -106,7 +115,8 @@ class TemplateClassPlaceholderProcessor
     {
         return strpos($html, self::CLASS_FEATURED_IMAGE) !== false
             || strpos($html, self::CLASS_CLOSE_BUTTON) !== false
-            || strpos($html, self::CLASS_ACTION_BUTTON) !== false;
+            || strpos($html, self::CLASS_ACTION_BUTTON) !== false
+            || strpos($html, self::CLASS_COUNTDOWN) !== false;
     }
 
     /**
@@ -322,6 +332,110 @@ class TemplateClassPlaceholderProcessor
             }
 
             $node->setAttribute('data-notifal-class-placeholder', 'close-button');
+        }
+    }
+
+    /**
+     * Normalize countdown placeholders and sync initial unit display text.
+     *
+     * Frontend JS ticks the timer from data-countdown-seconds. This pass only
+     * sanitizes attributes and keeps visible unit spans aligned with the duration.
+     *
+     * @param \DOMDocument $document Parsed document.
+     * @param \DOMElement  $root Wrapper element.
+     * @return void
+     * @since 2.4.4
+     */
+    private static function processCountdownPlaceholders(\DOMDocument $document, \DOMElement $root): void
+    {
+        $xpath = new \DOMXPath($document);
+        $nodes = $xpath->query(
+            './/*[contains(concat(" ", normalize-space(@class), " "), " ' . self::CLASS_COUNTDOWN . ' ")]',
+            $root
+        );
+
+        if (!$nodes) {
+            return;
+        }
+
+        foreach ($nodes as $node) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            // Sanitize duration to a non-negative integer second count.
+            $raw_seconds = $node->getAttribute('data-countdown-seconds');
+            $total_seconds = absint($raw_seconds);
+            $node->setAttribute('data-countdown-seconds', (string) $total_seconds);
+
+            // Default format hint for authors / AI (runtime uses unit spans).
+            if (!$node->hasAttribute('data-countdown-format')) {
+                $node->setAttribute('data-countdown-format', 'mm:ss');
+            }
+
+            // Normalize on-complete action for the frontend timer runtime.
+            $on_complete = strtolower((string) $node->getAttribute('data-countdown-on-complete'));
+            if (!in_array($on_complete, ['stay', 'hide', 'close'], true)) {
+                $on_complete = 'stay';
+            }
+            $node->setAttribute('data-countdown-on-complete', $on_complete);
+
+            if (!$node->hasAttribute('aria-label')) {
+                $node->setAttribute('aria-label', esc_attr__('Countdown timer', 'notifal'));
+            }
+
+            // Keep nested value spans in sync with the configured duration.
+            self::syncCountdownUnitDisplays($xpath, $node, $total_seconds);
+
+            $node->setAttribute('data-notifal-class-placeholder', 'countdown');
+        }
+    }
+
+    /**
+     * Write padded unit values into [data-countdown-unit] spans.
+     *
+     * @param \DOMXPath   $xpath         Document XPath helper.
+     * @param \DOMElement $countdownRoot Countdown root element.
+     * @param int         $total_seconds Duration in seconds.
+     * @return void
+     * @since 2.4.4
+     */
+    private static function syncCountdownUnitDisplays(
+        \DOMXPath $xpath,
+        \DOMElement $countdownRoot,
+        int $total_seconds
+    ): void {
+        $days = (int) floor($total_seconds / 86400);
+        $hours = (int) floor(($total_seconds % 86400) / 3600);
+        $minutes = (int) floor(($total_seconds % 3600) / 60);
+        $seconds = (int) ($total_seconds % 60);
+
+        $parts = [
+            'days' => $days,
+            'hours' => $hours,
+            'minutes' => $minutes,
+            'seconds' => $seconds,
+        ];
+
+        $unit_nodes = $xpath->query('.//*[@data-countdown-unit]', $countdownRoot);
+
+        if (!$unit_nodes) {
+            return;
+        }
+
+        foreach ($unit_nodes as $unit_node) {
+            if (!$unit_node instanceof \DOMElement) {
+                continue;
+            }
+
+            $unit = strtolower((string) $unit_node->getAttribute('data-countdown-unit'));
+
+            if (!isset($parts[$unit])) {
+                continue;
+            }
+
+            $value = (int) $parts[$unit];
+            $unit_node->textContent = $value < 10 ? '0' . (string) $value : (string) $value;
         }
     }
 

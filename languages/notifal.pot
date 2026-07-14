@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Notifal\n"
 "Report-Msgid-Bugs-To: https://notifal.com\n"
-"POT-Creation-Date: 2026-07-07 17:57+0000\n"
+"POT-Creation-Date: 2026-07-14 12:43+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -31,6 +31,10 @@ msgstr ""
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:238
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:456
 msgid "%1$d influenced order (%2$d paid, counted in revenue)"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:116
+msgid "%1$s of %2$s"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/Settings/WooCommerceCartDisplayRulesService.php:212
@@ -81,7 +85,7 @@ msgstr ""
 msgid "(unknown product)"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:130
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:148
 msgid "1 element selected"
 msgstr ""
 
@@ -90,31 +94,31 @@ msgstr ""
 msgid "30-day money-back guarantee"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:167
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:185
 msgid "300 Light"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:168
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:186
 msgid "400 Regular"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:169
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:187
 msgid "500 Medium"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:170
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:188
 msgid "600 Semi-Bold"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:171
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:189
 msgid "700 Bold"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:172
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:190
 msgid "800 Extra Bold"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:173
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:191
 msgid "900 Black"
 msgstr ""
 
@@ -146,7 +150,7 @@ msgstr ""
 msgid "A modal dialog that appears in the center of the screen with a backdrop. Ideal for important messages, forms, or detailed information. Requires user interaction to dismiss."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:546
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:567
 msgid "A new analytics table stores per-button click aggregates. The event queue also accepts optional button metadata so Pro can aggregate clicks without extra frontend requests."
 msgstr ""
 
@@ -172,6 +176,10 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:92
 msgid "AI prompt (read-only)"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:315
+msgid "AI prompts for HTML Builder and Generate with AI now ask for the notifal-countdown structure when a timer is needed. Select the timer in the builder to set minutes, seconds, and what happens when it ends (keep 00:00, hide the timer, or close the notification). Notifal runs the countdown when the notification is shown."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:89
@@ -209,7 +217,7 @@ msgstr ""
 msgid "Accessibility"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:384
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:440
 msgid "Accurate clicked revenue on orders"
 msgstr ""
 
@@ -217,11 +225,11 @@ msgstr ""
 msgid "Action Button"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:525
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:546
 msgid "Action button clicks now record which button was clicked — including button label, action type (post link, copy, custom, and more), and a stable tracking ID for analytics."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:489
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:510
 msgid "Action buttons via class"
 msgstr ""
 
@@ -256,12 +264,12 @@ msgid "Active pattern"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/RestrictionCardRendererTrait.php:100
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:182
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:193
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:219
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:229
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:239
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:249
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:183
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:194
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:234
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:244
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:254
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:264
 msgid "Add Filter"
 msgstr ""
 
@@ -326,7 +334,7 @@ msgstr ""
 msgid "Add new..."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:483
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:504
 msgid "Add notifal-close-button to your own button or link to dismiss the notification and record close analytics — no Close Icon widget required."
 msgstr ""
 
@@ -338,7 +346,7 @@ msgstr ""
 msgid "Add unlimited filters per restriction type"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:430
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:544
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:314
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:746
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:181
@@ -862,7 +870,7 @@ msgstr ""
 msgid "Auto-save failed"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:124
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:142
 msgid "Auto-saved"
 msgstr ""
 
@@ -972,12 +980,12 @@ msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:351
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:196
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:148
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:166
 msgid "Background"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:569
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:156
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:174
 msgid "Background Color"
 msgstr ""
 
@@ -1023,7 +1031,7 @@ msgstr ""
 msgid "Behavior settings contain invalid data."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:391
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:447
 msgid "Better variable product revenue matching"
 msgstr ""
 
@@ -1039,7 +1047,7 @@ msgstr ""
 msgid "Block Editor Templates"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:539
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:560
 msgid "Block Editor action buttons persist a trackingId attribute when inserted. Elementor action buttons use a widget-based tracking ID so the same button is counted consistently across page loads."
 msgstr ""
 
@@ -1060,7 +1068,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:582
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:223
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:300
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:165
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:183
 msgid "Border Radius"
 msgstr ""
 
@@ -1095,7 +1103,7 @@ msgstr ""
 msgid "Build Trust and Social Proof"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:469
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:490
 msgid "Build templates in Elementor or the Block Editor without Notifal widgets or blocks. Add HTML with special classes and get the same behavior as the official components — featured image, close button, and action buttons."
 msgstr ""
 
@@ -1124,7 +1132,7 @@ msgstr ""
 msgid "Button"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:531
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:552
 msgid "Button click breakdown in Pro analytics (Pro)"
 msgstr ""
 
@@ -1245,6 +1253,7 @@ msgid "Cart Subtotal"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:252
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:217
 msgid "Cart Tags"
 msgstr ""
 
@@ -1301,7 +1310,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:198
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:99
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:164
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:175
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:193
 msgid "Center"
 msgstr ""
 
@@ -1342,7 +1351,7 @@ msgstr ""
 msgid "Choose between default sounds or upload your own audio file"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:141
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:159
 msgid "Choose color"
 msgstr ""
 
@@ -1382,6 +1391,10 @@ msgstr ""
 msgid "Choose the type of rule based on your target. Pages, Posts, and Products are convenience options that automatically switch to Post Type and configure the appropriate settings. Post Type allows you to select from all available post types. Pro features require Notifal Pro."
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:91
+msgid "Choose what happens after the countdown reaches zero."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:70
 msgid "Choose when the notification should appear on the page. Different options provide various user experience approaches."
 msgstr ""
@@ -1411,7 +1424,7 @@ msgstr ""
 msgid "Claim Now"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:468
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:489
 msgid "Class-based template placeholders"
 msgstr ""
 
@@ -1438,7 +1451,7 @@ msgstr ""
 msgid "Clear session counters when the user logs out."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:328
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:384
 msgid "Clearer CTA behavior rules for AI"
 msgstr ""
 
@@ -1463,11 +1476,11 @@ msgstr ""
 msgid "Click a rule to edit it. To add another rule, fill the form below and click Save Rule without selecting a rule first."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:97
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:107
 msgid "Click any element in the canvas or the elements tree to start editing."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:100
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:110
 msgid "Click here to import a new one"
 msgstr ""
 
@@ -1522,7 +1535,7 @@ msgstr ""
 msgid "Clicked revenue"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:392
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:448
 msgid "Clicked revenue backfill and pending checkout snapshots now resolve parent and variation product IDs against WooCommerce order line items, so revenue is counted correctly for variable products."
 msgstr ""
 
@@ -1566,7 +1579,7 @@ msgstr ""
 msgid "Close Icon"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:321
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:331
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/CloseIconRenderer.php:159
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/CloseIconRenderer.php:169
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:93
@@ -1579,7 +1592,7 @@ msgstr ""
 msgid "Close Rate"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:482
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:503
 msgid "Close button via class"
 msgstr ""
 
@@ -1595,6 +1608,10 @@ msgstr ""
 msgid "Close on Form Submit"
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:94
+msgid "Close the notification"
+msgstr ""
+
 #: app/Modules/Templates/Resources/Lang/js/translations.php:19
 msgid "Close tooltip"
 msgstr ""
@@ -1605,7 +1622,7 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:260
 #: app/Modules/OnPageNotification/Presentation/Admin/Traits/FilterRendererTrait.php:70
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:135
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:153
 msgid "Collapse"
 msgstr ""
 
@@ -1614,7 +1631,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:159
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:177
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:364
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:155
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:173
 msgid "Color"
 msgstr ""
 
@@ -1626,11 +1643,11 @@ msgstr ""
 msgid "Color Dodge"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:143
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:161
 msgid "Color presets"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:142
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:160
 msgid "Color swatch"
 msgstr ""
 
@@ -1664,7 +1681,7 @@ msgstr ""
 msgid "Comment Counter"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:235
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:250
 msgid "Comment Restrictions"
 msgstr ""
 
@@ -1740,12 +1757,12 @@ msgid "Contact your hosting provider to enable the PHP ZIP extension, or enable 
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:381
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:179
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:197
 msgid "Contain"
 msgstr ""
 
 #: app/Modules/Templates/Controllers/FeaturedImageApiController.php:312
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:132
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:150
 msgid "Content"
 msgstr ""
 
@@ -1779,7 +1796,7 @@ msgstr ""
 msgid "Content within page flow like banners. Integrates naturally with your content."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:276
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:291
 msgid "Context-Aware Content Source"
 msgstr ""
 
@@ -1823,7 +1840,7 @@ msgstr ""
 msgid "Converted"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:146
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:164
 msgid "Copied"
 msgstr ""
 
@@ -1894,6 +1911,11 @@ msgstr ""
 msgid "Count & Alert Modes"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:384
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:86
+msgid "Countdown timer"
+msgstr ""
+
 #: app/Domain/Tags/RegisterTags.php:1007
 #: app/Domain/Tags/RegisterTags.php:1029
 msgid "Country"
@@ -1908,7 +1930,7 @@ msgid "Coupon applied"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:382
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:178
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:196
 msgid "Cover"
 msgstr ""
 
@@ -1932,10 +1954,6 @@ msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Dashboard/DashboardWidget.php:505
 msgid "Create one"
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:434
-msgid "Create templates by pasting self-contained HTML from AI tools or any source, no Elementor or Gutenberg required. Edit extracted text and colors, insert Notifal tags, and preview with the full frontend pipeline."
 msgstr ""
 
 #: app/Modules/Templates/Presentation/Admin/Views/components/template-creation-options.php:86
@@ -1967,6 +1985,10 @@ msgstr ""
 msgid "Current site time: %1$s (%2$s)"
 msgstr ""
 
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:221
+msgid "Currently you can't define any limit for cart tags. These tags are replaced with data from the visitor's live WooCommerce cart."
+msgstr ""
+
 #: app/Infrastructure/WordPress/Admin/Settings/Services/PostTypeDiscoveryService.php:161
 msgid "Custom"
 msgstr ""
@@ -1988,7 +2010,7 @@ msgstr ""
 msgid "Custom CSS & Advanced Styling"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:342
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:398
 msgid "Custom CSS @media queries work again"
 msgstr ""
 
@@ -2037,7 +2059,7 @@ msgstr ""
 msgid "Custom Post Type Counter"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:245
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:260
 msgid "Custom Post Type Restrictions"
 msgstr ""
 
@@ -2059,7 +2081,7 @@ msgstr ""
 msgid "Custom Upload"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:144
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:162
 msgid "Custom color"
 msgstr ""
 
@@ -2099,7 +2121,7 @@ msgstr ""
 msgid "Dashboard refreshed successfully!"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:545
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:566
 msgid "Database support for button stats"
 msgstr ""
 
@@ -2159,11 +2181,7 @@ msgstr ""
 msgid "Delay is required when \"After Delay\" is selected"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:441
-msgid "Delay, exit intent, scroll, and other timed popups now work reliably on more WordPress sites, including setups where the active theme affects how notification data is loaded."
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:398
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:454
 msgid "Delayed payment attribution"
 msgstr ""
 
@@ -2227,7 +2245,7 @@ msgstr ""
 msgid "Description (optional)"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:127
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:145
 msgid "Deselect"
 msgstr ""
 
@@ -2244,7 +2262,7 @@ msgid "Design visually using the Elementor builder."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:162
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:118
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:136
 msgid "Desktop"
 msgstr ""
 
@@ -2318,7 +2336,7 @@ msgstr ""
 msgid "Dismiss"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:107
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:125
 msgid "Dismiss error"
 msgstr ""
 
@@ -2723,7 +2741,7 @@ msgstr ""
 msgid "Draft templates are not available in notifications. Click Publish when you are ready."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:122
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:140
 msgid "Drag to resize preview width"
 msgstr ""
 
@@ -2734,7 +2752,7 @@ msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/campaign-list.php:51
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/notifications-list.php:64
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:108
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:126
 #: app/Shared/AdminUI/Lists/BaseListView.php:444
 #: app/Shared/AdminUI/Lists/BaseListView.php:977
 msgid "Duplicate"
@@ -2829,7 +2847,7 @@ msgstr ""
 msgid "Edit notification in a new tab"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:104
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:122
 msgid "Edit this element's outerHTML, then click Update HTML. Use a single root tag only."
 msgstr ""
 
@@ -2846,7 +2864,7 @@ msgstr ""
 msgid "Editor"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:103
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:121
 msgid "Element HTML"
 msgstr ""
 
@@ -2882,7 +2900,7 @@ msgstr ""
 msgid "Elementor plugin is not installed."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:89
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:99
 msgid "Elements"
 msgstr ""
 
@@ -2985,7 +3003,7 @@ msgstr ""
 msgid "Enter text to copy"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:105
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:123
 msgid "Enter valid HTML for one element only (a single opening and closing tag)."
 msgstr ""
 
@@ -3185,16 +3203,16 @@ msgstr ""
 msgid "Exclusion"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:497
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:518
 msgid "Existing Elementor widgets and Block Editor blocks are not modified. Class placeholders are processed only on custom HTML elements, so current templates keep working exactly as before."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:261
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:136
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:154
 msgid "Expand"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:335
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:391
 msgid "Expanded class-placeholder reference"
 msgstr ""
 
@@ -3394,7 +3412,7 @@ msgstr ""
 msgid "Featured Image"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:111
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:129
 msgid "Featured Image Placeholder"
 msgstr ""
 
@@ -3402,7 +3420,7 @@ msgstr ""
 msgid "Featured Products Only"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:475
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:496
 msgid "Featured image via class"
 msgstr ""
 
@@ -3415,7 +3433,7 @@ msgid "File is too large. Maximum size is 10MB."
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:380
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:180
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:198
 msgid "Fill"
 msgstr ""
 
@@ -3429,6 +3447,10 @@ msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:319
 msgid "Filters & Effects"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:301
+msgid "Find text in the HTML Source modal with highlighted matches, automatic scroll to the first result, and previous/next arrows to move between matches when you need to tweak the markup."
 msgstr ""
 
 #: app/Domain/Tags/RegisterWooCommerceCartTags.php:120
@@ -3490,11 +3512,11 @@ msgstr ""
 msgid "Focus is trapped within this notification. Use Tab to navigate between elements."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:151
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:169
 msgid "Font Size"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:152
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:170
 msgid "Font Weight"
 msgstr ""
 
@@ -3608,7 +3630,7 @@ msgstr ""
 msgid "Generate dynamic tags for any custom post type automatically. Create comprehensive tag sets including standard fields, custom meta fields, and taxonomies."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:370
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:426
 msgid "Generate full notifications with AI"
 msgstr ""
 
@@ -3705,7 +3727,6 @@ msgstr ""
 msgid "HTML"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:433
 #: app/Modules/Templates/Presentation/Admin/Controllers/HtmlBuilderPageController.php:111
 #: app/Modules/Templates/Presentation/Admin/Controllers/HtmlBuilderPageController.php:112
 #: app/Modules/Templates/Presentation/Admin/ListTable/ColumnsController.php:65
@@ -3716,23 +3737,27 @@ msgstr ""
 msgid "HTML Builder Templates"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:322
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:378
 msgid "HTML Builder and Generate with AI on the OnPage list now include full class-placeholder documentation. AI-generated templates should output working copy buttons (data-notifal-action=\"copy\" plus data-copy-text) and Ajax add to cart buttons (data-notifal-action=\"ajax-add-to-cart\" with quantity, redirect, and product attributes) instead of plain notifal-action-button markup."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:405
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:461
 msgid "HTML Builder improvements"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:286
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:342
 msgid "HTML Builder pre-created templates"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:145
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:286
+msgid "HTML Builder style attribute updates"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:163
 msgid "HTML Preview"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:101
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:111
 msgid "HTML Source"
 msgstr ""
 
@@ -3749,7 +3774,7 @@ msgid "Header content"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:266
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:164
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:182
 msgid "Height"
 msgstr ""
 
@@ -3773,7 +3798,7 @@ msgstr ""
 msgid "Hide details"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:90
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:100
 msgid "Hide elements panel"
 msgstr ""
 
@@ -3782,8 +3807,12 @@ msgstr ""
 msgid "Hide examples"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:92
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:102
 msgid "Hide properties panel"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:93
+msgid "Hide the timer"
 msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:194
@@ -3923,11 +3952,11 @@ msgstr ""
 msgid "Image Resolution"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:113
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:131
 msgid "Image Size"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:110
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:128
 msgid "Image URL"
 msgstr ""
 
@@ -3966,7 +3995,7 @@ msgstr ""
 msgid "Import OnPage Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:378
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:434
 msgid "Import OnPage Notifications from a file or by pasting exported JSON directly. A security notice and trusted-source confirmation help keep imports safe; pasted JSON is validated server-side and saved as disabled drafts."
 msgstr ""
 
@@ -4050,7 +4079,7 @@ msgstr ""
 msgid "Impressions"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:532
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:553
 msgid "In Notifal Pro, open OnPage Analytics and click the Clicks column for a notification to see a breakdown modal — which buttons received clicks, how many, and their action types. Load more rows when templates have many buttons."
 msgstr ""
 
@@ -4396,12 +4425,16 @@ msgstr ""
 msgid "Justified"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:177
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:195
 msgid "Justify"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:96
 msgid "Keep keyboard focus within the notification when it's active. This prevents users from accidentally navigating away and ensures keyboard users can interact with the notification."
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:92
+msgid "Keep showing 00:00"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/general.php:12
@@ -4490,7 +4523,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:270
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:95
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:160
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:174
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:192
 msgid "Left"
 msgstr ""
 
@@ -4522,7 +4555,7 @@ msgstr ""
 msgid "Limited time offer - 50% off selected items!"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:153
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:171
 msgid "Line Height"
 msgstr ""
 
@@ -4548,7 +4581,7 @@ msgstr ""
 msgid "Load HTML"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:133
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:151
 msgid "Load HTML to see elements"
 msgstr ""
 
@@ -4567,7 +4600,7 @@ msgstr ""
 msgid "Load a pattern, then replace placeholders with your real business details."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:98
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:108
 msgid "Load an HTML template to start editing"
 msgstr ""
 
@@ -4639,8 +4672,8 @@ msgstr ""
 msgid "Loading took too long. The marketplace may be slow, please try again."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:445
-#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:458
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:559
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:572
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:251
 #: app/Modules/OnPageNotification/Resources/Lang/js/analytics.php:8
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:15
@@ -4698,11 +4731,11 @@ msgstr ""
 msgid "Manual Close Only"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:162
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:180
 msgid "Margin Bottom"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:161
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:179
 msgid "Margin Top"
 msgstr ""
 
@@ -4738,7 +4771,7 @@ msgstr ""
 msgid "Maybe Later"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:115
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:133
 msgid "Media Library"
 msgstr ""
 
@@ -4746,8 +4779,12 @@ msgstr ""
 msgid "Meta Fields"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:293
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:349
 msgid "Minimum Notifal version checks for pre-created templates"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:88
+msgid "Minutes"
 msgstr ""
 
 #: app/Shared/Utils/FileUploadValidator.php:45
@@ -4759,7 +4796,7 @@ msgid "Missing required field: %s"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:168
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:120
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:138
 msgid "Mobile"
 msgstr ""
 
@@ -4795,10 +4832,6 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/analytics.php:25
 msgid "More notifications loaded"
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:440
-msgid "More reliable timed notifications"
 msgstr ""
 
 #: app/Modules/Campaign/Presentation/Admin/Views/campaign-list.php:52
@@ -4929,6 +4962,10 @@ msgstr ""
 msgid "New update is available. Click to go to Plugins page and update."
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:119
+msgid "Next result"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:101
 msgid "Next update: %1$s hr %2$s min later"
 msgstr ""
@@ -4972,7 +5009,7 @@ msgstr ""
 msgid "No Display Rules Set"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:99
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:109
 msgid "No HTML in this template."
 msgstr ""
 
@@ -5025,11 +5062,11 @@ msgstr ""
 msgid "No description available for this display type."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:134
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:152
 msgid "No editable elements found"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:94
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:104
 msgid "No element selected"
 msgstr ""
 
@@ -5049,12 +5086,12 @@ msgstr ""
 msgid "No file was uploaded."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:182
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:193
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:219
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:229
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:239
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:249
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:183
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:194
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:234
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:244
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:254
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:264
 msgid "No filters configured. Click %s to create a condition."
 msgstr ""
 
@@ -5101,6 +5138,10 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Components/NotificationDetailPopupComponent.php:85
 #: app/Modules/OnPageNotification/Resources/Lang/js/import.php:20
 msgid "No preview available"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:117
+msgid "No results"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:11
@@ -5158,7 +5199,7 @@ msgid "No, thanks"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:383
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:181
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:199
 msgid "None"
 msgstr ""
 
@@ -5243,6 +5284,10 @@ msgstr ""
 msgid "Notifal Templates"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:314
+msgid "Notifal countdown timers"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Application/Services/Analytics/OrderAttributionService.php:365
 msgid "Notifal influenced this order - %s"
 msgstr ""
@@ -5259,7 +5304,7 @@ msgstr ""
 msgid "Notification %s successfully."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:381
+#: app/Modules/OnPageNotification/Application/Services/Template/TemplateClassPlaceholderProcessor.php:495
 #: app/Modules/Templates/Infrastructure/WordPress/BlockEditor/Renderers/ActionButtonRenderer.php:273
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:668
 msgid "Notification Action Button"
@@ -5419,7 +5464,7 @@ msgid "OR: Notification shows if any single rule matches. AND: Notification show
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:376
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:166
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:184
 msgid "Object Fit"
 msgstr ""
 
@@ -5437,7 +5482,7 @@ msgstr ""
 msgid "On Scroll"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:371
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:427
 msgid "On the OnPage Notifications list, use Generate with AI to copy a prompt that asks external AI tools for a complete Notifal import JSON, HTML template plus appearance, timing, behavior, and display rules. Open Import to paste the JSON and create a ready-to-review draft in one step."
 msgstr ""
 
@@ -5463,7 +5508,7 @@ msgstr ""
 msgid "OnPage Analytics Dashboard"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:343
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:399
 msgid "OnPage Custom CSS validation now accepts @media blocks when inner rules use the notification ID or class prefix, so responsive styles like mobile width no longer show false validation errors."
 msgstr ""
 
@@ -5591,7 +5636,7 @@ msgstr ""
 msgid "Order Paid Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:178
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:179
 msgid "Order Restrictions"
 msgstr ""
 
@@ -5612,7 +5657,7 @@ msgstr ""
 msgid "Order Tags"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:385
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:441
 msgid "Order attribution now shows Total clicked revenue as the sum of each clicked product line subtotal (price × quantity) when clicked products are listed on the order."
 msgstr ""
 
@@ -5668,7 +5713,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:532
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:56
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:194
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:272
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:287
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/display-rules-settings.php:118
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:461
 msgid "PRO"
@@ -5686,19 +5731,19 @@ msgstr ""
 msgid "Padding"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:159
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:177
 msgid "Padding Bottom"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:160
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:178
 msgid "Padding Left"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:158
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:176
 msgid "Padding Right"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:157
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:175
 msgid "Padding Top"
 msgstr ""
 
@@ -5741,7 +5786,7 @@ msgstr ""
 msgid "Page Published Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:225
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:240
 msgid "Page Restrictions"
 msgstr ""
 
@@ -5796,7 +5841,7 @@ msgstr ""
 msgid "Paste JSON"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:377
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:433
 msgid "Paste JSON when importing notifications"
 msgstr ""
 
@@ -5860,7 +5905,7 @@ msgstr ""
 msgid "Per Session"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:524
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:545
 msgid "Per-button click tracking"
 msgstr ""
 
@@ -6210,7 +6255,7 @@ msgstr ""
 msgid "Post Published Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:215
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:230
 msgid "Post Restrictions"
 msgstr ""
 
@@ -6358,8 +6403,12 @@ msgstr ""
 msgid "Preview viewport"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:121
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:139
 msgid "Preview width"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:118
+msgid "Previous result"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:85
@@ -6461,7 +6510,7 @@ msgstr ""
 msgid "Product Publish Date"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:189
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:190
 msgid "Product Restrictions"
 msgstr ""
 
@@ -6510,11 +6559,11 @@ msgstr ""
 msgid "Promotions"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:329
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:385
 msgid "Prompts now tell external AI tools when to use copy coupon, add to cart in place, or visit product page CTAs, so coupon popups, cart nudges, and shop buttons match the right Notifal action type."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:88
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:98
 msgid "Properties"
 msgstr ""
 
@@ -6553,6 +6602,14 @@ msgstr ""
 msgid "Read More"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:293
+msgid "Readable HTML Source modal"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:307
+msgid "Readable Properties HTML tab"
+msgstr ""
+
 #: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:30
 msgid "Recover lost sales with exit-intent coupons, flash discounts, and cross-sell offers powered by live WooCommerce cart data."
 msgstr ""
@@ -6569,7 +6626,7 @@ msgstr ""
 msgid "Redirect to Checkout"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:129
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:147
 msgid "Redo (Ctrl+Y)"
 msgstr ""
 
@@ -6624,7 +6681,7 @@ msgid "Remember notification state (dismissed/active) when page is refreshed."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:13
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:109
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:127
 msgid "Remove"
 msgstr ""
 
@@ -6705,7 +6762,7 @@ msgid "Requires WooCommerce"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:226
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:85
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:95
 msgid "Reset"
 msgstr ""
 
@@ -6726,11 +6783,11 @@ msgstr ""
 msgid "Resetting..."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:139
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:157
 msgid "Resize elements panel"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:140
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:158
 msgid "Resize properties panel"
 msgstr ""
 
@@ -6746,7 +6803,7 @@ msgstr ""
 msgid "Response received from server."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:117
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:135
 msgid "Responsive"
 msgstr ""
 
@@ -6792,7 +6849,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:274
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:103
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:168
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:176
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:194
 msgid "Right"
 msgstr ""
 
@@ -6961,6 +7018,10 @@ msgstr ""
 msgid "Search Categories"
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:113
+msgid "Search HTML"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:81
 msgid "Search Labels"
 msgstr ""
@@ -7015,6 +7076,14 @@ msgstr ""
 
 #: app/Modules/Campaign/Resources/Lang/js/campaign.php:24
 msgid "Search failed. Please try again."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:300
+msgid "Search in HTML Source"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:114
+msgid "Search in HTML…"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:12
@@ -7075,6 +7144,10 @@ msgstr ""
 msgid "Seasonal"
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:89
+msgid "Seconds"
+msgstr ""
+
 #: app/Domain/Tags/Controllers/DynamicKeysController.php:84
 #: app/Modules/Campaign/Presentation/Admin/Routes/AdminRouteController.php:127
 #: app/Modules/Templates/Presentation/Admin/Routes/AdminRouteController.php:163
@@ -7130,7 +7203,7 @@ msgstr ""
 msgid "See your top performers with Pro analytics"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:125
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:143
 msgid "Select"
 msgstr ""
 
@@ -7146,7 +7219,7 @@ msgstr ""
 msgid "Select All Tags"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:116
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:134
 msgid "Select Image"
 msgstr ""
 
@@ -7199,7 +7272,7 @@ msgstr ""
 msgid "Select all items"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:96
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:106
 msgid "Select an element that contains text directly inside it, or use the HTML tab for nested markup."
 msgstr ""
 
@@ -7219,7 +7292,7 @@ msgstr ""
 msgid "Select the JavaScript event that should trigger the notification when it occurs on the specified element."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:126
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:144
 msgid "Select tool (click elements)"
 msgstr ""
 
@@ -7231,6 +7304,10 @@ msgstr ""
 #: app/Modules/Campaign/Presentation/Admin/Views/Edit/index.php:234
 #: app/Modules/Campaign/Resources/Lang/js/campaign.php:21
 msgid "Selected notifications"
+msgstr ""
+
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:87
+msgid "Set how long the timer runs. Notifal starts the countdown when the notification is shown."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/timing.php:87
@@ -7313,7 +7390,7 @@ msgstr ""
 msgid "Show duplicate source"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:91
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:101
 msgid "Show elements panel"
 msgstr ""
 
@@ -7325,7 +7402,7 @@ msgstr ""
 msgid "Show if: display the notification when the rules below match (using AND/OR logic). Don't show if: hide the notification when those rules match."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:278
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:293
 msgid "Show notification content related to the page the visitor is viewing. Target products, posts, pages, and archives by category depth with optional fallback."
 msgstr ""
 
@@ -7341,7 +7418,7 @@ msgstr ""
 msgid "Show on Tablet"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:93
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:103
 msgid "Show properties panel"
 msgstr ""
 
@@ -7368,7 +7445,7 @@ msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:452
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:130
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:150
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:168
 msgid "Size"
 msgstr ""
 
@@ -7419,7 +7496,7 @@ msgstr ""
 msgid "Small notification that slides in from the side. Perfect for quick confirmations and alerts."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:406
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:462
 msgid "Smaller boot preloader, a clearer new-template welcome flow (paste HTML or generate with AI), link URL editing for anchors, and richer AI prompt fields with field-filling patterns."
 msgstr ""
 
@@ -7427,11 +7504,11 @@ msgstr ""
 msgid "Smart Tags"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:271
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:286
 msgid "Smart Targeting"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:321
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:377
 msgid "Smarter AI prompts for action buttons"
 msgstr ""
 
@@ -7486,7 +7563,7 @@ msgstr ""
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:412
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:514
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:239
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:149
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:167
 msgid "Spacing"
 msgstr ""
 
@@ -7543,7 +7620,7 @@ msgstr ""
 msgid "Spotlight new posts, products, and reviews the moment they go live with timely on-page notifications."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:538
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:559
 msgid "Stable IDs in Block Editor and Elementor"
 msgstr ""
 
@@ -7611,11 +7688,11 @@ msgstr ""
 msgid "Stock Alert"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:131
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:149
 msgid "Style"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:138
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:156
 msgid "Style editable"
 msgstr ""
 
@@ -7661,7 +7738,7 @@ msgstr ""
 msgid "Swipe to Dismiss"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:336
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:392
 msgid "TEMPLATE_CLASS_PLACEHOLDERS.md now lists required and optional data attributes for featured image, close button, copy, Ajax add to cart, custom URL, and custom trigger placeholders."
 msgstr ""
 
@@ -7682,7 +7759,7 @@ msgid "Table sorted successfully"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Frontend/Routes/OnPagePreviewRouteController.php:165
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:119
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:137
 msgid "Tablet"
 msgstr ""
 
@@ -7855,7 +7932,7 @@ msgstr ""
 msgid "Text"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:154
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:172
 msgid "Text Align"
 msgstr ""
 
@@ -7865,7 +7942,7 @@ msgstr ""
 msgid "Text Color"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:137
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:155
 msgid "Text editable"
 msgstr ""
 
@@ -7877,8 +7954,16 @@ msgstr ""
 msgid "Text shown on the button while redirecting. Leave empty to show no loading text; the button will then redirect after a short delay without changing the label."
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:294
+msgid "The HTML Source popup now opens with indented HTML and formatted CSS in style tags, so you can read and edit the markup like in a code editor instead of one long minified line."
+msgstr ""
+
 #: app/Shared/Services/NoticeService.php:94
 msgid "The PHP ZIP extension is not enabled on your server. This extension is required for importing and exporting pre-created notifications with bundled media files."
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:308
+msgid "The Properties panel HTML tab now shows indented element markup and includes the same search with previous/next navigation, so editing a selected element is easier for non-technical users."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:114
@@ -7915,7 +8000,7 @@ msgstr ""
 msgid "The percentage of the page the user must scroll before the notification appears."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:287
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:343
 msgid "The pre-created notification library now supports HTML Builder. When a marketplace template includes an HTML Builder export, you can import it directly from the notification details popup alongside Elementor and Block Editor."
 msgstr ""
 
@@ -7931,7 +8016,7 @@ msgstr ""
 msgid "The uploaded file was only partially uploaded."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:207
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:208
 msgid "The user tags will be replaced with the currently logged-in user's data. Also, make sure you set the display rules to show the notification only to logged-in users; otherwise, the tags will be replaced with empty strings."
 msgstr ""
 
@@ -7963,7 +8048,7 @@ msgstr ""
 msgid "This campaign status cannot be toggled from the list."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:95
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:105
 msgid "This element has no direct text to edit."
 msgstr ""
 
@@ -7991,7 +8076,7 @@ msgstr ""
 msgid "This field is required."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:112
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:130
 msgid "This image is loaded dynamically from the notification context (product, post, or page). Preview shows sample data like Elementor and Block Editor."
 msgstr ""
 
@@ -8285,7 +8370,7 @@ msgstr ""
 msgid "Type to search on-page notifications…"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:147
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:165
 msgid "Typography"
 msgstr ""
 
@@ -8342,7 +8427,7 @@ msgstr ""
 msgid "Unavailable while a campaign controls the schedule. Change or remove the campaign under General."
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:128
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:146
 msgid "Undo (Ctrl+Z)"
 msgstr ""
 
@@ -8420,7 +8505,7 @@ msgstr ""
 msgid "Update Category"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:102
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:120
 msgid "Update HTML"
 msgstr ""
 
@@ -8484,7 +8569,7 @@ msgstr ""
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:669
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:71
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/behavior-settings.php:209
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:281
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:296
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:477
 msgid "Upgrade to Pro"
 msgstr ""
@@ -8545,11 +8630,11 @@ msgstr ""
 msgid "Use cross-sell products configured on cart items."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:490
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:511
 msgid "Use notifal-action-button on custom HTML elements for full action button behavior: post/product links, copy, close, Ajax add to cart, custom URLs, and custom triggers. Set the type with data-notifal-action — tracking and Pro per-button analytics work the same as widgets."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:476
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:497
 msgid "Use notifal-post-feature-image on any element to render the context-aware featured image — same resolver as the Product Image widget and block. Optional data-preview-image-source, data-image-resolution, and data-image-lazy-load attributes are supported."
 msgstr ""
 
@@ -8631,7 +8716,7 @@ msgid "User Roles"
 msgstr ""
 
 #: app/Infrastructure/WordPress/Admin/Settings/Views/settings-page.php:118
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:200
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/content-source-settings.php:201
 #: app/Shared/AdminUI/Fields/TagsRenderer.php:194
 msgid "User Tags"
 msgstr ""
@@ -8816,35 +8901,35 @@ msgstr ""
 msgid "What's New in %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:519
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:540
 msgid "What's New in 2.3.11"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:463
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:484
 msgid "What's New in 2.3.12"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:428
-msgid "What's New in 2.4.0"
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:365
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:421
 msgid "What's New in 2.4.1"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:316
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:372
 msgid "What's New in 2.4.2"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:281
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:337
 msgid "What's New in 2.4.3"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:281
+msgid "What's New in 2.4.4"
 msgstr ""
 
 #: app/Infrastructure/WordPress/WhatsNewPopup/Infrastructure/WhatsNewController.php:110
 msgid "What's new popup dismissed."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:294
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:350
 msgid "When a marketplace template requires a newer Notifal version, the archive card and details popup now tell you before import. Import buttons stay disabled until you update Notifal from Plugins."
 msgstr ""
 
@@ -8860,7 +8945,7 @@ msgstr ""
 msgid "When enabled, the bar sticks to the top when the user scrolls. When disabled, the bar scrolls away with the page."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:399
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:455
 msgid "When payment completes after on-hold or pending status, clicked revenue is still recorded if product clicks were validated at checkout, even when live click lookup no longer matches."
 msgstr ""
 
@@ -8872,21 +8957,29 @@ msgstr ""
 msgid "When should the notification appear on the page. Advanced timing options are Pro features."
 msgstr ""
 
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:90
+msgid "When timer ends"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:287
+msgid "When you edit an element in the HTML tab and remove CSS from the style attribute, Update HTML now keeps that change. Styles from class or style-tag rules stay in the stylesheet instead of being copied back as inline styles."
+msgstr ""
+
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/appearance-settings.php:145
 msgid "Where to display the notification on desktop devices"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:496
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:517
 msgid "Widget and block output unchanged"
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:221
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ProductImageWidget.php:247
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:163
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:181
 msgid "Width"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:114
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:132
 msgid "Width, height, and border radius apply to the dynamic image injected at render time — not the placeholder wrapper."
 msgstr ""
 
@@ -9013,7 +9106,7 @@ msgid "You have selected post types for tag generation but haven't generated the
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/save.php:42
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:87
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:97
 msgid "You have unsaved changes."
 msgstr ""
 
@@ -9025,11 +9118,11 @@ msgstr ""
 msgid "You have unsaved changes. Are you sure you want to leave?"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:86
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:96
 msgid "You have unsaved changes. Are you sure you want to reset?"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:123
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:141
 msgid "You have unsaved changes. Leave without saving?"
 msgstr ""
 
@@ -9110,7 +9203,7 @@ msgstr ""
 msgid "ago"
 msgstr ""
 
-#: app/Modules/Templates/Resources/Lang/js/html-builder.php:106
+#: app/Modules/Templates/Resources/Lang/js/html-builder.php:124
 msgid "chars"
 msgstr ""
 

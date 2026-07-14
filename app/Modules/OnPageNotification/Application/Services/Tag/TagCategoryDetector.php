@@ -127,6 +127,7 @@ class TagCategoryDetector
      * @param array $detectedCategories Array of detected tag categories.
      * @return array Array of restriction types to hide.
      * @since 2.0.0
+     * @since 2.4.4 Hides the cart information card when no cart tags are detected.
      */
     public function getHiddenRestrictions(array $detectedCategories): array
     {
@@ -147,6 +148,11 @@ class TagCategoryDetector
             $hiddenRestrictions[] = 'user';
         }
 
+        // If no cart tags detected, hide the cart information card
+        if (!in_array(TagCategory::CART, $detectedCategories, true)) {
+            $hiddenRestrictions[] = 'cart';
+        }
+
         // If no post tags detected, hide post restrictions
         if (!in_array(TagCategory::POSTS, $detectedCategories, true)) {
             $hiddenRestrictions[] = 'post';
@@ -164,7 +170,16 @@ class TagCategoryDetector
         // If no custom post type tags detected, hide custom post type restrictions
         // Custom post types are handled dynamically - check if any non-core categories are detected
         $hasCustomPostTypeTags = false;
-        $coreCategories = [TagCategory::PRODUCTS, TagCategory::ORDERS, TagCategory::USERS, TagCategory::POSTS, TagCategory::PAGES, TagCategory::COMMENTS, TagCategory::GENERAL];
+        $coreCategories = [
+            TagCategory::PRODUCTS,
+            TagCategory::ORDERS,
+            TagCategory::USERS,
+            TagCategory::CART,
+            TagCategory::POSTS,
+            TagCategory::PAGES,
+            TagCategory::COMMENTS,
+            TagCategory::GENERAL,
+        ];
 
         foreach ($detectedCategories as $category) {
             if (!in_array($category, $coreCategories, true)) {

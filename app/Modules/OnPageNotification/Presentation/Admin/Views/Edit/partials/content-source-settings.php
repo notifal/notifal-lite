@@ -169,6 +169,7 @@ class ContentSourceSettingsRenderer
      * @return void
      *
      * @since 2.0.0
+     * @since 2.4.4 Added cart tags information card when WooCommerce is active.
      */
     private function renderAllRestrictionCards(): void
     {
@@ -208,6 +209,20 @@ class ContentSourceSettingsRenderer
                     </div>
                 </div>'
         ]);
+
+        // Cart tags have no restriction filters; show an info note when WooCommerce is active.
+        if (PluginDetector::isWooCommerceActive()) {
+            $this->renderInformationCard([
+                'id' => 'notifal-cart-restrictions',
+                'title' => __('Cart Tags', 'notifal'),
+                'content' => '
+                    <div class="notifal-info-message">
+                        <div class="notifal-info-content">
+                            <p>' . esc_html__("Currently you can't define any limit for cart tags. These tags are replaced with data from the visitor's live WooCommerce cart.", 'notifal') . '</p>
+                        </div>
+                    </div>'
+            ]);
+        }
 
         // Post restrictions
         $this->renderRestrictionCard([

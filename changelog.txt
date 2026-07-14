@@ -1,5 +1,13 @@
 == Changelog ==
 
+2.4.4 [2026-07-11]
+Fixed: HTML Builder HTML tab now keeps style attribute edits when you remove CSS properties and click Update HTML, without restoring stylesheet-matched rules as inline styles.
+Added: Content Source now shows an info note for cart tags explaining that cart tag limits are not available, matching the user tags behavior.
+Improved: HTML Source modal now opens with indented, readable HTML (including CSS in style tags) instead of a single minified line.
+Added: HTML Source modal search with highlighted matches, scroll-to-first result, and previous/next navigation.
+Improved: Properties panel HTML tab now opens with indented element markup and the same find-in-HTML search with previous/next navigation.
+Added: Notifal countdown placeholder (`notifal-countdown`) with AI prompt guidance, Content panel minutes/seconds and when-timer-ends settings in HTML Builder, and frontend timer runtime.
+
 2.4.3 [2026-07-06]
 Added: Pre-created notification import now supports HTML Builder.
 Added: Pre-created notification library now checks each template's minimum Notifal version before import.

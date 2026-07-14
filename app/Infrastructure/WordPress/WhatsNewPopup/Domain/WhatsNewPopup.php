@@ -119,7 +119,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.4.3';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.4.4';
     }
 
     /**
@@ -192,6 +192,13 @@ class WhatsNewPopup
     private function getAllVersionsConfig(): array
     {
         return [
+            '2.4.4' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.4'),
+                'content' => $this->getVersion244Content(),
+                'action_buttons' => [],
+            ],
             '2.4.3' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -211,13 +218,6 @@ class WhatsNewPopup
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.1'),
                 'content' => $this->getVersion241Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.0' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.0'),
-                'content' => $this->getVersion240Content(),
                 'action_buttons' => [],
             ],
         ];
@@ -264,6 +264,62 @@ class WhatsNewPopup
             'title' => $config['title'],
             'content' => $config['content'],
         ];
+    }
+
+    /**
+     * Get content for version 2.4.4
+     *
+     * @return string HTML content for version 2.4.4
+     * @since 2.4.4
+     */
+    private function getVersion244Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.4", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧩</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('HTML Builder style attribute updates', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When you edit an element in the HTML tab and remove CSS from the style attribute, Update HTML now keeps that change. Styles from class or style-tag rules stay in the stylesheet instead of being copied back as inline styles.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📄</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Readable HTML Source modal', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The HTML Source popup now opens with indented HTML and formatted CSS in style tags, so you can read and edit the markup like in a code editor instead of one long minified line.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Search in HTML Source', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Find text in the HTML Source modal with highlighted matches, automatic scroll to the first result, and previous/next arrows to move between matches when you need to tweak the markup.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✏️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Readable Properties HTML tab', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The Properties panel HTML tab now shows indented element markup and includes the same search with previous/next navigation, so editing a selected element is easier for non-technical users.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⏱️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Notifal countdown timers', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('AI prompts for HTML Builder and Generate with AI now ask for the notifal-countdown structure when a timer is needed. Select the timer in the builder to set minutes, seconds, and what happens when it ends (keep 00:00, hide the timer, or close the notification). Notifal runs the countdown when the notification is shown.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     /**
@@ -404,41 +460,6 @@ class WhatsNewPopup
                         <div class="notifal-feature-content">
                             <h4><?php esc_html_e('HTML Builder improvements', 'notifal'); ?></h4>
                             <p><?php esc_html_e('Smaller boot preloader, a clearer new-template welcome flow (paste HTML or generate with AI), link URL editing for anchors, and richer AI prompt fields with field-filling patterns.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.4.0
-     *
-     * @return string HTML content for version 2.4.0
-     * @since 2.4.0
-     */
-    private function getVersion240Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.0", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧱</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('HTML Builder', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Create templates by pasting self-contained HTML from AI tools or any source, no Elementor or Gutenberg required. Edit extracted text and colors, insert Notifal tags, and preview with the full frontend pipeline.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⏱️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('More reliable timed notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Delay, exit intent, scroll, and other timed popups now work reliably on more WordPress sites, including setups where the active theme affects how notification data is loaded.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>
