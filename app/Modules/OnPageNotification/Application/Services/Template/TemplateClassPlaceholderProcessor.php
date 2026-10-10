@@ -3,6 +3,8 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Forms\Application\Services\FormRenderProcessor;
+use Notifal\Modules\Templates\Application\Services\CountdownDateResolver;
 use Notifal\Modules\Templates\Application\Services\FeaturedImageAutoSourceResolver;
 use Notifal\Modules\Templates\Application\Services\FeaturedImageResolver;
 
@@ -16,7 +18,8 @@ defined('ABSPATH') || exit;
  *   - notifal-post-feature-image
  *   - notifal-close-button
  *   - notifal-action-button
- *   - notifal-countdown
+   *   - notifal-countdown
+ *   - notifal-form
  *
  * @package Notifal\Modules\OnPageNotification\Application\Services\Template
  * @since 2.3.12
@@ -45,6 +48,13 @@ class TemplateClassPlaceholderProcessor
      * @since 2.4.4
      */
     public const CLASS_COUNTDOWN = 'notifal-countdown';
+
+    /**
+     * CSS class for Forms module placeholders.
+     *
+     * @since 3.0.0
+     */
+    public const CLASS_FORM = 'notifal-form';
 
     /**
      * Process rendered template HTML and hydrate class-based placeholders.
@@ -89,10 +99,13 @@ class TemplateClassPlaceholderProcessor
         self::processFeaturedImagePlaceholders($document, $root, $frontendContext);
         self::processCloseButtonPlaceholders($document, $root);
         self::processActionButtonPlaceholders($document, $root, $actionContextMeta);
-        self::processCountdownPlaceholders($document, $root);
+        self::processCountdownPlaceholders($document, $root, $frontendContext);
 
         // Serialize the processed fragment back to HTML
         $processedHtml = self::extractRootInnerHtml($document, $root);
+
+        // Hydrate Notifal forms (nonce, honeypot, captcha mount, signed schema).
+        $processedHtml = self::processFormPlaceholders($processedHtml, $frontendContext);
 
         /**
          * Filter HTML after class-placeholder processing.
@@ -116,7 +129,40 @@ class TemplateClassPlaceholderProcessor
         return strpos($html, self::CLASS_FEATURED_IMAGE) !== false
             || strpos($html, self::CLASS_CLOSE_BUTTON) !== false
             || strpos($html, self::CLASS_ACTION_BUTTON) !== false
-            || strpos($html, self::CLASS_COUNTDOWN) !== false;
+            || strpos($html, self::CLASS_COUNTDOWN) !== false
+            || strpos($html, self::CLASS_FORM) !== false;
+    }
+
+    /**
+     * Hydrate Notifal form placeholders via the Forms module render processor.
+     *
+     * @param string $html            Fragment HTML.
+     * @param array  $frontendContext Frontend context.
+     * @return string
+     * @since 3.0.0
+     */
+    private static function processFormPlaceholders(string $html, array $frontendContext): string
+    {
+        if ($html === '' || strpos($html, self::CLASS_FORM) === false) {
+            return $html;
+        }
+
+        // Only run when Forms module class is available (module may be kill-switched).
+        if (!class_exists(FormRenderProcessor::class)) {
+            return $html;
+        }
+
+        try {
+            $processor = notifal_app(FormRenderProcessor::class);
+            if ($processor instanceof FormRenderProcessor) {
+                return $processor->process($html, $frontendContext);
+            }
+        } catch (\Throwable $e) {
+            // Fail open for template render if Forms DI is unavailable.
+            return $html;
+        }
+
+        return $html;
     }
 
     /**
@@ -338,16 +384,21 @@ class TemplateClassPlaceholderProcessor
     /**
      * Normalize countdown placeholders and sync initial unit display text.
      *
-     * Frontend JS ticks the timer from data-countdown-seconds. This pass only
-     * sanitizes attributes and keeps visible unit spans aligned with the duration.
+     * Frontend JS ticks from data-countdown-seconds or data-countdown-due.
+     * This pass sanitizes attributes and keeps visible unit spans aligned.
      *
      * @param \DOMDocument $document Parsed document.
      * @param \DOMElement  $root Wrapper element.
+     * @param array        $frontendContext Notification render context.
      * @return void
      * @since 2.4.4
+     * @updated 3.0.0 Due date, unit visibility, labels, and product sale date type.
      */
-    private static function processCountdownPlaceholders(\DOMDocument $document, \DOMElement $root): void
-    {
+    private static function processCountdownPlaceholders(
+        \DOMDocument $document,
+        \DOMElement $root,
+        array $frontendContext = []
+    ): void {
         $xpath = new \DOMXPath($document);
         $nodes = $xpath->query(
             './/*[contains(concat(" ", normalize-space(@class), " "), " ' . self::CLASS_COUNTDOWN . ' ")]',
@@ -363,17 +414,46 @@ class TemplateClassPlaceholderProcessor
                 continue;
             }
 
-            // Sanitize duration to a non-negative integer second count.
+            $type = strtolower((string) $node->getAttribute('data-countdown-type'));
+            if ($type === 'product-sale-date') {
+                $type = 'product-sale-date';
+            } elseif ($type !== 'due-date') {
+                $type = 'evergreen';
+            }
+            $node->setAttribute('data-countdown-type', $type);
+
+            $use_sale = $type === 'product-sale-date';
+            $node->setAttribute('data-countdown-use-sale-date', $use_sale ? '1' : '0');
+
+            if ($use_sale) {
+                $resolved = CountdownDateResolver::resolveCountdownDate($frontendContext, null);
+                if (is_numeric($resolved) && (int) $resolved > 0) {
+                    $timestamp = (int) $resolved;
+                    // Runtime tick still uses due-date semantics after the sale end is resolved.
+                    $type = 'due-date';
+                    $node->setAttribute('data-countdown-type', $type);
+                    $node->setAttribute('data-countdown-due', self::formatCountdownDue($timestamp));
+                    $node->setAttribute('data-countdown-seconds', (string) max(0, $timestamp - time()));
+                }
+            }
+
             $raw_seconds = $node->getAttribute('data-countdown-seconds');
             $total_seconds = absint($raw_seconds);
+
+            if ($type === 'due-date') {
+                $due_raw = trim((string) $node->getAttribute('data-countdown-due'));
+                $due_ts = $due_raw !== '' ? strtotime($due_raw) : false;
+                if ($due_ts !== false) {
+                    $total_seconds = max(0, (int) $due_ts - time());
+                }
+            }
+
             $node->setAttribute('data-countdown-seconds', (string) $total_seconds);
 
-            // Default format hint for authors / AI (runtime uses unit spans).
             if (!$node->hasAttribute('data-countdown-format')) {
                 $node->setAttribute('data-countdown-format', 'mm:ss');
             }
 
-            // Normalize on-complete action for the frontend timer runtime.
             $on_complete = strtolower((string) $node->getAttribute('data-countdown-on-complete'));
             if (!in_array($on_complete, ['stay', 'hide', 'close'], true)) {
                 $on_complete = 'stay';
@@ -384,11 +464,107 @@ class TemplateClassPlaceholderProcessor
                 $node->setAttribute('aria-label', esc_attr__('Countdown timer', 'notifal'));
             }
 
-            // Keep nested value spans in sync with the configured duration.
+            self::applyCountdownChrome($xpath, $node);
             self::syncCountdownUnitDisplays($xpath, $node, $total_seconds);
 
             $node->setAttribute('data-notifal-class-placeholder', 'countdown');
         }
+    }
+
+    /**
+     * Format a unix timestamp for data-countdown-due.
+     *
+     * @param int $timestamp Unix timestamp.
+     * @return string Local datetime string.
+     * @since 3.0.0
+     */
+    private static function formatCountdownDue(int $timestamp): string
+    {
+        if (function_exists('wp_date')) {
+            return (string) wp_date('Y-m-d\TH:i', $timestamp);
+        }
+
+        return gmdate('Y-m-d\TH:i', $timestamp);
+    }
+
+    /**
+     * Hide units/labels from show attributes and apply custom label text.
+     *
+     * @param \DOMXPath   $xpath         Document XPath helper.
+     * @param \DOMElement $countdownRoot Countdown root element.
+     * @return void
+     * @since 3.0.0
+     */
+    private static function applyCountdownChrome(\DOMXPath $xpath, \DOMElement $countdownRoot): void
+    {
+        $show_labels = (string) $countdownRoot->getAttribute('data-countdown-show-labels') !== '0';
+        $units = ['days', 'hours', 'minutes', 'seconds'];
+
+        foreach ($units as $unit) {
+            $unit_nodes = $xpath->query('.//*[@data-countdown-unit="' . $unit . '"]', $countdownRoot);
+            if (!$unit_nodes || $unit_nodes->length === 0) {
+                continue;
+            }
+
+            $value_node = $unit_nodes->item(0);
+            if (!$value_node instanceof \DOMElement) {
+                continue;
+            }
+
+            $attr = (string) $countdownRoot->getAttribute('data-countdown-show-' . $unit);
+            $shown = $attr !== '0';
+            $box = $value_node->parentNode instanceof \DOMElement ? $value_node->parentNode : null;
+
+            if ($box) {
+                self::toggleHiddenClass($box, !$shown);
+                $sep = $box->nextSibling;
+                while ($sep && !$sep instanceof \DOMElement) {
+                    $sep = $sep->nextSibling;
+                }
+                if ($sep instanceof \DOMElement && self::elementHasClass($sep, 'notifal-countdown__sep')) {
+                    self::toggleHiddenClass($sep, !$shown);
+                }
+            }
+
+            $custom = trim((string) $countdownRoot->getAttribute('data-countdown-label-' . $unit));
+            $label_nodes = $xpath->query('.//*[contains(concat(" ", normalize-space(@class), " "), " notifal-countdown__label ")]', $box ?: $countdownRoot);
+            if ($label_nodes) {
+                foreach ($label_nodes as $label_node) {
+                    if (!$label_node instanceof \DOMElement) {
+                        continue;
+                    }
+                    if ($box && $label_node->parentNode !== $box) {
+                        continue;
+                    }
+                    if ($custom !== '') {
+                        $label_node->textContent = $custom;
+                    }
+                    self::toggleHiddenClass($label_node, !$show_labels);
+                }
+            }
+        }
+    }
+
+    /**
+     * Add or remove the shared notifal-hidden class.
+     *
+     * @param \DOMElement $element Target element.
+     * @param bool        $hidden  Whether the element should be hidden.
+     * @return void
+     * @since 3.0.0
+     */
+    private static function toggleHiddenClass(\DOMElement $element, bool $hidden): void
+    {
+        $classes = preg_split('/\s+/', trim((string) $element->getAttribute('class'))) ?: [];
+        $classes = array_values(array_filter($classes, static function ($class) {
+            return $class !== '' && $class !== 'notifal-hidden';
+        }));
+
+        if ($hidden) {
+            $classes[] = 'notifal-hidden';
+        }
+
+        $element->setAttribute('class', implode(' ', $classes));
     }
 
     /**

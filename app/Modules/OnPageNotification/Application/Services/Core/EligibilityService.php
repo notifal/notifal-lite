@@ -135,6 +135,11 @@ class EligibilityService
         $eligibleNotifications = [];
 
         foreach ($notifications as $notification) {
+            // Skip notifications excluded from the global auto-injection pipeline (e.g. inline mounts).
+            if (!$this->isGlobalEligible($notification, $context)) {
+                continue;
+            }
+
             if ($this->eligibilityChecker->isEligible($notification, $context)) {
                 $preparedNotification = $this->dataPreparer->prepareForFrontend($notification, $context);
 
@@ -197,6 +202,25 @@ class EligibilityService
         }
 
         return $notifications;
+    }
+
+    /**
+     * Determine whether a notification should participate in global floating injection.
+     *
+     * @param \WP_Post $notification Notification post object.
+     * @param array    $context     Current page context.
+     * @return bool True when the notification may be injected globally.
+     * @since 3.0.0
+     */
+    private function isGlobalEligible(\WP_Post $notification, array $context): bool
+    {
+        // Default to globally eligible; Pro marks inline notifications as mount-only.
+        return (bool) apply_filters(
+            FilterHooks::ONPAGE_NOTIFICATION_GLOBAL_ELIGIBLE,
+            true,
+            $notification,
+            $context
+        );
     }
 
 

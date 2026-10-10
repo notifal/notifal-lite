@@ -28,6 +28,8 @@ class Urls
     public const API_BASE_NOTIFAL = 'https://notifal.com/wp-json/notifal/v1';
     public const API_BASE_MARKETPLACE = 'https://notifal.com/wp-json/notifal-mp/v1';
     public const API_BASE_LICENSE = 'https://notifal.com/wp-json/nlm/v1';
+    public const API_BASE_AI_GATEWAY = 'https://notifal.com/wp-json/notifal-ai/v1';
+    public const API_BASE_AI_SUPPORT = 'https://notifal.com/wp-json/nas/v1';
 
     /**
      * Main website URLs
@@ -39,7 +41,26 @@ class Urls
      */
     public const SUPPORT_PAGE = 'https://notifal.com/my-account/support';
     public const KNOWLEDGE_BASE = 'https://notifal.com/knowledge-base/';
+    /**
+     * Product documentation hub on notifal.com.
+     *
+     * Prefer this over the knowledge base for plugin list and similar help CTAs.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const DOCUMENTATION = 'https://notifal.com/documentation/';
     public const COMMUNITY = 'https://notifal.com/community/';
+
+    /**
+     * Privacy policy page URL.
+     *
+     * Linked from AI disclosure copy and related legal notices.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const PRIVACY_POLICY = 'https://notifal.com/privacy-policy/';
 
     /**
      * Learning and onboarding URLs
@@ -82,89 +103,75 @@ class Urls
     public const TEMPLATES_LIBRARY = 'https://notifal.com/templates/';
 
     /**
-     * Generate URL with UTM parameters for activation popup
+     * Generate URL with UTM parameters for plugin context.
      *
-     * @param string $url Base URL to add UTM parameters to
-     * @param string $campaign UTM campaign parameter
-     * @return string URL with UTM parameters
-     */
-    public static function withActivationPopupUtm(string $url, string $campaign): string
-    {
-        return add_query_arg([
-            'utm_source' => 'activation_popup',
-            'utm_medium' => 'plugin',
-            'utm_campaign' => $campaign,
-        ], $url);
-    }
-
-    /**
-     * Generate URL with UTM parameters for plugin context
-     *
-     * @param string $url Base URL to add UTM parameters to
-     * @param string $source UTM source parameter
-     * @param string $campaign UTM campaign parameter (optional)
-     * @return string URL with UTM parameters
+     * @param string $url Base URL to add UTM parameters to.
+     * @param string $source UTM source parameter.
+     * @param string $campaign UTM campaign parameter (optional).
+     * @return string URL with UTM parameters.
      */
     public static function withPluginUtm(string $url, string $source = 'wordpress_plugin', string $campaign = ''): string
     {
+        // Build the shared plugin UTM query arguments.
         $args = [
             'utm_source' => $source,
             'utm_medium' => 'plugin',
         ];
-
-        if (!empty($campaign)) {
+        // Append the campaign only when one is provided.
+        if ('' !== $campaign) {
             $args['utm_campaign'] = $campaign;
         }
-
+        // Return the final tracked URL.
         return add_query_arg($args, $url);
     }
 
     /**
-     * Generate URL with UTM parameters for upgrade context
+     * Generate URL with UTM parameters for upgrade context.
      *
-     * @param string $url Base URL to add UTM parameters to
-     * @param string $source UTM source parameter
-     * @return string URL with UTM parameters
+     * @param string $url Base URL to add UTM parameters to.
+     * @param string $source UTM source parameter.
+     * @return string URL with UTM parameters.
      */
     public static function withUpgradeUtm(string $url, string $source = ''): string
     {
+        // Build the shared upgrade UTM query arguments.
         $args = [
             'utm_source' => $source,
             'utm_medium' => 'plugin',
             'utm_campaign' => 'upgrade',
         ];
-
+        // Return the final tracked URL.
         return add_query_arg($args, $url);
     }
 
     /**
-     * Get onboarding URL with activation popup UTM parameters
+     * Get onboarding URL with plugin UTM parameters.
      *
      * @return string
      */
     public static function getOnboardingUrl(): string
     {
-        return self::withActivationPopupUtm(self::ONBOARDING_COURSE, 'onboarding');
+        return self::withPluginUtm(self::ONBOARDING_COURSE, 'wordpress_plugin', 'onboarding');
     }
 
     /**
-     * Get knowledge base URL with activation popup UTM parameters
+     * Get knowledge base URL with plugin UTM parameters.
      *
      * @return string
      */
     public static function getKnowledgeBaseUrl(): string
     {
-        return self::withActivationPopupUtm(self::KNOWLEDGE_BASE, 'tutorials');
+        return self::withPluginUtm(self::KNOWLEDGE_BASE, 'wordpress_plugin', 'tutorials');
     }
 
     /**
-     * Get community URL with activation popup UTM parameters
+     * Get community URL with plugin UTM parameters.
      *
      * @return string
      */
     public static function getCommunityUrl(): string
     {
-        return self::withActivationPopupUtm(self::COMMUNITY, 'community');
+        return self::withPluginUtm(self::COMMUNITY, 'wordpress_plugin', 'community');
     }
 
     /**

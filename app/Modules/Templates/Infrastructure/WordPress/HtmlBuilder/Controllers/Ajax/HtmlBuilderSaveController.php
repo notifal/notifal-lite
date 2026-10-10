@@ -87,6 +87,14 @@ class HtmlBuilderSaveController
 
         update_post_meta($templateId, '_notifal_content_hash', md5($sanitized['content']));
 
+        // Record whether this saved content contains a custom script so support
+        // can identify templates using AI-generated JavaScript at a glance.
+        if (HtmlTemplateSanitizer::containsScriptTags($sanitized['content'])) {
+            update_post_meta($templateId, '_notifal_has_custom_script', '1');
+        } else {
+            delete_post_meta($templateId, '_notifal_has_custom_script');
+        }
+
         do_action(ActionHooks::TEMPLATE_HTML_BUILDER_SAVED, $templateId);
 
         /** @var TemplateUrlService $urlService */

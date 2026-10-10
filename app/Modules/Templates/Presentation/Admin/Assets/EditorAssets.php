@@ -67,11 +67,11 @@ class EditorAssets
             []
         );
 
-        // Enqueue JS
+        // Enqueue JS (depends on shared AI character mount helpers).
         notifal_enqueue_script(
             'notifal-templates-admin-script',
             $jsUrl . 'TemplatesAdminScript.js',
-            ['notifal-shared-admin-js'],
+            ['notifal-shared-admin-js', 'notifal-ai-connection-js'],
             $translations,
             'NotifalTemplateStrings'
         );

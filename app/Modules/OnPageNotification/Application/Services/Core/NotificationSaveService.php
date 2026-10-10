@@ -4,7 +4,9 @@ namespace Notifal\Modules\OnPageNotification\Application\Services\Core;
 
 use Notifal\Core\Support\Helpers\UrlHelper;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\ActiveNotificationsAssetGate;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
+use Notifal\Modules\OnPageNotification\Application\Services\Core\ClientUserRulesBuilder;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\ContentExtractor;
 use Notifal\Shared\Utils\Helper;
@@ -131,6 +133,9 @@ class NotificationSaveService
             // @since 2.3.10 Invalidate cached Users rule index when display rules may have changed.
             ClientUserRulesBuilder::clearIndexCache();
 
+            // @since 3.0.0 Invalidate frontend asset gate after activation / rules changes.
+            ActiveNotificationsAssetGate::clearCache();
+
             // Fire action hooks
             do_action(ActionHooks::ONPAGE_NOTIFICATION_SAVED, $postId, $sanitizedData);
 
@@ -158,16 +163,20 @@ class NotificationSaveService
     }
 
     /**
-     * Validate basic required fields
+     * Validate basic required fields.
      *
-     * @since 2.0.0
-     * @param array $data Form data
-     * @return array Validation result
+     * Notification labels are optional and are not validated here.
+     *
+     * @since 3.0.0 Labels are optional and no longer block save.
+     * @param array $data Form data.
+     * @return array Validation result.
      */
     private function validateBasicFields(array $data): array
     {
+        // Sanitize the internal notification title before length and emptiness checks.
         $title = Helper::sanitizeInput($data['notif_title'] ?? '', 'text');
-        
+
+        // Title is required so the notification can be identified in the admin list.
         if (empty($title)) {
             return [
                 'valid' => false,
@@ -175,6 +184,7 @@ class NotificationSaveService
             ];
         }
 
+        // Enforce a practical title length limit for storage and UI display.
         if (strlen($title) > 255) {
             return [
                 'valid' => false,
@@ -182,15 +192,7 @@ class NotificationSaveService
             ];
         }
 
-        // Validate that at least one label is selected
-        $labels = $data['notifal_labels'] ?? [];
-        if (empty($labels) || !is_array($labels)) {
-            return [
-                'valid' => false,
-                'message' => __('At least one notification label must be selected.', 'notifal')
-            ];
-        }
-
+        // Labels remain optional, empty selections are allowed and cleared on save.
         return ['valid' => true];
     }
 

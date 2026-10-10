@@ -377,7 +377,7 @@ class PreCreatedNotificationsAjaxController
     /**
      * Handle AJAX request for pre-created archive HTML fragment.
      *
-     * Fetches taxonomies and notifications from notifal.com (with 15s timeout)
+     * Fetches taxonomies, trending, and notifications from notifal.com in parallel
      * and returns the archive markup so the list page can load without blocking.
      *
      * @since 2.0.0
@@ -392,12 +392,19 @@ class PreCreatedNotificationsAjaxController
             $filters = self::sanitizeFilters($rawFilters);
             $filters['page'] = 1;
 
+            // Resolve archive context for page vs modal rendering.
+            $archiveContext = 'page';
+            if (isset($_POST['archive_context'])) {
+                $archiveContext = sanitize_key(wp_unslash((string) $_POST['archive_context']));
+            }
+
             $apiService = self::getApiService();
 
-            // Warm taxonomy + trending caches first (often cached); notifications call is the heaviest.
-            $taxonomies = $apiService->getTaxonomies();
-            $preloaded_trending = $apiService->getTrendingCategories();
-            $apiResponse = $apiService->getNotifications($filters);
+            // Fetch bootstrap data in parallel when caches are cold.
+            $bootstrap = $apiService->fetchArchiveBootstrap($filters);
+            $taxonomies = $bootstrap['taxonomies'];
+            $preloaded_trending = $bootstrap['trending'];
+            $apiResponse = $bootstrap['api_response'];
 
             $currentFilters = [
                 'search'    => $filters['search'],
@@ -415,10 +422,6 @@ class PreCreatedNotificationsAjaxController
             $preloaded_filters = $currentFilters;
 
             // Modal context: hide duplicate title/wrapper (modal already has its own header).
-            $archiveContext = 'page';
-            if (isset($_POST['archive_context'])) {
-                $archiveContext = sanitize_key(wp_unslash((string) $_POST['archive_context']));
-            }
             if ($archiveContext === 'modal') {
                 $hide_header = true;
                 $hide_wrapper = true;

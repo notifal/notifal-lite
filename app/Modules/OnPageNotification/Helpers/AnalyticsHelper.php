@@ -2,8 +2,10 @@
 
 namespace Notifal\Modules\OnPageNotification\Helpers;
 
-use Notifal\Infrastructure\WordPress\ActivationPopup\Domain\ActivationPopup;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Database\MigrationService;
+use Notifal\Modules\SetupWizard\Domain\Constants\SetupWizardOptions;
 
 defined('ABSPATH') || exit;
 
@@ -86,8 +88,11 @@ class AnalyticsHelper
         $today = current_time("Y-m-d");
         $candidates = [];
 
-        // First activation on this site (fresh installs and popup completion).
-        $activationTime = get_option(ActivationPopup::ACTIVATION_TIME_KEY);
+        // First activation on this site (Setup Wizard marker, with legacy fallback).
+        $activationTime = get_option(SetupWizardOptions::FIRST_INSTALL, false);
+        if (!$activationTime) {
+            $activationTime = get_option('notifal_activation_time', false);
+        }
         if ($activationTime) {
             $candidates[] = wp_date("Y-m-d", (int) $activationTime);
         }
@@ -712,5 +717,679 @@ class AnalyticsHelper
         unset($row);
 
         return $rows;
+    }
+
+    /**
+     * Whether this site should expose revenue and order-influence analytics.
+     *
+     * Revenue metrics require WooCommerce or Easy Digital Downloads so amounts map to real orders.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function supportsRevenueAnalytics(): bool
+    {
+        // Detect supported ecommerce plugins on the site.
+        $supports = PluginDetector::isWooCommerceActive() || PluginDetector::isEDDActive();
+
+        /**
+         * Filters whether revenue analytics are enabled for the current site.
+         *
+         * @param bool $supports Default detection result.
+         * @since 3.0.0
+         */
+        return (bool) apply_filters(FilterHooks::ONPAGE_ANALYTICS_SUPPORTS_REVENUE, $supports);
+    }
+
+    /**
+     * Whether influenced store orders are included in conversion totals.
+     *
+     * True on WooCommerce and EDD sites. Form submissions are counted separately via {@see countsFormConversions()}.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function countsOrderConversions(): bool
+    {
+        // Order conversions require a supported ecommerce plugin (same gate as revenue analytics).
+        return self::supportsRevenueAnalytics();
+    }
+
+    /**
+     * Whether on-notification form submissions are included in conversion totals.
+     *
+     * Always true: all sites count form fills. On ecommerce, totals add orders plus forms (separate data sources).
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function countsFormConversions(): bool
+    {
+        // Form submissions are a conversion signal on every site type.
+        return true;
+    }
+
+    /**
+     * Whether conversions are attributed to store orders (ecommerce context).
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function usesOrderBasedConversions(): bool
+    {
+        // Backward-compatible alias for order inclusion in conversion metrics.
+        return self::countsOrderConversions();
+    }
+
+    /**
+     * Whether conversions are attributed only to on-notification form submissions (non-ecommerce).
+     *
+     * False on ecommerce sites, where orders and forms are both counted.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function usesFormBasedConversions(): bool
+    {
+        // Form-only conversion mode applies when orders are not part of the metric.
+        return self::countsFormConversions() && ! self::countsOrderConversions();
+    }
+
+    /**
+     * Admin-facing labels and helper copy for conversion metrics (context-aware).
+     *
+     * @return array{
+     *     conversions_label: string,
+     *     conversions_subtitle: string,
+     *     conversion_rate_subtitle: string,
+     *     conversions_tooltip: string,
+     *     conversion_rate_label: string
+     * }
+     * @since 3.0.0
+     */
+    public static function getConversionContextLabels(): array
+    {
+        // Ecommerce sites: conversions combine influenced orders and notification form submissions.
+        if (self::countsOrderConversions()) {
+            return [
+                'conversions_label'          => __('Conversions', 'notifal'),
+                'conversions_subtitle'       => __('Influenced orders and form submissions', 'notifal'),
+                'conversion_rate_subtitle'   => __('Unique visitors who ordered or submitted a form', 'notifal'),
+                'conversions_tooltip'        => __('Counts paid orders attributed after a notification click, plus successful embedded Notifal form submissions on the same notification. Each order and each form submit counts once.', 'notifal'),
+                'conversion_rate_label'      => __('Conversion Rate', 'notifal'),
+            ];
+        }
+
+        // Lead and content sites: conversions mean form submissions on the notification.
+        return [
+            'conversions_label'          => __('Conversions', 'notifal'),
+            'conversions_subtitle'       => __('Form submissions from this notification', 'notifal'),
+            'conversion_rate_subtitle'   => __('Unique visitors who submitted a form after seeing the notification', 'notifal'),
+            'conversions_tooltip'        => __('Counts when a visitor sees a notification and successfully submits an embedded Notifal form.', 'notifal'),
+            'conversion_rate_label'      => __('Conversion Rate', 'notifal'),
+        ];
+    }
+
+    /**
+     * Total conversions for a notification in a date range (orders, forms, or both).
+     *
+     * Non-ecommerce: form submission rows only ({@see countFormSubmissionsForNotification()}).
+     * Ecommerce: influenced order rows in the conversions table plus form submission rows (additive; no double count
+     * because orders and forms use separate storage).
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @param int    $campaignId     Optional campaign filter for order conversions (forms ignore campaign).
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countTotalConversionsForNotification(
+        int $notificationId,
+        string $startDate,
+        string $endDate,
+        int $campaignId = 0
+    ): int {
+        // Non-ecommerce sites only count form submissions.
+        if (! self::countsOrderConversions()) {
+            return self::countFormSubmissionsForNotification($notificationId, $startDate, $endDate);
+        }
+
+        // Ecommerce: sum order conversions and form submissions from their source tables.
+        $orderConversions = self::countOrderConversionsForNotification($notificationId, $startDate, $endDate, $campaignId);
+        $formConversions  = self::countFormSubmissionsForNotification($notificationId, $startDate, $endDate);
+
+        return $orderConversions + $formConversions;
+    }
+
+    /**
+     * Count influenced order conversions stored in the conversions table.
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @param int    $campaignId     When greater than zero, limit to that campaign.
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countOrderConversionsForNotification(
+        int $notificationId,
+        string $startDate,
+        string $endDate,
+        int $campaignId = 0
+    ): int {
+        // Require a valid notification and order conversion mode.
+        if ($notificationId <= 0 || ! self::countsOrderConversions()) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        // Resolve the conversions table name from migration metadata.
+        $tables            = MigrationService::getTableNames();
+        $conversionsTable  = $tables['conversions'] ?? '';
+
+        // Bail when the conversions table has not been created yet.
+        if ($conversionsTable === '' || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $conversionsTable)) !== $conversionsTable) {
+            return 0;
+        }
+
+        // Optional campaign filter applies only to order rows.
+        if ($campaignId > 0) {
+            $sql = $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$conversionsTable}
+                WHERE notification_id = %d
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s
+                AND campaign_id = %d",
+                $notificationId,
+                $startDate . ' 00:00:00',
+                $endDate . ' 23:59:59',
+                $campaignId
+            );
+        } else {
+            $sql = $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$conversionsTable}
+                WHERE notification_id = %d
+                AND conversion_timestamp >= %s
+                AND conversion_timestamp <= %s",
+                $notificationId,
+                $startDate . ' 00:00:00',
+                $endDate . ' 23:59:59'
+            );
+        }
+
+        return (int) $wpdb->get_var($sql);
+    }
+
+    /**
+     * Count unique converters on ecommerce sites (orders and forms combined).
+     *
+     * Builds a deduplicated set of converter identity keys: logged-in order converters (user id),
+     * guest order converters (click session id), and form submitters (hashed IP). The same person may
+     * still appear twice if they convert as a logged-in buyer and later submit a form as a guest
+     * because forms do not store WordPress user IDs.
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @param int    $campaignId     Optional campaign filter for order identities only.
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countUniqueCombinedConvertersForNotification(
+        int $notificationId,
+        string $startDate,
+        string $endDate,
+        int $campaignId = 0
+    ): int {
+        // Delegate to form-only counting on non-ecommerce sites.
+        if (! self::countsOrderConversions()) {
+            return self::countUniqueFormSubmittersForNotification($notificationId, $startDate, $endDate);
+        }
+
+        // Require a valid notification ID.
+        if ($notificationId <= 0) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        // Load analytics table names.
+        $tables               = MigrationService::getTableNames();
+        $conversionsTable     = $tables['conversions'] ?? '';
+        $productClicksTable   = $tables['product_clicks'] ?? '';
+        $formTable            = self::getFormSubmissionsTableName();
+
+        // Require conversions and product click tables for order identities.
+        if (
+            $conversionsTable === ''
+            || $productClicksTable === ''
+            || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $conversionsTable)) !== $conversionsTable
+            || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $productClicksTable)) !== $productClicksTable
+        ) {
+            // Fall back to form submitters when order tables are unavailable.
+            return self::countUniqueFormSubmittersForNotification($notificationId, $startDate, $endDate);
+        }
+
+        // When forms storage is missing, count order identities only (legacy guest plus logged-in query).
+        if (! self::formSubmissionsTableExists()) {
+            return self::countUniqueOrderConvertersForNotification($notificationId, $startDate, $endDate, $campaignId);
+        }
+
+        // Campaign filter fragment for order-side identities.
+        $campaignSql = $campaignId > 0 ? ' AND c.campaign_id = %d' : '';
+
+        // Base parameters shared by order identity subqueries.
+        $orderParams = [
+            $notificationId,
+            $startDate . ' 00:00:00',
+            $endDate . ' 23:59:59',
+        ];
+
+        if ($campaignId > 0) {
+            $orderParams[] = $campaignId;
+        }
+
+        // Form submitter parameters (campaign does not apply to forms).
+        $formParams = [
+            $notificationId,
+            $startDate,
+            $endDate,
+        ];
+
+        // Union distinct identity keys across orders and forms, then count them.
+        $sql = $wpdb->prepare(
+            "SELECT COUNT(*) FROM (
+                SELECT CONCAT('u:', CAST(c.user_id AS CHAR)) AS identity
+                FROM {$conversionsTable} c
+                WHERE c.notification_id = %d
+                AND c.conversion_timestamp >= %s
+                AND c.conversion_timestamp <= %s
+                {$campaignSql}
+                AND c.user_id > 0
+                UNION
+                SELECT CONCAT('s:', pc.session_id) AS identity
+                FROM {$conversionsTable} c
+                INNER JOIN {$productClicksTable} pc ON pc.id = c.product_click_id
+                WHERE c.notification_id = %d
+                AND c.conversion_timestamp >= %s
+                AND c.conversion_timestamp <= %s
+                {$campaignSql}
+                AND c.user_id = 0
+                AND pc.session_id IS NOT NULL
+                AND pc.session_id != ''
+                UNION
+                SELECT CONCAT('ip:', fs.ip_hash) AS identity
+                FROM {$formTable} fs
+                WHERE fs.notification_id = %d
+                AND fs.ip_hash != ''
+                AND DATE(fs.created_at) >= %s
+                AND DATE(fs.created_at) <= %s
+            ) AS combined_identities",
+            array_merge($orderParams, $orderParams, $formParams)
+        );
+
+        return (int) $wpdb->get_var($sql);
+    }
+
+    /**
+     * Count unique order converters only (logged-in user IDs plus guest click session IDs).
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @param int    $campaignId     Optional campaign filter.
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countUniqueOrderConvertersForNotification(
+        int $notificationId,
+        string $startDate,
+        string $endDate,
+        int $campaignId = 0
+    ): int {
+        // Require a valid notification ID.
+        if ($notificationId <= 0) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        // Load table names for conversions and product clicks.
+        $tables             = MigrationService::getTableNames();
+        $conversionsTable   = $tables['conversions'] ?? '';
+        $productClicksTable = $tables['product_clicks'] ?? '';
+
+        if (
+            $conversionsTable === ''
+            || $productClicksTable === ''
+            || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $conversionsTable)) !== $conversionsTable
+            || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $productClicksTable)) !== $productClicksTable
+        ) {
+            return 0;
+        }
+
+        // Optional campaign filter for order rows.
+        $campaignSql = $campaignId > 0 ? ' AND c.campaign_id = %d' : '';
+
+        // Count distinct logged-in buyers.
+        $paramsLoggedIn = [
+            $notificationId,
+            $startDate . ' 00:00:00',
+            $endDate . ' 23:59:59',
+        ];
+
+        if ($campaignId > 0) {
+            $paramsLoggedIn[] = $campaignId;
+        }
+
+        $loggedInSql = $wpdb->prepare(
+            "SELECT COUNT(DISTINCT c.user_id)
+            FROM {$conversionsTable} c
+            WHERE c.notification_id = %d
+            AND c.conversion_timestamp >= %s
+            AND c.conversion_timestamp <= %s
+            {$campaignSql}
+            AND c.user_id > 0",
+            $paramsLoggedIn
+        );
+
+        $loggedInConverters = (int) $wpdb->get_var($loggedInSql);
+
+        // Count distinct guest sessions linked through product clicks.
+        $paramsGuest = [
+            $notificationId,
+            $startDate . ' 00:00:00',
+            $endDate . ' 23:59:59',
+        ];
+
+        if ($campaignId > 0) {
+            $paramsGuest[] = $campaignId;
+        }
+
+        $guestSql = $wpdb->prepare(
+            "SELECT COUNT(DISTINCT pc.session_id)
+            FROM {$conversionsTable} c
+            INNER JOIN {$productClicksTable} pc ON pc.id = c.product_click_id
+            WHERE c.notification_id = %d
+            AND c.conversion_timestamp >= %s
+            AND c.conversion_timestamp <= %s
+            {$campaignSql}
+            AND c.user_id = 0
+            AND pc.session_id IS NOT NULL
+            AND pc.session_id != ''",
+            $paramsGuest
+        );
+
+        $guestConverters = (int) $wpdb->get_var($guestSql);
+
+        return $loggedInConverters + $guestConverters;
+    }
+
+    /**
+     * Daily form submission counts for one or more notifications (for charts and exports).
+     *
+     * @param int[]  $notificationIds Notification post IDs.
+     * @param string $startDate       Start date (Y-m-d).
+     * @param string $endDate         End date (Y-m-d).
+     * @return array<int, array{date: string, value: int}>
+     * @since 3.0.0
+     */
+    public static function getFormSubmissionDailyCountsForNotifications(
+        array $notificationIds,
+        string $startDate,
+        string $endDate
+    ): array {
+        // Normalize IDs and bail when forms storage is missing.
+        $notificationIds = array_values(array_filter(array_map('absint', $notificationIds)));
+
+        if (empty($notificationIds) || ! self::formSubmissionsTableExists()) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $table         = self::getFormSubmissionsTableName();
+        $placeholders  = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $params        = array_merge($notificationIds, [$startDate, $endDate]);
+
+        // Aggregate submissions per calendar day.
+        $sql = $wpdb->prepare(
+            "SELECT DATE(created_at) AS date, COUNT(*) AS value
+            FROM {$table}
+            WHERE notification_id IN ({$placeholders})
+            AND DATE(created_at) >= %s
+            AND DATE(created_at) <= %s
+            GROUP BY DATE(created_at)
+            ORDER BY date ASC",
+            $params
+        );
+
+        $rows = $wpdb->get_results($sql, ARRAY_A);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        // Cast values to integers for chart consumers.
+        return array_map(
+            static function (array $row): array {
+                return [
+                    'date'  => (string) ($row['date'] ?? ''),
+                    'value' => (int) ($row['value'] ?? 0),
+                ];
+            },
+            $rows
+        );
+    }
+
+    /**
+     * Daily influenced order conversion counts for notifications (conversions table source).
+     *
+     * @param int[]  $notificationIds Notification post IDs.
+     * @param string $startDate       Start date (Y-m-d).
+     * @param string $endDate         End date (Y-m-d).
+     * @param int    $campaignId      Optional campaign filter for order rows.
+     * @return array<int, array{date: string, value: int}>
+     * @since 3.0.0
+     */
+    public static function getOrderConversionDailyCountsForNotifications(
+        array $notificationIds,
+        string $startDate,
+        string $endDate,
+        int $campaignId = 0
+    ): array {
+        // Normalize IDs and require order conversion mode.
+        $notificationIds = array_values(array_filter(array_map('absint', $notificationIds)));
+
+        if (empty($notificationIds) || ! self::countsOrderConversions()) {
+            return [];
+        }
+
+        global $wpdb;
+
+        $tables           = MigrationService::getTableNames();
+        $conversionsTable = $tables['conversions'] ?? '';
+
+        if ($conversionsTable === '' || $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $conversionsTable)) !== $conversionsTable) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($notificationIds), '%d'));
+        $campaignSql  = $campaignId > 0 ? ' AND campaign_id = %d' : '';
+        $params       = array_merge(
+            $notificationIds,
+            [$startDate . ' 00:00:00', $endDate . ' 23:59:59']
+        );
+
+        if ($campaignId > 0) {
+            $params[] = $campaignId;
+        }
+
+        $sql = $wpdb->prepare(
+            "SELECT DATE(conversion_timestamp) AS date, COUNT(*) AS value
+            FROM {$conversionsTable}
+            WHERE notification_id IN ({$placeholders})
+            AND conversion_timestamp >= %s
+            AND conversion_timestamp <= %s
+            {$campaignSql}
+            GROUP BY DATE(conversion_timestamp)
+            ORDER BY date ASC",
+            $params
+        );
+
+        $rows = $wpdb->get_results($sql, ARRAY_A);
+
+        if (! is_array($rows)) {
+            return [];
+        }
+
+        return array_map(
+            static function (array $row): array {
+                return [
+                    'date'  => (string) ($row['date'] ?? ''),
+                    'value' => (int) ($row['value'] ?? 0),
+                ];
+            },
+            $rows
+        );
+    }
+
+    /**
+     * Merge two daily count series by date, summing values for matching dates.
+     *
+     * @param array<int, array{date: string, value: int}> $seriesA First series.
+     * @param array<int, array{date: string, value: int}> $seriesB Second series.
+     * @return array<int, array{date: string, value: int}>
+     * @since 3.0.0
+     */
+    public static function mergeDailyCountSeries(array $seriesA, array $seriesB): array
+    {
+        // Index both series by date for O(n) merging.
+        $byDate = [];
+
+        foreach (array_merge($seriesA, $seriesB) as $row) {
+            $date = (string) ($row['date'] ?? '');
+
+            if ($date === '') {
+                continue;
+            }
+
+            $byDate[$date] = ($byDate[$date] ?? 0) + (int) ($row['value'] ?? 0);
+        }
+
+        // Sort chronologically for chart rendering.
+        ksort($byDate);
+
+        $merged = [];
+
+        foreach ($byDate as $date => $value) {
+            $merged[] = [
+                'date'  => $date,
+                'value' => (int) $value,
+            ];
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Resolve the Notifal form submissions table name.
+     *
+     * @return string
+     * @since 3.0.0
+     */
+    public static function getFormSubmissionsTableName(): string
+    {
+        // Table name follows the Forms module migration prefix.
+        global $wpdb;
+
+        return $wpdb->prefix . 'notifal_form_submissions';
+    }
+
+    /**
+     * Whether the form submissions table exists in the database.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    public static function formSubmissionsTableExists(): bool
+    {
+        // Avoid queries when the Forms module has not created tables yet.
+        global $wpdb;
+
+        $table = self::getFormSubmissionsTableName();
+
+        return $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $table)) === $table;
+    }
+
+    /**
+     * Count form submissions linked to a notification within a date range.
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countFormSubmissionsForNotification(int $notificationId, string $startDate, string $endDate): int
+    {
+        // Bail when forms storage is unavailable or the notification ID is invalid.
+        if ($notificationId <= 0 || ! self::formSubmissionsTableExists()) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        $table = self::getFormSubmissionsTableName();
+
+        // Count submissions tied to this notification inside the inclusive date window.
+        $sql = $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table}
+            WHERE notification_id = %d
+            AND DATE(created_at) >= %s
+            AND DATE(created_at) <= %s",
+            $notificationId,
+            $startDate,
+            $endDate
+        );
+
+        return (int) $wpdb->get_var($sql);
+    }
+
+    /**
+     * Count unique form submitters (by hashed IP) for a notification in a date range.
+     *
+     * @param int    $notificationId OnPage notification post ID.
+     * @param string $startDate      Start date (Y-m-d).
+     * @param string $endDate        End date (Y-m-d).
+     * @return int
+     * @since 3.0.0
+     */
+    public static function countUniqueFormSubmittersForNotification(int $notificationId, string $startDate, string $endDate): int
+    {
+        // Bail when forms storage is unavailable or the notification ID is invalid.
+        if ($notificationId <= 0 || ! self::formSubmissionsTableExists()) {
+            return 0;
+        }
+
+        global $wpdb;
+
+        $table = self::getFormSubmissionsTableName();
+
+        // Distinct ip_hash values approximate unique visitors for form conversions.
+        $sql = $wpdb->prepare(
+            "SELECT COUNT(DISTINCT ip_hash) FROM {$table}
+            WHERE notification_id = %d
+            AND ip_hash != ''
+            AND DATE(created_at) >= %s
+            AND DATE(created_at) <= %s",
+            $notificationId,
+            $startDate,
+            $endDate
+        );
+
+        return (int) $wpdb->get_var($sql);
     }
 }

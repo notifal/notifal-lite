@@ -132,13 +132,15 @@ function render_notification_detail_popup(string $context = 'archive'): void {
 
 /**
  * Render notification detail popup footer (import buttons only).
- * Buttons without a marketplace file are hidden via JS (notifal-hidden).
+ * Buttons start hidden and are revealed by JS only after template details load.
+ * Buttons without a marketplace file stay hidden via JS (notifal-hidden).
  *
  * @param string $context Context identifier for element IDs (e.g., 'modal', 'archive')
  * @return void
  *
  * @since 2.0.0
- * @since 2.4.3 button are hidden if there is no marketplace file
+ * @since 2.4.3 Buttons are hidden if there is no marketplace file.
+ * @since 2.4.5 Buttons stay hidden until template details finish loading.
  */
 function render_notification_detail_popup_footer(string $context = 'archive'): void {
     $id_prefix = $context === 'modal' ? 'notifalModal' : 'notifal';
@@ -148,18 +150,18 @@ function render_notification_detail_popup_footer(string $context = 'archive'): v
         <?php
         if (PluginDetector::isElementorActive()) :
             ?>
-            <button type="button" class="notifal-popup-import-btn notifal-popup-import-elementor" id="<?php echo esc_attr($id_prefix); ?>PopupImportElementorBtn" data-file-type="elementor">
+            <button type="button" class="notifal-popup-import-btn notifal-popup-import-elementor notifal-hidden" id="<?php echo esc_attr($id_prefix); ?>PopupImportElementorBtn" data-file-type="elementor" disabled>
                 <?php echo NotifalIconService::render('cloud-download', 16); ?>
                 <?php esc_html_e('Import Elementor', 'notifal'); ?>
             </button>
             <?php
         endif;
         ?>
-        <button type="button" class="notifal-popup-import-btn notifal-popup-import-block-editor" id="<?php echo esc_attr($id_prefix); ?>PopupImportBlockEditorBtn" data-file-type="block-editor">
+        <button type="button" class="notifal-popup-import-btn notifal-popup-import-block-editor notifal-hidden" id="<?php echo esc_attr($id_prefix); ?>PopupImportBlockEditorBtn" data-file-type="block-editor" disabled>
             <?php echo NotifalIconService::render('cloud-download', 16); ?>
             <?php esc_html_e('Import Block Editor', 'notifal'); ?>
         </button>
-        <button type="button" class="notifal-popup-import-btn notifal-popup-import-html-builder" id="<?php echo esc_attr($id_prefix); ?>PopupImportHtmlBuilderBtn" data-file-type="html-builder">
+        <button type="button" class="notifal-popup-import-btn notifal-popup-import-html-builder notifal-hidden" id="<?php echo esc_attr($id_prefix); ?>PopupImportHtmlBuilderBtn" data-file-type="html-builder" disabled>
             <?php echo NotifalIconService::render('cloud-download', 16); ?>
             <?php esc_html_e('Import HTML Builder', 'notifal'); ?>
         </button>

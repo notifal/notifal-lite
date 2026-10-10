@@ -14,6 +14,7 @@ defined('ABSPATH') || exit;
  * Normalizes AI-generated or loosely shaped OnPage notification settings before import sanitization.
  *
  * @since 2.4.1
+ * @updated 3.0.0 Drop invented sitewide post_type visibility=all rules on import.
  * @author Hossein <hossein@notifal.com>
  */
 class OnPageImportSettingsNormalizer
@@ -21,11 +22,15 @@ class OnPageImportSettingsNormalizer
     /**
      * Normalize all notification settings blocks from an import payload.
      *
+     * When template HTML is provided, content_source_type is forced to dynamic
+     * if any Notifal merge tag is present, otherwise static.
+     *
      * @since 2.4.1
-     * @param array<string, mixed> $settings Raw notification.settings array.
+     * @param array<string, mixed> $settings     Raw notification.settings array.
+     * @param string               $templateHtml Optional template HTML used to resolve content_source_type.
      * @return array<string, mixed> Normalized settings.
      */
-    public static function normalize(array $settings): array
+    public static function normalize(array $settings, string $templateHtml = ''): array
     {
         // Copy the settings array so the original import payload is not mutated.
         $normalized = $settings;
@@ -39,9 +44,19 @@ class OnPageImportSettingsNormalizer
             $normalized['timing'] = self::normalizeTimingSettings($normalized['timing']);
         }
 
-        if (isset($normalized['content_source']) && is_array($normalized['content_source'])) {
-            $normalized['content_source'] = self::normalizeContentSourceSettings($normalized['content_source']);
+        // Ensure content_source exists so tag-based type resolution can always run.
+        if (!isset($normalized['content_source']) || !is_array($normalized['content_source'])) {
+            $normalized['content_source'] = array();
         }
+
+        // Strip invented keys and sanitize supported content source fields first.
+        $normalized['content_source'] = self::normalizeContentSourceSettings($normalized['content_source']);
+
+        // Override content_source_type from template HTML tag presence when available.
+        $normalized['content_source'] = OnPageContentSourceTypeResolver::applyFromTemplateHtml(
+            $normalized['content_source'],
+            $templateHtml
+        );
 
         if (isset($normalized['display_rules']) && is_array($normalized['display_rules'])) {
             $normalized['display_rules'] = self::normalizeDisplayRules($normalized['display_rules']);
@@ -161,14 +176,19 @@ class OnPageImportSettingsNormalizer
      * Convert AI display rule shapes into Notifal items[] storage format.
      *
      * @since 2.4.1
+     * @updated 3.0.0 Strip invented post_type visibility=all filler rules after conversion.
      * @param array<string, mixed> $displayRules Raw display rules block.
      * @return array<string, mixed>
      */
     public static function normalizeDisplayRules(array $displayRules): array
     {
-        // Already in supported items format.
+        // Already in supported items format: still strip filler sitewide post_type rules.
         if (DisplayRulesDataNormalizer::isItemsFormat($displayRules)) {
-            return $displayRules;
+            return DisplayRulesDataNormalizer::wrapItems(
+                DisplayRulesDataNormalizer::stripInventedSitewidePostTypeRules(
+                    DisplayRulesDataNormalizer::extractItems($displayRules)
+                )
+            );
         }
 
         // AI often uses { rules: [ { rule_type, operator, value } ] }.
@@ -193,11 +213,24 @@ class OnPageImportSettingsNormalizer
                 );
             }
 
-            return DisplayRulesDataNormalizer::wrapItems(self::deduplicateDisplayRuleItems($items));
+            return DisplayRulesDataNormalizer::wrapItems(
+                DisplayRulesDataNormalizer::stripInventedSitewidePostTypeRules(
+                    self::deduplicateDisplayRuleItems($items)
+                )
+            );
         }
 
-        // Fall back to legacy keyed format handled by DisplayRulesDataNormalizer.
-        return $displayRules;
+        // Empty or unknown shapes become an empty items list.
+        if (!is_array($displayRules) || $displayRules === array()) {
+            return DisplayRulesDataNormalizer::wrapItems(array());
+        }
+
+        // Normalize legacy keyed shapes then drop filler post_type=all rows.
+        return DisplayRulesDataNormalizer::wrapItems(
+            DisplayRulesDataNormalizer::stripInventedSitewidePostTypeRules(
+                DisplayRulesDataNormalizer::extractItems($displayRules)
+            )
+        );
     }
 
     /**

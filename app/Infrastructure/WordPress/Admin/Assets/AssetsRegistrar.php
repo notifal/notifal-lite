@@ -4,6 +4,8 @@
 namespace Notifal\Infrastructure\WordPress\Admin\Assets;
 
 use Notifal\Core\Support\Helpers\UrlHelper;
+use Notifal\Infrastructure\WordPress\Admin\Support\NasSupportWidgetRegistrar;
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Shared\AdminUI\Toast\ToastRenderer;
 use Notifal\Shared\Config\Paths;
 use Notifal\Shared\Helpers\AdminScreenDetector;
@@ -28,18 +30,26 @@ class AssetsRegistrar
      */
     public static function register(): void
     {
+        NasSupportWidgetRegistrar::register();
 
-        add_action('admin_enqueue_scripts', [self::class, 'enqueueIcons'], 1);
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueGlobalBackend'], 1);
         add_action('admin_enqueue_scripts', [self::class, 'enqueue'], 1);
         add_action('admin_enqueue_scripts', [self::class, 'enqueueDashboardWidget'], 1);
         add_action('admin_footer', [self::class, 'injectGlobalToast']);
     }
 
     /**
-     * Enqueue notifal-icons.css globally on all admin pages.
+     * Enqueue global backend CSS and JS on all admin pages.
+     *
+     * Mirrors the GlobalBackendStyle / GlobalBackendScript Vite pair used for
+     * admin-wide UI that is not limited to Notifal screens.
+     *
+     * @return void
+     * @since 2.0.0
      */
-    public static function enqueueIcons(): void
+    public static function enqueueGlobalBackend(): void
     {
+        // Global backend stylesheet (icons + admin-wide UI helpers).
         notifal_enqueue_style(
             'notifal-global-backend',
             Paths::cssAdminBuildUrl().'GlobalBackendStyle.css',
@@ -50,6 +60,23 @@ class AssetsRegistrar
             'notifal-icons',
             Paths::cssAdminBuildUrl().'IconsAdminStyle.css',
             []
+        );
+
+        // Allow modules to inject localized data for the global backend script.
+        $globalData = apply_filters(
+            FilterHooks::ADMIN_GLOBAL_BACKEND_DATA,
+            [
+                'rtl' => is_rtl(),
+            ]
+        );
+
+        // Global backend script (menu flyouts and other admin-wide behaviors).
+        notifal_enqueue_script(
+            'notifal-global-backend',
+            Paths::jsAdminBuildUrl().'GlobalBackendScript.js',
+            [],
+            is_array($globalData) ? $globalData : [],
+            'NotifalGlobalBackend'
         );
     }
 
@@ -85,7 +112,9 @@ class AssetsRegistrar
             [
                 'ajax_url' => UrlHelper::baseAjax(),
                 'rtl' => is_rtl(),
-            ]
+                'nasSupport' => NasSupportWidgetRegistrar::localized_config(),
+            ],
+            'notifalSharedAdminJs'
         );
     }
 

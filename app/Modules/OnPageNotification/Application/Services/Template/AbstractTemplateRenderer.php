@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Template;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Traits\TagProcessingTrait;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\WidgetContextProvider;
 use Notifal\Shared\Utils\Helper;
@@ -109,8 +110,29 @@ abstract class AbstractTemplateRenderer
 
             $this->enqueueThirdPartyCssFromContent($content);
 
+            // Capture third-party/widget assets only; Notifal core handles are WP-managed.
             $capturedAssets = $this->captureNewlyEnqueuedAssets();
             $assets         = $this->mergeAssetArrays($builderAssets, $capturedAssets);
+
+            /**
+             * Allow modules (Forms, etc.) to append assets based on rendered HTML.
+             *
+             * @since 3.0.0
+             * @param array    $assets   Merged css/js asset lists.
+             * @param string   $content  Rendered template HTML.
+             * @param \WP_Post $template Template post.
+             */
+            $assets = apply_filters(
+                FilterHooks::ONPAGE_TEMPLATE_RENDERED_ASSETS,
+                $assets,
+                $content,
+                $template
+            );
+
+            // Ensure filter return shape stays an array for the frontend payload.
+            if (!is_array($assets)) {
+                $assets = [];
+            }
 
             WidgetContextProvider::clearContext();
 
@@ -214,13 +236,19 @@ abstract class AbstractTemplateRenderer
         // --- Newly enqueued styles ---
         $newStyleHandles = array_diff(wp_styles()->queue, $this->preRenderStylesQueue);
         foreach ($newStyleHandles as $handle) {
+            // Skip Notifal core CSS managed by dedicated frontend registrars.
+            if ($this->isNotifalManagedAssetHandle((string) $handle)) {
+                continue;
+            }
+
             $style = wp_styles()->registered[$handle] ?? null;
             if (!$style) {
                 continue;
             }
 
             $src = $this->resolveAssetUrl($style->src, wp_styles());
-            if ($src) {
+            // Skip known Notifal core file URLs even if registered under another handle.
+            if ($src && !$this->isNotifalManagedAssetUrl($src)) {
                 $css[] = $src;
             }
 
@@ -242,12 +270,15 @@ abstract class AbstractTemplateRenderer
             if (in_array($handle, $newStyleHandles, true)) {
                 continue;
             }
+            if ($this->isNotifalManagedAssetHandle((string) $handle)) {
+                continue;
+            }
             $style = wp_styles()->registered[$handle] ?? null;
             if (!$style || empty($style->src)) {
                 continue;
             }
             $src = $this->resolveAssetUrl($style->src, wp_styles());
-            if ($src) {
+            if ($src && !$this->isNotifalManagedAssetUrl($src)) {
                 $css[] = $src;
             }
         }
@@ -255,13 +286,17 @@ abstract class AbstractTemplateRenderer
         // --- Newly enqueued scripts ---
         $newScriptHandles = array_diff(wp_scripts()->queue, $this->preRenderScriptsQueue);
         foreach ($newScriptHandles as $handle) {
+            if ($this->isNotifalManagedAssetHandle((string) $handle)) {
+                continue;
+            }
+
             $script = wp_scripts()->registered[$handle] ?? null;
             if (!$script) {
                 continue;
             }
 
             $src = $this->resolveAssetUrl($script->src, wp_scripts());
-            if ($src) {
+            if ($src && !$this->isNotifalManagedAssetUrl($src)) {
                 $js[] = $src;
             }
 
@@ -277,12 +312,15 @@ abstract class AbstractTemplateRenderer
             if (in_array($handle, $newScriptHandles, true)) {
                 continue;
             }
+            if ($this->isNotifalManagedAssetHandle((string) $handle)) {
+                continue;
+            }
             $script = wp_scripts()->registered[$handle] ?? null;
             if (!$script || empty($script->src)) {
                 continue;
             }
             $src = $this->resolveAssetUrl($script->src, wp_scripts());
-            if ($src) {
+            if ($src && !$this->isNotifalManagedAssetUrl($src)) {
                 $js[] = $src;
             }
         }
@@ -600,6 +638,58 @@ abstract class AbstractTemplateRenderer
                 $enqueued[$cssKey] = true;
             }
         }
+    }
+
+    /**
+     * Whether a WP dependency handle is owned by Notifal frontend registrars.
+     *
+     * These must not be re-injected via template_assets (duplicate link/script tags).
+     *
+     * @param string $handle Style or script handle.
+     * @return bool
+     * @since 3.0.0
+     */
+    protected function isNotifalManagedAssetHandle(string $handle): bool
+    {
+        $managed = [
+            'notifal-onpage-frontend-bundle',
+            'notifal-onpage-frontend-style',
+            'notifal-forms-frontend',
+            'notifal-templates-frontend-bundle',
+            'notifal-elementor-widgets-style',
+            'notifal-google-recaptcha',
+            'notifal-turnstile',
+        ];
+
+        return in_array($handle, $managed, true);
+    }
+
+    /**
+     * Whether a resolved asset URL points at a Notifal-managed core build file.
+     *
+     * @param string $url Absolute asset URL.
+     * @return bool
+     * @since 3.0.0
+     */
+    protected function isNotifalManagedAssetUrl(string $url): bool
+    {
+        $needles = [
+            'OnPageFrontendStyle.css',
+            'OnPageFrontendBundle.js',
+            'FormsFrontendStyle.css',
+            'FormsFrontendBundle.js',
+            'TemplatesFrontendBundle.js',
+            'TemplatesFrontendStyle.css',
+            'TemplatesAdminStyle.css',
+        ];
+
+        foreach ($needles as $needle) {
+            if (strpos($url, $needle) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

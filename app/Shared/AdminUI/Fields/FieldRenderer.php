@@ -169,12 +169,13 @@ class FieldRenderer {
 
         echo '<select class="notifal-select"' . ($dynamic_tooltip ? ' data-dynamic-tooltip="true"' : '') . ' id="' . esc_attr($id) . '" name="' . esc_attr($id) . '"' . $input_attrs . '>';
         foreach ($options as $opt) {
-            $disabled_attr = isset($opt['disabled']) && $opt['disabled'] ? ' disabled="disabled"' : '';
+            // Build optional attributes such as disabled and data-* metadata for each option.
+            $option_attrs = self::buildSelectOptionAttributes($opt);
             printf(
                 '<option value="%1$s"%2$s%3$s>%4$s</option>',
                 esc_attr($opt['value']),
                 selected($opt['value'], $selected, false),
-                $disabled_attr,
+                $option_attrs,
                 esc_html($opt['label'])
             );
         }
@@ -343,6 +344,42 @@ class FieldRenderer {
 
         do_action(ActionHooks::FIELD_DATETIME_AFTER);
         do_action(ActionHooks::FIELD_DATETIME_AFTER . $id);
+    }
+
+    /**
+     * Build HTML attributes for a select option entry.
+     *
+     * Supports disabled state and arbitrary data-* attributes used by Pro upsell UI.
+     *
+     * @param array $option Option definition passed to FieldRenderer::select().
+     * @return string Escaped attribute string for the <option> tag.
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    private static function buildSelectOptionAttributes(array $option): string
+    {
+        // Start with an empty attribute string.
+        $attributes = '';
+
+        // Mark option as disabled when requested by the caller.
+        if (! empty($option['disabled'])) {
+            $attributes .= ' disabled="disabled"';
+        }
+
+        // Append any data-* attributes supplied on the option array.
+        foreach ($option as $key => $value) {
+            if (strpos((string) $key, 'data-') !== 0) {
+                continue;
+            }
+
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $attributes .= ' ' . esc_attr((string) $key) . '="' . esc_attr((string) $value) . '"';
+        }
+
+        return $attributes;
     }
 
     /**

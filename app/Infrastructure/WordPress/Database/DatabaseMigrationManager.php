@@ -4,6 +4,8 @@ namespace Notifal\Infrastructure\WordPress\Database;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Shared\Utils\Helper;
+use Throwable;
 
 defined('ABSPATH') || exit;
 
@@ -15,6 +17,7 @@ defined('ABSPATH') || exit;
  *
  * @package Notifal\Infrastructure\WordPress\Database
  * @since 2.0.0
+ * @updated 3.0.0 Persist DB version only after hooks succeed; isolate Throwable so install/update cannot white-screen the site.
  * @author Hossein <hossein@notifal.com>
  */
 class DatabaseMigrationManager
@@ -34,6 +37,14 @@ class DatabaseMigrationManager
     private const VERSION_OPTION = 'notifal_db_version';
 
     /**
+     * Request-level lock so init + admin_init cannot double-run migrations.
+     *
+     * @since 3.0.0
+     * @var bool
+     */
+    private static $isRunning = false;
+
+    /**
      * Initialize the migration manager.
      *
      * @since 2.0.0
@@ -48,11 +59,17 @@ class DatabaseMigrationManager
      * Check if migrations need to be run and execute them.
      *
      * @since 2.0.0
+     * @updated 3.0.0 Skip while a migration pass is already in progress for this request.
      */
     public static function checkAndRunMigrations(): void
     {
-        // Default to '0.0.0' if option doesn't exist (fresh install)
-        // This ensures migrations run on first installation
+        // Avoid overlapping runs when both init and admin_init fire in one request.
+        if (self::$isRunning) {
+            return;
+        }
+
+        // Default to '0.0.0' if option doesn't exist (fresh install).
+        // This ensures migrations run on first installation.
         $currentVersion = get_option(self::VERSION_OPTION, '0.0.0');
 
         if (version_compare($currentVersion, self::CURRENT_VERSION, '<')) {
@@ -63,41 +80,64 @@ class DatabaseMigrationManager
     /**
      * Run all necessary migrations.
      *
+     * Marks the database version only after before/after hooks complete successfully.
+     * Catches Throwable so a single migration listener cannot take the whole site down.
+     *
      * @param string $fromVersion Current database version
      * @since 2.0.0
+     * @updated 3.0.0 Soft-fail migration hooks and delay version bump until hooks finish.
      */
     private static function runMigrations(string $fromVersion): void
     {
-        global $wpdb;
+        // Mark this request as busy before any hook work starts.
+        self::$isRunning = true;
 
-        // Ensure we have the required WordPress database functions
-        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        try {
+            // Ensure we have the required WordPress database functions.
+            require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-        /**
-         * Fires before running database migrations.
-         *
-         * @since 2.0.0
-         * @param string $fromVersion Current database version
-         * @param string $toVersion Target database version
-         */
-        do_action(ActionHooks::DATABASE_MIGRATIONS_BEFORE_RUN, $fromVersion, self::CURRENT_VERSION);
+            /**
+             * Fires before running database migrations.
+             *
+             * @since 2.0.0
+             * @param string $fromVersion Current database version
+             * @param string $toVersion Target database version
+             */
+            do_action(ActionHooks::DATABASE_MIGRATIONS_BEFORE_RUN, $fromVersion, self::CURRENT_VERSION);
 
-        // Run migrations based on version
-        if (version_compare($fromVersion, '2.0.0', '<')) {
-            self::migrateToVersion200();
+            // Run migrations based on version.
+            if (version_compare($fromVersion, '2.0.0', '<')) {
+                self::migrateToVersion200();
+            }
+
+            /**
+             * Fires after running database migrations.
+             *
+             * @since 2.0.0
+             * @param string $fromVersion Previous database version
+             * @param string $toVersion New database version
+             */
+            do_action(ActionHooks::DATABASE_MIGRATIONS_AFTER_RUN, $fromVersion, self::CURRENT_VERSION);
+
+            // Persist version only when every migration step and hook finished cleanly.
+            // Failed passes leave the old version so the next request can retry safely.
+            update_option(self::VERSION_OPTION, self::CURRENT_VERSION);
+        } catch (Throwable $throwable) {
+            // Keep the site online; log details for support and allow a later retry.
+            Helper::log(
+                sprintf(
+                    'Database migration failed from %1$s to %2$s: %3$s in %4$s:%5$d',
+                    $fromVersion,
+                    self::CURRENT_VERSION,
+                    $throwable->getMessage(),
+                    $throwable->getFile(),
+                    $throwable->getLine()
+                )
+            );
+        } finally {
+            // Always clear the request lock so later admin_init/manual runs can proceed.
+            self::$isRunning = false;
         }
-
-        // Update database version
-        update_option(self::VERSION_OPTION, self::CURRENT_VERSION);
-
-        /**
-         * Fires after running database migrations.
-         *
-         * @since 2.0.0
-         * @param string $fromVersion Previous database version
-         * @param string $toVersion New database version
-         */
-        do_action(ActionHooks::DATABASE_MIGRATIONS_AFTER_RUN, $fromVersion, self::CURRENT_VERSION);
     }
 
     /**

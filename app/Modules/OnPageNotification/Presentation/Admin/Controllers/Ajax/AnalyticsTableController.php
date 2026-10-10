@@ -4,6 +4,7 @@ namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax
 
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -212,14 +213,16 @@ class AnalyticsTableController
             
             // Conversions column
             $html .= '<td>' . esc_html(number_format($notification['stats']['total_conversions'])) . '</td>';
-            
-            // Revenue column: show store-formatted amount and expose raw float for client-side sorting and CSV.
-            $revenueClass = apply_filters('notifal_pro_enhanced_analytics_allowed', false) ? 'notifal-revenue-highlight' : 'notifal-revenue-always-visible';
-            $revenueRaw = isset($notification['revenue']) ? (float) $notification['revenue'] : 0.0;
-            $revenueDisplay = $moneyFormatter->formatPlain($revenueRaw);
-            $html .= '<td class="' . $revenueClass . '" data-notifal-raw-revenue="' . esc_attr((string) $revenueRaw) . '">';
-            $html .= esc_html($revenueDisplay);
-            $html .= '</td>';
+
+            // Revenue column (only when WooCommerce or EDD is active).
+            if (AnalyticsHelper::supportsRevenueAnalytics()) {
+                $revenueClass = apply_filters('notifal_pro_enhanced_analytics_allowed', false) ? 'notifal-revenue-highlight' : 'notifal-revenue-always-visible';
+                $revenueRaw = isset($notification['revenue']) ? (float) $notification['revenue'] : 0.0;
+                $revenueDisplay = $moneyFormatter->formatPlain($revenueRaw);
+                $html .= '<td class="' . esc_attr($revenueClass) . '" data-notifal-raw-revenue="' . esc_attr((string) $revenueRaw) . '">';
+                $html .= esc_html($revenueDisplay);
+                $html .= '</td>';
+            }
             
             // Close Rate column
             $html .= '<td>';
@@ -273,6 +276,12 @@ class AnalyticsTableController
 
         // Get parameters from request
         $metric = Helper::sanitizeInput($_POST['metric'] ?? 'impressions', 'text');
+
+        // Block revenue chart requests when the site has no ecommerce plugin.
+        if ($metric === 'revenue' && ! AnalyticsHelper::supportsRevenueAnalytics()) {
+            notifal_json_error(__('Revenue analytics are not available on this site.', 'notifal'));
+            return;
+        }
 
         // Get current filters
         $notificationId = isset($_POST['notification_id']) ? (int)$_POST['notification_id'] : null;

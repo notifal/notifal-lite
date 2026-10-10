@@ -1,0 +1,285 @@
+<?php
+
+namespace Notifal\Modules\Forms\Presentation\Admin\Routes;
+
+defined('ABSPATH') || exit;
+
+use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\Forms\Application\Services\FormDuplicateService;
+use Notifal\Modules\Forms\Application\Services\FormFieldSanitizer;
+use Notifal\Modules\Forms\Infrastructure\WordPress\Repositories\FormFieldsRepository;
+use Notifal\Modules\Forms\Infrastructure\WordPress\Repositories\FormMetaRepository;
+use Notifal\Modules\Forms\Infrastructure\WordPress\Repositories\SubmissionRepository;
+use Notifal\Shared\AdminUI\Toast\ToastManager;
+use Notifal\Shared\AdminUI\Traits\AdminOperationsTrait;
+use Notifal\Shared\Utils\Helper;
+
+/**
+ * Admin routes for Form CPT list actions (delete, duplicate, empty trash).
+ *
+ * BaseListView generates URLs like `admin.php?action=notifal_delete_notifal_form`.
+ * Without this dispatcher those requests load a blank admin screen.
+ *
+ * @since 3.0.0
+ * @author Hossein <hossein@notifal.com>
+ */
+class AdminRouteController
+{
+    use AdminOperationsTrait;
+
+    /**
+     * Hook prefix for ActionHooks constants used by AdminOperationsTrait.
+     *
+     * @var string
+     */
+    protected const HOOK_PREFIX = 'Notifal\\Infrastructure\\WordPress\\Hooks\\ActionHooks::';
+
+    /**
+     * Form CPT slug.
+     *
+     * @var string
+     */
+    protected const POST_TYPE = 'notifal_form';
+
+    /**
+     * Forms list admin page slug.
+     *
+     * @var string
+     */
+    protected const LIST_PAGE = 'notifal-forms';
+
+    /**
+     * Register the admin_init dispatcher.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    public static function register(): void
+    {
+        // Listen for list-row GET actions before any admin output.
+        add_action('admin_init', [self::class, 'dispatch']);
+    }
+
+    /**
+     * Dispatch GET action requests to the matching handler.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    public static function dispatch(): void
+    {
+        // Only run inside wp-admin.
+        if (!is_admin()) {
+            return;
+        }
+
+        // Read the route action from the query string.
+        $action = Helper::sanitizeInput($_GET['action'] ?? '', 'text');
+
+        switch ($action) {
+            case 'notifal_delete_notifal_form':
+                self::handleDeleteForm();
+                break;
+
+            case 'notifal_duplicate_notifal_form':
+                self::handleDuplicateForm();
+                break;
+
+            case 'notifal_empty_trash_notifal_form':
+                self::handleEmptyTrashForm();
+                break;
+
+            case 'notifal_delete_form_submission':
+                self::handleDeleteSubmission();
+                break;
+        }
+    }
+
+    /**
+     * Build a redirect URL back to the Forms list, preserving status when set.
+     *
+     * @param string $status Optional status tab (trash, etc.).
+     * @return string
+     * @since 3.0.0
+     */
+    protected static function getListRedirectUrl(string $status = ''): string
+    {
+        // Start from the Forms list screen.
+        $url = admin_url('admin.php?page=' . self::LIST_PAGE);
+
+        // Keep the active status filter when returning from an action.
+        if ($status !== '') {
+            $url = add_query_arg('status', rawurlencode($status), $url);
+        }
+
+        return $url;
+    }
+
+    /**
+     * Trash or permanently delete a single form.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    protected static function handleDeleteForm(): void
+    {
+        // Resolve the form ID from the request.
+        $postId = absint($_GET['id'] ?? 0);
+
+        self::handleDeletePost(
+            $postId,
+            'delete_notifal_form_' . $postId,
+            self::POST_TYPE,
+            static function ($status) {
+                return self::getListRedirectUrl(is_string($status) ? $status : '');
+            },
+            [
+                'deleted' => 'FORMS_FORM_DELETED',
+                'trashed' => 'FORMS_FORM_TRASHED',
+            ]
+        );
+    }
+
+    /**
+     * Duplicate a form including fields, emails, and integration settings.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    protected static function handleDuplicateForm(): void
+    {
+        // Resolve the form ID and list redirect context from the request.
+        $postId = absint($_GET['id'] ?? 0);
+        $nonce = Helper::sanitizeInput($_GET['_wpnonce'] ?? '', 'key');
+        $status = Helper::sanitizeInput($_GET['status'] ?? '', 'text');
+        $listUrl = self::getListRedirectUrl(is_string($status) ? $status : '');
+
+        // Validate post ID and type before nonce checks.
+        if ($postId <= 0 || get_post_type($postId) !== self::POST_TYPE) {
+            ToastManager::error(__('Invalid post ID.', 'notifal'), $listUrl);
+            return;
+        }
+
+        // Verify the duplicate nonce generated by BaseListView.
+        if (!wp_verify_nonce($nonce, 'duplicate_notifal_form_' . $postId)) {
+            ToastManager::error(__('Security check failed.', 'notifal'), $listUrl);
+            return;
+        }
+
+        // Ensure the current user can edit the source form.
+        if (!current_user_can('edit_post', $postId)) {
+            ToastManager::error(__('You do not have permission to duplicate this form.', 'notifal'), $listUrl);
+            return;
+        }
+
+        try {
+            // Copy fields + settings explicitly so duplicates match the source form.
+            $sanitizer = new FormFieldSanitizer();
+            $duplicateService = new FormDuplicateService(
+                new FormMetaRepository(),
+                new FormFieldsRepository($sanitizer)
+            );
+            $newFormId = $duplicateService->duplicate($postId);
+
+            // Open the duplicate on the Notifal form edit screen with a success toast.
+            $editUrl = add_query_arg(
+                [
+                    'page'    => 'notifal-form',
+                    'form_id' => $newFormId,
+                ],
+                admin_url('admin.php')
+            );
+
+            ToastManager::success(__('Form duplicated successfully.', 'notifal'), $editUrl);
+        } catch (\Throwable $exception) {
+            ToastManager::error($exception->getMessage(), $listUrl);
+        }
+    }
+
+    /**
+     * Permanently delete all trashed forms.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    protected static function handleEmptyTrashForm(): void
+    {
+        self::handleEmptyTrash(
+            self::POST_TYPE,
+            'empty_trash_notifal_form',
+            static function ($status = '') {
+                // Empty trash returns to the trash tab when requested, otherwise the main list.
+                if ($status === 'trash') {
+                    return self::getListRedirectUrl('trash');
+                }
+
+                return self::getListRedirectUrl();
+            },
+            'FORMS_TRASH_EMPTIED'
+        );
+    }
+
+    /**
+     * Permanently delete a single form submission row.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    protected static function handleDeleteSubmission(): void
+    {
+        // Resolve ID and redirect target early.
+        $submissionId = absint($_GET['id'] ?? 0);
+        $redirect = admin_url('admin.php?page=notifal-form-submissions');
+        $formId = isset($_GET['form_id']) ? absint($_GET['form_id']) : 0;
+        if ($formId > 0) {
+            $redirect = add_query_arg('form_id', $formId, $redirect);
+        }
+
+        // Reject invalid IDs before nonce checks.
+        if ($submissionId <= 0) {
+            ToastManager::error(__('Invalid submission.', 'notifal'), $redirect);
+            return;
+        }
+
+        // Verify the list/detail delete nonce.
+        $nonce = Helper::sanitizeInput($_GET['_wpnonce'] ?? '', 'key');
+        if (!wp_verify_nonce($nonce, 'delete_form_submission_' . $submissionId)) {
+            ToastManager::error(__('Security check failed.', 'notifal'), $redirect);
+            return;
+        }
+
+        // Capability gate for admin-only mutations.
+        if (!current_user_can('manage_options')) {
+            ToastManager::error(__('You do not have permission to delete submissions.', 'notifal'), $redirect);
+            return;
+        }
+
+        $repo = new SubmissionRepository();
+        $existing = $repo->get($submissionId);
+        if (!$existing) {
+            ToastManager::error(__('Submission not found.', 'notifal'), $redirect);
+            return;
+        }
+
+        // Prefer redirecting back to the same form inbox when possible.
+        $existingFormId = isset($existing['form_id']) ? absint($existing['form_id']) : 0;
+        if ($formId <= 0 && $existingFormId > 0) {
+            $redirect = add_query_arg('form_id', $existingFormId, $redirect);
+        }
+
+        $deleted = $repo->delete($submissionId);
+        if (!$deleted) {
+            ToastManager::error(__('Failed to delete submission.', 'notifal'), $redirect);
+            return;
+        }
+
+        /**
+         * Fires after a submission row is deleted from admin.
+         *
+         * @since 3.0.0
+         */
+        do_action(ActionHooks::FORMS_SUBMISSION_DELETED, $submissionId);
+
+        ToastManager::success(__('Submission deleted.', 'notifal'), $redirect);
+    }
+}

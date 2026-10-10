@@ -1,5 +1,6 @@
 <?php
 
+use Notifal\Modules\Ai\Config\AiCharacter;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Modules\OnPageNotification\Presentation\Admin\Components\NotificationDetailPopupComponent;
 use Notifal\Shared\Services\NotifalIconService;
@@ -40,6 +41,24 @@ $urlService = notifal_app(UrlService::class);
                 </button>
             </div>
             <div class="notifal-modal-header-actions">
+                <?php
+                // Bold shine CTA (same visual language as the list AI invite strip).
+                // Click handler closes this modal, then opens #notifal-onpage-ai-prompt-modal.
+                ?>
+                <button
+                    type="button"
+                    class="notifal-ai-invite__cta notifal-precreated-create-with-ai-btn"
+                    id="notifal-precreated-create-with-ai-btn"
+                >
+                    <span class="notifal-ai-invite__cta-shine" aria-hidden="true"></span>
+                    <span class="notifal-ai-invite__cta-label notifal-flex notifal-gap-10">
+                        <?php
+                        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- AiCharacter::renderFaceHtml() returns fixed safe markup.
+                        echo AiCharacter::renderFaceHtml('sm');
+                        ?>
+                        <?php esc_html_e('Create with AI', 'notifal'); ?>
+                    </span>
+                </button>
                 <a href="<?php echo esc_url($urlService->getCreateNotificationUrl()); ?>"
                    class="notifal-button notifal-flex notifal-gap-10 notifal-create-from-scratch-btn">
                     <?php echo NotifalIconService::render('plus-circle', 16); ?>

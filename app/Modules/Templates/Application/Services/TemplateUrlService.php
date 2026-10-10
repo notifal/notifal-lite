@@ -50,35 +50,53 @@ class TemplateUrlService
     /**
      * Get URL to create a new template with the HTML Builder.
      *
+     * @param bool $openNoti When true, the builder opens with Noti chat expanded.
      * @return string
      * @since 2.4.0
+     * @updated 3.0.0 Support opening Noti by default after create redirect.
      */
-    public function getCreateHtmlBuilderUrl(): string
+    public function getCreateHtmlBuilderUrl(bool $openNoti = false): string
     {
+        // Create a fresh nonce for the create-template admin action.
         $nonce = NonceManager::create('notifal_create_notifal_html_builder');
 
-        return add_query_arg([
+        // Base query args used by AdminRouteController::handleCreateHtmlBuilderTemplate().
+        $args = [
             'action'   => 'notifal_create_notifal_html_builder',
             '_wpnonce' => $nonce,
-        ], admin_url('admin.php'));
+        ];
+
+        // Ask the create handler to keep open_noti on the builder edit redirect.
+        if ($openNoti) {
+            $args['open_noti'] = '1';
+        }
+
+        return add_query_arg($args, admin_url('admin.php'));
     }
 
     /**
      * Get URL to edit a template in the HTML Builder.
      *
-     * @param int $templateId Template post ID.
+     * @param int  $templateId Template post ID.
+     * @param bool $openNoti   When true, the builder opens with Noti chat expanded.
      * @return string
      * @since 2.4.0
+     * @updated 3.0.0 Support opening Noti by default from create/invite CTAs.
      */
-    public function getEditHtmlBuilderUrl(int $templateId): string
+    public function getEditHtmlBuilderUrl(int $templateId, bool $openNoti = false): string
     {
-        return add_query_arg(
-            [
-                'page'        => HtmlBuilderPageController::PAGE_SLUG,
-                'template_id' => $templateId,
-            ],
-            admin_url('admin.php')
-        );
+        // Always include the builder page slug and template id.
+        $args = [
+            'page'        => HtmlBuilderPageController::PAGE_SLUG,
+            'template_id' => $templateId,
+        ];
+
+        // Persist the invite intent so React can expand Noti on first paint.
+        if ($openNoti) {
+            $args['open_noti'] = '1';
+        }
+
+        return add_query_arg($args, admin_url('admin.php'));
     }
 
     /**

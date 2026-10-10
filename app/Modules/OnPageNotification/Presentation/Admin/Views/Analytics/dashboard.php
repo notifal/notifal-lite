@@ -19,6 +19,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Shared\Utils\Helper;
 
 // Initialize services
@@ -76,6 +77,10 @@ $has_enhanced_analytics_access = (bool) apply_filters('notifal_pro_enhanced_anal
 
 // Get analytics data (will be filtered for Pro upsell if Pro not active)
 $dashboardData = $analyticsService->getDashboardOverview($filters);
+
+// Revenue UI and queries apply only when WooCommerce or EDD is active (since 3.0.0).
+$notifal_supports_revenue_analytics = AnalyticsHelper::supportsRevenueAnalytics();
+$notifal_conversion_context         = AnalyticsHelper::getConversionContextLabels();
 // Pre-compute dashboard total revenue label once for cards, upsell copy, and consistent escaping.
 $notifal_analytics_total_revenue_display = $analyticsMoneyFormatter->formatPlain((float) ($dashboardData['current_period']['total_revenue'] ?? 0));
 
@@ -97,7 +102,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
 ?>
 
 <div class="wp-wrap notifal-admin-page">
-    <div class="notifal-analytics-dashboard">
+    <div class="notifal-analytics-dashboard" data-notifal-supports-revenue="<?php echo $notifal_supports_revenue_analytics ? '1' : '0'; ?>">
     <?php do_action(ActionHooks::ADMIN_PAGE_CONTENT_BEFORE); ?>
         <!-- Dashboard Header -->
         <div class="notifal-dashboard-header">
@@ -385,7 +390,8 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                     </div>
                 </div>
 
-                <!-- Clicked Revenue - Always accessible to encourage upgrades -->
+                <?php if ($notifal_supports_revenue_analytics) : ?>
+                <!-- Clicked Revenue -->
                 <div class="notifal-metric-card notifal-metric-revenue notifal-metric-highlight">
                     <div class="notifal-metric-icon">
                         <span class="notifal-icon notifal-icon-coin"></span>
@@ -466,6 +472,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                         </div>
                     </div>
                 </div>
+                <?php endif; ?>
 
                 <!-- Click-Through Rate -->
                 <div class="notifal-metric-card notifal-metric-ctr<?php echo $isProUpsell ? ' notifal-metric-blurred' : ''; ?>">
@@ -534,8 +541,8 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                         <span class="notifal-icon notifal-icon-exchange-rate"></span>
                     </div>
                     <div class="notifal-metric-content">
-                        <h3 class="notifal-metric-title"><?php esc_html_e('Conversion Rate', 'notifal'); ?></h3>
-                        <p class="notifal-metric-subtitle"><?php esc_html_e('Unique visitors who placed an influenced order', 'notifal'); ?></p>
+                        <h3 class="notifal-metric-title"><?php echo esc_html($notifal_conversion_context['conversion_rate_label']); ?></h3>
+                        <p class="notifal-metric-subtitle"><?php echo esc_html($notifal_conversion_context['conversion_rate_subtitle']); ?></p>
                         <div class="notifal-metric-value">
                             <?php if ($isProUpsell): ?>
                                 <span class="notifal-blurred-text">#.##%</span>
@@ -647,11 +654,19 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                     </div>
                     <div class="notifal-upgrade-text">
                         <h3><?php esc_html_e('Unlock Powerful Analytics with Notifal Pro', 'notifal'); ?></h3>
-                        <p><?php echo sprintf(
-                            esc_html__("You've generated %s in clicked revenue (%s in total influenced revenue)! Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further.", 'notifal'),
-                            '<strong>' . esc_html($notifal_analytics_total_revenue_display) . '</strong>',
-                            '<strong>' . esc_html($notifal_influenced_revenue_display) . '</strong>'
-                        ); ?></p>
+                        <p>
+                            <?php if ($notifal_supports_revenue_analytics) : ?>
+                                <?php
+                                echo sprintf(
+                                    esc_html__("You've generated %s in clicked revenue (%s in total influenced revenue)! Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further.", 'notifal'),
+                                    '<strong>' . esc_html($notifal_analytics_total_revenue_display) . '</strong>',
+                                    '<strong>' . esc_html($notifal_influenced_revenue_display) . '</strong>'
+                                );
+                                ?>
+                            <?php else : ?>
+                                <?php esc_html_e('Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further.', 'notifal'); ?>
+                            <?php endif; ?>
+                        </p>
                         <ul class="notifal-upgrade-features">
                             <li><span class="notifal-icon notifal-icon-check"></span><?php esc_html_e('Detailed impressions & click tracking', 'notifal'); ?></li>
                             <li><span class="notifal-icon notifal-icon-check"></span><?php esc_html_e('Advanced conversion analytics', 'notifal'); ?></li>
@@ -696,8 +711,10 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                             <select class="notifal-chart-metric-selector"<?php echo $isProUpsell ? ' disabled' : ''; ?>>
                                 <option value="impressions"><?php esc_html_e('Impressions', 'notifal'); ?></option>
                                 <option value="clicks"><?php esc_html_e('Clicks', 'notifal'); ?></option>
-                                <option value="conversions"><?php esc_html_e('Conversions', 'notifal'); ?></option>
+                                <option value="conversions"><?php echo esc_html($notifal_conversion_context['conversions_label']); ?></option>
+                                <?php if ($notifal_supports_revenue_analytics) : ?>
                                 <option value="revenue"><?php esc_html_e('Revenue', 'notifal'); ?></option>
+                                <?php endif; ?>
                             </select>
                         </div>
                     </div>
@@ -795,7 +812,9 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                         <input type="search" placeholder="<?php esc_attr_e('Search notifications...', 'notifal'); ?>" class="notifal-table-search"<?php echo $isProUpsell ? ' disabled' : ''; ?>>
                         <select class="notifal-table-sort"<?php echo $isProUpsell ? ' disabled' : ''; ?>>
                             <option value="performance" selected><?php esc_html_e('Sort by Performance', 'notifal'); ?></option>
+                            <?php if ($notifal_supports_revenue_analytics) : ?>
                             <option value="revenue"><?php esc_html_e('Sort by Revenue', 'notifal'); ?></option>
+                            <?php endif; ?>
                             <?php if (!$isProUpsell): ?>
                                 <option value="ctr"><?php esc_html_e('Sort by CTR', 'notifal'); ?></option>
                                 <option value="conversions"><?php esc_html_e('Sort by Conversions', 'notifal'); ?></option>
@@ -848,13 +867,16 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                     <?php endif; ?>
                                 </th>
                                 <th>
-                                    <?php esc_html_e('Conversions', 'notifal'); ?>
+                                    <span title="<?php echo esc_attr($notifal_conversion_context['conversions_tooltip']); ?>">
+                                        <?php echo esc_html($notifal_conversion_context['conversions_label']); ?>
+                                    </span>
                                     <?php if ($isProUpsell): ?>
                                         <span class="notifal-pro-badge notifal-pro-badge-xs">
                                             <span class="notifal-icon notifal-icon-crown"></span>
                                         </span>
                                     <?php endif; ?>
                                 </th>
+                                <?php if ($notifal_supports_revenue_analytics) : ?>
                                 <th>
                                     <?php esc_html_e('Clicked Revenue', 'notifal'); ?>
                                 </th>
@@ -867,6 +889,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                 <th>
                                     <?php esc_html_e('Influenced Orders', 'notifal'); ?>
                                 </th>
+                                <?php endif; ?>
                                 <th>
                                     <?php esc_html_e('Close Rate', 'notifal'); ?>
                                     <?php if ($isProUpsell): ?>
@@ -945,6 +968,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                                 <?php echo esc_html(number_format($notification['stats']['total_conversions'])); ?>
                                             <?php endif; ?>
                                         </td>
+                                        <?php if ($notifal_supports_revenue_analytics) : ?>
                                         <td class="<?php echo $isProUpsell ? 'notifal-revenue-always-visible' : 'notifal-revenue-highlight'; ?>"
                                             data-notifal-raw-revenue="<?php echo esc_attr((string) $notifal_row_revenue_raw); ?>">
                                             <?php echo esc_html($notifal_row_revenue_display); ?>
@@ -956,6 +980,7 @@ $lastUpdateInfo = $analyticsService->getLastUpdateTime();
                                         <td class="notifal-influenced-orders-cell">
                                             <?php echo esc_html(number_format($notifal_row_influenced_orders)); ?>
                                         </td>
+                                        <?php endif; ?>
                                         <td class="<?php echo $isProUpsell ? 'notifal-blurred-data' : ''; ?>">
                                             <?php if ($isProUpsell): ?>
                                                 <span class="notifal-blurred-text">#.##%</span>

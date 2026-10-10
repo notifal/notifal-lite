@@ -40,12 +40,13 @@ use Notifal\Infrastructure\WordPress\Admin\Helpers\AdminStatsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\ConversionTracker;
+use Notifal\Modules\OnPageNotification\Application\Services\Analytics\FormSubmissionConversionTracker;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\OrderAttributionService;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\WooCommerceCartContextBuilder;
 use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Modules\OnPageNotification\Helpers\NotificationHelper;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
-use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
+use Notifal\Modules\OnPageNotification\Application\Services\Inline\InlineNotificationPageDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationDataPreparer;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\NotificationEligibilityChecker;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\TrackingService;
@@ -133,6 +134,7 @@ class ServiceProvider extends AbstractServiceProvider
         AnalyticsHelper::class,
         NotificationHelper::class,
         ConversionTracker::class,
+        FormSubmissionConversionTracker::class,
         OrderAttributionService::class,
         UrlService::class,
         EligibilityService::class,
@@ -209,6 +211,13 @@ class ServiceProvider extends AbstractServiceProvider
 
         // Initialize conversion tracking
         ConversionTracker::register();
+
+        // Form submission conversions for non-ecommerce sites (since 3.0.0).
+        FormSubmissionConversionTracker::register();
+
+        // Register inline shortcode page detection for frontend asset loading.
+        $inlinePageDetector = new InlineNotificationPageDetector();
+        $inlinePageDetector->register();
 
         // Register order attribution display (WooCommerce/EDD admin pages, since 2.3.0)
         OrderAttributionService::register();

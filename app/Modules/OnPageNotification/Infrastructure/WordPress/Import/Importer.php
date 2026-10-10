@@ -23,9 +23,11 @@ defined('ABSPATH') || exit;
  * Class Importer
  *
  * Handles importing OnPage Notifications from JSON or ZIP files.
- * Includes template dependency handling and settings validation.
+ * Includes template dependency handling, connected Form CPT recreation,
+ * and settings validation.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Surface form_warnings from nested template import.
  * @author Hossein <hossein@notifal.com>
  */
 class Importer
@@ -47,12 +49,22 @@ class Importer
 
         // Map importer result to the standard import response shape.
         if (!empty($importResult['success'])) {
+            $postId = absint($importResult['post_id'] ?? 0);
+            $templateId = absint($importResult['template_id'] ?? 0);
+
             return [
                 'success' => 1,
                 'failed' => 0,
                 'errors' => [],
                 'first_title' => $firstTitle,
+                'notification_id' => $postId,
+                'template_id' => $templateId,
+                'edit_url' => $postId > 0 ? (string) get_edit_post_link($postId, 'raw') : '',
                 'is_zip' => false,
+                // Recoverable connected-form messages for try-again UX.
+                'form_warnings' => !empty($importResult['form_warnings']) && is_array($importResult['form_warnings'])
+                    ? array_values(array_unique($importResult['form_warnings']))
+                    : [],
             ];
         }
 
@@ -82,19 +94,31 @@ class Importer
     public static function importFromFile(string $filePath): array
     {
         $firstTitle = '';
+        $formWarnings = [];
 
         // Define processor for JSON imports (single notification)
-        $jsonProcessor = function ($json) use (&$firstTitle) {
+        $jsonProcessor = function ($json) use (&$firstTitle, &$formWarnings) {
             // Extract and sanitize title for response metadata
             $title = Helper::sanitizeInput($json['notification']['title'] ?? __('Imported Notification', 'notifal'), 'text');
             $firstTitle = $title;
 
-            return self::importFromData($json);
+            $result = self::importFromData($json);
+            // Collect connected-form warnings without failing the notification import.
+            if (!empty($result['form_warnings']) && is_array($result['form_warnings'])) {
+                $formWarnings = array_merge($formWarnings, $result['form_warnings']);
+            }
+
+            return $result;
         };
 
         // Define processor for ZIP imports (multiple notifications with bundled media)
-        $zipProcessor = function ($jsonData, $bundledMedia = []) use (&$firstTitle) {
+        $zipProcessor = function ($jsonData, $bundledMedia = []) use (&$firstTitle, &$formWarnings) {
             $result = self::importFromData($jsonData, $bundledMedia);
+
+            // Collect connected-form warnings across ZIP entries.
+            if (!empty($result['form_warnings']) && is_array($result['form_warnings'])) {
+                $formWarnings = array_merge($formWarnings, $result['form_warnings']);
+            }
 
             // Extract title from first successful import for response metadata
             if (empty($firstTitle) && $result['success'] && isset($jsonData['notification']['title'])) {
@@ -109,6 +133,11 @@ class Importer
 
         // Add notification-specific metadata
         $result['first_title'] = $firstTitle;
+
+        // Deduplicate warnings for a clear try-again UX message.
+        if ($formWarnings !== []) {
+            $result['form_warnings'] = array_values(array_unique($formWarnings));
+        }
 
         return $result;
     }
@@ -147,6 +176,7 @@ class Importer
         try {
             // Import template first if exists (pass bundled media for marketplace support)
             $templateId = 0;
+            $formWarnings = [];
             if (isset($notificationData['template'])) {
                 $templateResult = self::handleTemplateImport($notificationData['template'], $bundledMedia);
                 if (!$templateResult['success']) {
@@ -156,6 +186,10 @@ class Importer
                     ];
                 }
                 $templateId = $templateResult['template_id'] ?? 0;
+                // Bubble connected-form warnings from the nested template importer.
+                if (!empty($templateResult['form_warnings']) && is_array($templateResult['form_warnings'])) {
+                    $formWarnings = $templateResult['form_warnings'];
+                }
             }
 
             // Create notification post
@@ -168,8 +202,22 @@ class Importer
             }
             $postId = $postResult['post_id'];
 
-            // Import settings
-            $settingsResult = self::importNotificationSettings($postId, $notificationData['settings'], $templateId);
+            // Collect template HTML so content_source_type can follow merge-tag presence.
+            $templateHtml = '';
+            if (
+                isset($notificationData['template']['content'])
+                && is_string($notificationData['template']['content'])
+            ) {
+                $templateHtml = $notificationData['template']['content'];
+            }
+
+            // Import settings (pass template HTML for static/dynamic content source resolution).
+            $settingsResult = self::importNotificationSettings(
+                $postId,
+                $notificationData['settings'],
+                $templateId,
+                $templateHtml
+            );
             if (!$settingsResult['success']) {
                 // Rollback post creation
                 wp_delete_post($postId, true);
@@ -189,7 +237,13 @@ class Importer
                 update_post_meta($postId, '_notifal_template_id', $templateId);
             }
 
-            return ['success' => true];
+            return [
+                'success'     => true,
+                'post_id'     => $postId,
+                'template_id' => absint($templateId),
+                // Recoverable form messages (license / addon) for try-again UX.
+                'form_warnings' => $formWarnings,
+            ];
         } catch (Exception $e) {
             return [
                 'success' => false,
@@ -307,10 +361,15 @@ class Importer
      * @param int $postId Notification post ID.
      * @param array $settings Settings data.
      * @param int|null $importedTemplateId The ID of the newly imported template (if any).
+     * @param string $templateHtml Template HTML used to resolve content_source_type from merge tags.
      * @return array Array with 'success' boolean and 'error' string if failed.
      */
-    private static function importNotificationSettings(int $postId, array $settings, ?int $importedTemplateId = null): array
-    {
+    private static function importNotificationSettings(
+        int $postId,
+        array $settings,
+        ?int $importedTemplateId = null,
+        string $templateHtml = ''
+    ): array {
         try {
             // Get settings services
             $appearanceService = notifal_app(AppearanceSettingsService::class);
@@ -319,8 +378,8 @@ class Importer
             $contentSourceService = notifal_app(ContentSourceService::class);
             $displayRulesService = notifal_app(DisplayRulesService::class);
 
-            // Normalize AI-shaped or inconsistent settings before service sanitization.
-            $settings = OnPageImportSettingsNormalizer::normalize($settings);
+            // Normalize AI-shaped settings and align content_source_type with template tags.
+            $settings = OnPageImportSettingsNormalizer::normalize($settings, $templateHtml);
 
             // Get content source settings and update template reference to the (existing or new) imported template
             $contentSourceSettings = $settings['content_source'] ?? [];

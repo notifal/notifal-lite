@@ -7,6 +7,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsService;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Repositories\NotificationQuery;
 use WP_Post;
@@ -26,11 +27,11 @@ defined('ABSPATH') || exit;
  *                influenced orders, and a link to full analytics
  * - All users:   List of currently active notifications with links to edit each one
  *
- * The widget intentionally does NOT require WooCommerce/EDD to display; revenue data shows
- * as zero if no ecommerce plugin is active.
+ * Revenue metrics are shown only when WooCommerce or Easy Digital Downloads is active.
  *
  * @package Notifal\Infrastructure\WordPress\Admin\Dashboard
  * @since 2.3.0
+ * @updated 3.0.0 Revenue metrics are hidden when no ecommerce plugin is active.
  * @author Hossein <hossein@notifal.com>
  */
 class DashboardWidget
@@ -143,6 +144,12 @@ class DashboardWidget
         // Determine if Pro analytics are available
         $isProActive = (bool) apply_filters(FilterHooks::IS_PRO_ANALYTICS_ACTIVE, false);
 
+        // Revenue blocks are hidden when the site has no ecommerce plugin.
+        $supportsRevenueAnalytics = AnalyticsHelper::supportsRevenueAnalytics();
+
+        // Context-aware conversion copy for the widget engagement section.
+        $conversionContext = AnalyticsHelper::getConversionContextLabels();
+
         // Fetch last 30 days data
         $filters = ['date_range' => 'last_30_days'];
 
@@ -203,7 +210,8 @@ class DashboardWidget
         ?>
         <div class="notifal-dashboard-widget">
 
-            <!-- Revenue section: always visible for both free and pro users -->
+            <?php if ($supportsRevenueAnalytics) : ?>
+            <!-- Revenue section: visible when WooCommerce or EDD is active -->
             <div class="notifal-widget-section notifal-widget-revenue-section">
                 <h4 class="notifal-widget-section-title"><?php esc_html_e('Last 30 Days Revenue', 'notifal'); ?></h4>
 
@@ -251,6 +259,7 @@ class DashboardWidget
 
                 </div><!-- .notifal-widget-metrics-grid -->
             </div><!-- .notifal-widget-revenue-section -->
+            <?php endif; ?>
 
             <!-- Analytics section: full data for Pro, upsell for free -->
             <div class="notifal-widget-section notifal-widget-analytics-section">
@@ -295,9 +304,12 @@ class DashboardWidget
                                 <span class="notifal-icon notifal-icon-exchange-rate"></span>
                             </div>
                             <div class="notifal-widget-metric__body">
-                                <span class="notifal-widget-metric__label"><?php esc_html_e('Conversions', 'notifal'); ?></span>
+                                <span class="notifal-widget-metric__label"><?php echo esc_html($conversionContext['conversions_label']); ?></span>
                                 <span class="notifal-widget-metric__value"><?php echo esc_html(number_format($totalConversions)); ?></span>
-                                <span class="notifal-widget-metric__sub"><?php echo esc_html($conversionRate . '% ' . __('conversion rate', 'notifal')); ?></span>
+                                <span class="notifal-widget-metric__sub" title="<?php echo esc_attr($conversionContext['conversions_tooltip']); ?>">
+                                    <?php echo esc_html($conversionRate . '% ' . __('conversion rate', 'notifal')); ?>
+                                    <span class="notifal-widget-metric__hint"><?php echo esc_html($conversionContext['conversions_subtitle']); ?></span>
+                                </span>
                             </div>
                         </div>
 

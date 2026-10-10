@@ -15,9 +15,11 @@ defined('ABSPATH') || exit;
  * Class NotificationExportService
  *
  * Handles exporting OnPage Notifications as JSON or ZIP archive.
- * Includes all notification settings, display rules, and associated template data.
+ * Includes all notification settings, display rules, associated template data,
+ * and connected Form CPT payloads referenced by the template.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Include connected forms from nested template export.
  * @author Hossein <hossein@notifal.com>
  */
 class NotificationExportService extends BaseExportService
@@ -172,9 +174,13 @@ class NotificationExportService extends BaseExportService
     /**
      * Prepare template data for export.
      *
+     * Includes connected Form CPT payloads so OnPage import recreates forms
+     * and reassigns data-form-id on the imported template.
+     *
      * @param int $templateId Template post ID.
      * @return array|null Template export data or null if not found.
      * @since 2.0.0
+     * @updated 3.0.0 Include connected forms from TemplateExportService.
      */
     private static function prepareTemplateData(int $templateId): ?array
     {
@@ -191,6 +197,9 @@ class NotificationExportService extends BaseExportService
             'builder' => $templateData['builder'],
             'content' => $templateData['content'],
             'dependencies' => $templateData['dependencies'] ?? [],
+            // Connected Form CPTs travel with the nested template payload.
+            'forms' => $templateData['forms'] ?? [],
+            'title' => $templateData['title'] ?? $templatePost->post_title,
         ];
     }
 

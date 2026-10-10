@@ -2,7 +2,6 @@
 
 namespace Notifal\Modules\Templates\Infrastructure\WordPress\Elementor;
 
-use Notifal\Modules\Templates\Config\Paths as TemplatePath;
 use Notifal\Shared\Config\Paths;
 use Notifal\Domain\Tags\Infrastructure\WordPress\Registration\DynamicKeysApiRegistrar;
 use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
@@ -34,7 +33,10 @@ class AssetsRegistrar
     }
 
     /**
-     * Register all shared widget styles.
+     * Register shared Elementor widget styles for the public frontend.
+     *
+     * Uses the frontend-only build so admin template-builder chrome is never
+     * shipped to visitors.
      *
      * @return void
      * @since 2.0.0
@@ -42,9 +44,12 @@ class AssetsRegistrar
      */
     public static function register_styles(): void
     {
-        notifal_enqueue_style(
+        // Register only: Elementor widget deps or Templates frontend gate enqueue it.
+        wp_register_style(
             'notifal-elementor-widgets-style',
-            Paths::cssAdminBuildUrl() . 'TemplatesAdminStyle.css'
+            Paths::cssFrontendBuildUrl() . 'TemplatesFrontendStyle.css',
+            [],
+            NOTIFAL_VERSION
         );
     }
 

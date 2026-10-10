@@ -3,6 +3,7 @@
 namespace Notifal\Modules\Templates\Application\Services;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Forms\Application\Services\ConnectedFormPortabilityService;
 use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Shared\Services\BaseExportService;
 use WP_Post;
@@ -13,8 +14,10 @@ defined('ABSPATH') || exit;
  * Class TemplateExportService
  *
  * Handles exporting templates as JSON or ZIP archive.
+ * Includes connected Form CPT payloads referenced via data-form-id.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Export connected Form CPT data with the template.
  * @author Hossein <hossein@notifal.com>
  */
 class TemplateExportService extends BaseExportService
@@ -94,10 +97,12 @@ class TemplateExportService extends BaseExportService
      *
      * Detects Elementor or Block Editor and extracts appropriate content and dependencies.
      * Ensures data integrity by validating post object and handling serialization safely.
+     * Includes connected Form CPT payloads so import can recreate and reassign them.
      *
      * @param WP_Post $post The template post.
      * @return array Structured export data ready for JSON serialization.
      * @since 2.0.0
+     * @updated 3.0.0 Export connected Form CPT data referenced by data-form-id.
      */
     public static function prepareExportData(WP_Post $post): array
     {
@@ -128,6 +133,10 @@ class TemplateExportService extends BaseExportService
 
         // Add dependencies for template portability
         $data['dependencies'] = self::extractDependencies($data);
+
+        // Bundle connected Form CPTs so destination sites can recreate and rebind them.
+        $data['forms'] = ConnectedFormPortabilityService::createDefault()
+            ->prepareFormsForExport($content);
 
         return apply_filters(FilterHooks::EXPORT_TEMPLATE_DATA, $data, $post);
     }

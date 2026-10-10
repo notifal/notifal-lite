@@ -88,8 +88,14 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_BEFORE, $tab, 'notification_display_type')); ?>
 
             <?php
-            // Get current display type and its description for dynamic tooltip
+            // Resolve current display type and description for the dynamic tooltip.
             $display_type = $appearance_settings['notification_display_type'];
+
+            // Fall back to toast when inline is saved but Pro license is unavailable.
+            if ($display_type === 'inline' && ! AppearanceSettingsService::isInlineDisplayTypeAllowed()) {
+                $display_type = 'toast';
+            }
+
             $display_description = AppearanceSettingsService::getDisplayTypeDescription($display_type);
 
             FieldRenderer::select(
@@ -103,6 +109,17 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
             );
             ?>
             <?php do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_SECTION_AFTER, $tab, 'notification_display_type')); ?>
+        </div>
+
+        <!-- Inline Placement (Pro extends via hooks) -->
+        <?php
+        // Show the Where panel on first paint when inline is the saved display type.
+        $is_inline_display_type = ($display_type === 'inline' && AppearanceSettingsService::isInlineDisplayTypeAllowed());
+        ?>
+        <div class="notifal-field-group notifal-inline-placement-group<?php echo $is_inline_display_type ? '' : ' notifal-hidden'; ?>">
+            <h3><?php esc_html_e( 'Where', 'notifal' ); ?></h3>
+            <?php do_action(ActionHooks::ADMIN_ONPAGE_APPEARANCE_INLINE_PLACEMENT_BEFORE); ?>
+            <?php do_action(ActionHooks::ADMIN_ONPAGE_APPEARANCE_INLINE_PLACEMENT_AFTER); ?>
         </div>
 
         <!-- Popup Backdrop Settings -->

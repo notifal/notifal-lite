@@ -8,6 +8,7 @@ use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Modules\OnPageNotification\Application\Services\Analytics\AnalyticsMoneyFormatter;
+use Notifal\Modules\OnPageNotification\Helpers\AnalyticsHelper;
 use Notifal\Shared\Config\Paths;
 
 defined('ABSPATH') || exit;
@@ -104,6 +105,7 @@ class AnalyticsAssets
      * @return array Analytics configuration data
      * @since 2.0.0
      * @since 2.2.4 Added `money` payload for revenue chart axis labels matching store currency.
+     * @since 3.0.0 Added revenue support flag and conversion context labels for non-ecommerce sites.
      */
     private static function getAnalyticsConfig(): array
     {
@@ -116,6 +118,8 @@ class AnalyticsAssets
             'export' => self::getExportConfiguration()['export'],
             // Use secure hook that only the legitimate pro plugin can provide
             'is_pro_active' => apply_filters('notifal_pro_enhanced_analytics_allowed', false),
+            'supports_revenue_analytics' => AnalyticsHelper::supportsRevenueAnalytics(),
+            'conversion_context' => AnalyticsHelper::getConversionContextLabels(),
             'upgrade_url' => Urls::withPluginUtm(Urls::PRICING, 'wordpress_plugin', 'notifal_pro_upgrade'),
             'plugin_url' => plugin_dir_url(NOTIFAL_FILE),
             'money' => $moneyFormatter->getJsMoneyConfig(),

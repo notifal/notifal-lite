@@ -32,7 +32,7 @@ class TemplateRenderer
     public static function renderPreviewCard(WP_Post $template, ?int $selectedId = null): void
     {
         $id    = $template->ID;
-        $title = esc_html(get_the_title($template));
+        $title = get_the_title($template);
 
         // Only check if this template matches the selected ID
         $checked = ($selectedId === $id) ? 'checked' : '';
@@ -56,15 +56,22 @@ class TemplateRenderer
 
             <label class="notifal-template-card" for="notifal_template_<?php echo esc_attr($id); ?>">
                 <div class="template-preview">
-                    <div class="notifal-iframe-loading"><?php echo esc_html__('Loading...', 'notifal'); ?></div>
+                    <?php // Visible loader until the preview iframe finishes loading. ?>
+                    <div class="notifal-iframe-loading" role="status" aria-live="polite">
+                        <span class="notifal-loading-spinner" aria-hidden="true"></span>
+                        <span class="notifal-iframe-loading-text">
+                            <?php echo esc_html__('Loading preview...', 'notifal'); ?>
+                        </span>
+                    </div>
                     <iframe
                         src="<?php echo esc_url($previewUrl); ?>"
                         class="notifal-template-iframe"
-                        loading="lazy"
+                        title="<?php echo esc_attr($title); ?>"
+                        loading="eager"
                     ></iframe>
                 </div>
                 <div class="notifal-flex notifal-justify-between notifal-align-center notifal-p-5">
-                    <div class="template-title"><?php echo $title; ?></div>
+                    <div class="template-title"><?php echo esc_html($title); ?></div>
                     <div class="notifal-flex notifal-gap-10">
                         <a href="<?php echo esc_url($editUrl); ?>"
                            class="notifal-action-button"

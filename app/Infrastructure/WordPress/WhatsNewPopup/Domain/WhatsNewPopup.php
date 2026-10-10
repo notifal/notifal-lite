@@ -6,10 +6,15 @@
  *
  * @package Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain
  * @since 2.0.0
+ * @updated 3.0.0 Keep latest What's New entries including Setup Wizard site readiness.
  * @author Hossein <hossein@notifal.com>
  */
 
 namespace Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain;
+
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardEligibilityService;
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardStateService;
+use Notifal\Modules\SetupWizard\Domain\Constants\SetupWizardOptions;
 
 defined('ABSPATH') || exit;
 
@@ -46,13 +51,22 @@ class WhatsNewPopup
      *
      * Shows when:
      * - Current version has show_popup = true, AND
-     * - Legacy upgrade (pre-2.0.0), OR last_shown is empty, OR current version > last_shown.
+     * - The site is upgrading (not a fresh install), AND
+     * - Legacy upgrade (pre-2.0.0), OR last_shown is empty on an existing site, OR current version > last_shown.
+     *
+     * Fresh installs seed last_shown during Setup Wizard activation so they never auto-see the install version popup.
      *
      * @return bool True if popup should be shown
      * @since 2.0.0
      */
     public function shouldShowWhatsNewPopup(): bool
     {
+        // Defer What's New while the first-run Setup Wizard is still active.
+        $eligibilityService = new SetupWizardEligibilityService(new SetupWizardStateService());
+        if ($eligibilityService->isFirstRunWizardActive()) {
+            return false;
+        }
+
         // Get current version
         $current_version = $this->getCurrentVersion();
 
@@ -64,24 +78,37 @@ class WhatsNewPopup
             return false;
         }
 
-        // Show popup for users upgrading from versions below 2.0.0
-        // These users have 'LEGACY_PLUGIN_VERSION_KEY' option but no 'LAST_SHOWN_VERSION_KEY'
+        // Show popup for users upgrading from versions below 2.0.0.
         $legacy_version = get_option(self::LEGACY_PLUGIN_VERSION_KEY);
         if (!empty($legacy_version) && empty($last_shown_version)) {
             return true;
         }
 
-        // Never shown before: show current version popup (covers fresh install and upgrade without prior popup visit)
+        // Fresh installs keep an empty last_shown record until seeded during activation.
         if (empty($last_shown_version)) {
-            return true;
+            return $this->shouldShowForExistingSiteWithoutWhatsNewRecord();
         }
 
-        // Show popup when current version is newer than last shown version
-        if (version_compare($current_version, $last_shown_version, '>')) {
+        // Show popup once when the plugin was updated to a newer configured version.
+        return version_compare($current_version, $last_shown_version, '>');
+    }
+
+    /**
+     * Return true when an existing site has never recorded a What's New version yet.
+     *
+     * @since 3.0.0
+     * @return bool
+     */
+    private function shouldShowForExistingSiteWithoutWhatsNewRecord(): bool
+    {
+        // Legacy pre-2.0 upgrades always qualify for the first What's New popup.
+        if (get_option(self::LEGACY_PLUGIN_VERSION_KEY, false)) {
             return true;
         }
-
-        return false;
+        // Existing sites upgrading to 3.0.0 without a prior What's New record.
+        $firstInstall = get_option(SetupWizardOptions::FIRST_INSTALL, false);
+        $isEligibleForWizard = (bool) get_option(SetupWizardOptions::ELIGIBLE, false);
+        return (bool) $firstInstall && !$isEligibleForWizard;
     }
 
     /**
@@ -119,7 +146,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '2.4.4';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '3.0.0';
     }
 
     /**
@@ -192,6 +219,20 @@ class WhatsNewPopup
     private function getAllVersionsConfig(): array
     {
         return [
+            '3.0.0' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '3.0.0'),
+                'content' => $this->getVersion300Content(),
+                'action_buttons' => [],
+            ],
+            '2.4.5' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.5'),
+                'content' => $this->getVersion245Content(),
+                'action_buttons' => [],
+            ],
             '2.4.4' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -204,20 +245,6 @@ class WhatsNewPopup
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.3'),
                 'content' => $this->getVersion243Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.2' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.2'),
-                'content' => $this->getVersion242Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.1' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.1'),
-                'content' => $this->getVersion241Content(),
                 'action_buttons' => [],
             ],
         ];
@@ -264,6 +291,119 @@ class WhatsNewPopup
             'title' => $config['title'],
             'content' => $config['content'],
         ];
+    }
+
+    /**
+     * Get content for version 3.0.0
+     *
+     * @return string HTML content for version 3.0.0
+     * @since 3.0.0
+     * @updated 3.0.0 Include Setup Wizard onboarding and site readiness in the 3.0.0 What's New entry.
+     */
+    private function getVersion300Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 3.0.0", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧭</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Setup Wizard with Noti', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Activate and Noti analyzes your site, shows industry-matched suggestion cards, connects your account, and builds notification drafts. Domain package preflight reuses cached analysis when available.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🤖</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Hosted Notifal AI generation', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Generate OnPage notifications and HTML Builder templates with Notifal AI. Connect your account with email verification, then create drafts from a guided wizard inside WordPress.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✏️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('HTML Builder: create or edit with AI', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Choose to generate a new template or edit the current one. Edit mode shows a before/after preview so you can apply changes only when you are happy.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧩</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('HTML Builder widgets', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('The left panel now has Structure and Widgets tabs. Insert heading, paragraph, image, featured image, button, close button, list, countdown, divider, and spacer with one click or drag them onto the tree (before, inside, or after).', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">↕️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Reorder Structure with drag and drop', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Drag any Structure row to move or nest it. Insertion lines show before/after placement, and an Inside badge highlights when you are nesting into a container. Press Delete or Backspace to remove the selected element.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎨</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smarter Style and Content editing', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Background color now reads CSS shorthand and can replace gradients with a solid color. Typography works on text inside layout containers, and paragraphs with nested bold or merge-tag markup stay editable in Content.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⚙️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Action buttons, spacer, countdown, and flex layout', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Action buttons expose Content settings for Notifal action types. Spacer height, countdown layout, and flex Items controls make layout tweaks faster without editing HTML by hand.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📝</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Notifal Forms', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Build multi-step lead forms in the HTML Builder with data attributes, captcha, honeypot, submissions inbox, CSV export, and webhook / Mailchimp integrations. Secrets stay in Settings and Form CPT meta, never in template HTML.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🛡️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('WP Armour compatibility for popup forms', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Forms rendered dynamically inside Notifal popups now receive WP Armour honeypot fields when WP Armour is installed and active, preventing valid submissions from being rejected as spam.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Get content for version 2.4.5
+     *
+     * @return string HTML content for version 2.4.5
+     * @since 2.4.5
+     */
+    private function getVersion245Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.5", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✨</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Smoother pre-created notifications experience', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Import Pre-Created now scrolls to the library even while templates are still loading, and builder import buttons in the details popup appear only after the template details are fully ready.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     /**
@@ -327,6 +467,7 @@ class WhatsNewPopup
      *
      * @return string HTML content for version 2.4.3
      * @since 2.4.3
+     * @updated 3.0.0 Restore 2.4.3 in the in-plugin last-four What's New list.
      */
     private function getVersion243Content(): string
     {
@@ -337,17 +478,17 @@ class WhatsNewPopup
                 <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.3", 'notifal')); ?></h3>
                 <div class="notifal-whatsnew-features">
                     <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📥</span>
+                        <span class="notifal-feature-icon">📦</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('HTML Builder pre-created templates', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('The pre-created notification library now supports HTML Builder. When a marketplace template includes an HTML Builder export, you can import it directly from the notification details popup alongside Elementor and Block Editor.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('HTML Builder import for pre-created notifications', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Pre-created notification import now supports HTML Builder templates, and the library checks each template minimum Notifal version before import.', 'notifal'); ?></p>
                         </div>
                     </div>
                     <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📌</span>
+                        <span class="notifal-feature-icon">🔗</span>
                         <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Minimum Notifal version checks for pre-created templates', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When a marketplace template requires a newer Notifal version, the archive card and details popup now tell you before import. Import buttons stay disabled until you update Notifal from Plugins.', 'notifal'); ?></p>
+                            <h4><?php esc_html_e('Clearer update guidance when a template needs a newer Notifal', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Archive cards and the details popup show when your installed version is too old, with a link to update from Plugins, and import requests are blocked server-side when required.', 'notifal'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -356,222 +497,4 @@ class WhatsNewPopup
         <?php
         return (string) ob_get_clean();
     }
-
-    /**
-     * Get content for version 2.4.2
-     *
-     * @return string HTML content for version 2.4.2
-     * @since 2.4.2
-     */
-    private function getVersion242Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.2", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🤖</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Smarter AI prompts for action buttons', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('HTML Builder and Generate with AI on the OnPage list now include full class-placeholder documentation. AI-generated templates should output working copy buttons (data-notifal-action="copy" plus data-copy-text) and Ajax add to cart buttons (data-notifal-action="ajax-add-to-cart" with quantity, redirect, and product attributes) instead of plain notifal-action-button markup.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📋</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Clearer CTA behavior rules for AI', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Prompts now tell external AI tools when to use copy coupon, add to cart in place, or visit product page CTAs, so coupon popups, cart nudges, and shop buttons match the right Notifal action type.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📖</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Expanded class-placeholder reference', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('TEMPLATE_CLASS_PLACEHOLDERS.md now lists required and optional data attributes for featured image, close button, copy, Ajax add to cart, custom URL, and custom trigger placeholders.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📱</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Custom CSS @media queries work again', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('OnPage Custom CSS validation now accepts @media blocks when inner rules use the notification ID or class prefix, so responsive styles like mobile width no longer show false validation errors.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.4.1
-     *
-     * @return string HTML content for version 2.4.1
-     * @since 2.4.1
-     */
-    private function getVersion241Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.1", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧩</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Generate full notifications with AI', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('On the OnPage Notifications list, use Generate with AI to copy a prompt that asks external AI tools for a complete Notifal import JSON, HTML template plus appearance, timing, behavior, and display rules. Open Import to paste the JSON and create a ready-to-review draft in one step.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📋</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Paste JSON when importing notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Import OnPage Notifications from a file or by pasting exported JSON directly. A security notice and trusted-source confirmation help keep imports safe; pasted JSON is validated server-side and saved as disabled drafts.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">💰</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Accurate clicked revenue on orders', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Order attribution now shows Total clicked revenue as the sum of each clicked product line subtotal (price × quantity) when clicked products are listed on the order.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛍️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Better variable product revenue matching', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Clicked revenue backfill and pending checkout snapshots now resolve parent and variation product IDs against WooCommerce order line items, so revenue is counted correctly for variable products.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">⏳</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Delayed payment attribution', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('When payment completes after on-hold or pending status, clicked revenue is still recorded if product clicks were validated at checkout, even when live click lookup no longer matches.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🛠️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('HTML Builder improvements', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Smaller boot preloader, a clearer new-template welcome flow (paste HTML or generate with AI), link URL editing for anchors, and richer AI prompt fields with field-filling patterns.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.3.12
-     *
-     * @return string HTML content for version 2.3.12
-     * @since 2.3.12
-     */
-    private function getVersion2312Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.12", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧩</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Class-based template placeholders', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Build templates in Elementor or the Block Editor without Notifal widgets or blocks. Add HTML with special classes and get the same behavior as the official components — featured image, close button, and action buttons.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🖼️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Featured image via class', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Use notifal-post-feature-image on any element to render the context-aware featured image — same resolver as the Product Image widget and block. Optional data-preview-image-source, data-image-resolution, and data-image-lazy-load attributes are supported.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">✕</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Close button via class', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Add notifal-close-button to your own button or link to dismiss the notification and record close analytics — no Close Icon widget required.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🖱️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Action buttons via class', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Use notifal-action-button on custom HTML elements for full action button behavior: post/product links, copy, close, Ajax add to cart, custom URLs, and custom triggers. Set the type with data-notifal-action — tracking and Pro per-button analytics work the same as widgets.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔒</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Widget and block output unchanged', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Existing Elementor widgets and Block Editor blocks are not modified. Class placeholders are processed only on custom HTML elements, so current templates keep working exactly as before.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
-    /**
-     * Get content for version 2.3.11
-     *
-     * @return string HTML content for version 2.3.11
-     * @since 2.3.11
-     */
-    private function getVersion2311Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.3.11", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🖱️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Per-button click tracking', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Action button clicks now record which button was clicked — including button label, action type (post link, copy, custom, and more), and a stable tracking ID for analytics.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📊</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Button click breakdown in Pro analytics (Pro)', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('In Notifal Pro, open OnPage Analytics and click the Clicks column for a notification to see a breakdown modal — which buttons received clicks, how many, and their action types. Load more rows when templates have many buttons.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🧩</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Stable IDs in Block Editor and Elementor', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Block Editor action buttons persist a trackingId attribute when inserted. Elementor action buttons use a widget-based tracking ID so the same button is counted consistently across page loads.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🗄️</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Database support for button stats', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('A new analytics table stores per-button click aggregates. The event queue also accepts optional button metadata so Pro can aggregate clicks without extra frontend requests.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return ob_get_clean();
-    }
-
 }

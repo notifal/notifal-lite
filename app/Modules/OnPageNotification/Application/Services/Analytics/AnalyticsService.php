@@ -612,6 +612,18 @@ class AnalyticsService
     }
 
     /**
+     * Whether revenue and order-influence metrics apply on this site.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    private function supportsRevenueMetrics(): bool
+    {
+        // Central gate shared by every revenue and influenced-order query.
+        return AnalyticsHelper::supportsRevenueAnalytics();
+    }
+
+    /**
      * Calculate total revenue across multiple notifications.
      *
      * @param array $notificationIds Array of notification IDs
@@ -622,7 +634,7 @@ class AnalyticsService
      */
     private function calculateTotalRevenue(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return 0.0;
         }
 
@@ -680,6 +692,10 @@ class AnalyticsService
      */
     public function calculateProductRevenue(int $notificationId, string $startDate, string $endDate, int $campaignId = 0): float
     {
+        if (! $this->supportsRevenueMetrics()) {
+            return 0.0;
+        }
+
         global $wpdb;
         $tables = $this->getTableNames();
         $conversionsTable = $tables["conversions"] ?? "";
@@ -726,7 +742,7 @@ class AnalyticsService
      */
     public function getRevenueTimeSeriesData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return [];
         }
 
@@ -899,7 +915,7 @@ class AnalyticsService
      */
     private function getBulkRevenueData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return [];
         }
 
@@ -965,7 +981,7 @@ class AnalyticsService
      */
     public function calculateTotalInfluencedRevenue(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): float
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return 0.0;
         }
 
@@ -1021,7 +1037,7 @@ class AnalyticsService
      */
     public function calculateTotalInfluencedOrders(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): int
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return 0;
         }
 
@@ -1143,7 +1159,7 @@ class AnalyticsService
      */
     private function getBulkInfluencedRevenueData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return [];
         }
 
@@ -1221,7 +1237,7 @@ class AnalyticsService
      */
     private function getBulkInfluencedOrdersData(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): array
     {
-        if (empty($notificationIds)) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds)) {
             return [];
         }
 
@@ -1434,7 +1450,7 @@ class AnalyticsService
      */
     public function calculateTotalPendingInfluencedOrders(array $notificationIds, string $startDate, string $endDate, int $campaignId = 0): int
     {
-        if (empty($notificationIds) || !function_exists('wc_get_orders')) {
+        if (! $this->supportsRevenueMetrics() || empty($notificationIds) || ! function_exists('wc_get_orders')) {
             return 0;
         }
 

@@ -19,8 +19,7 @@ return [
     'invalid_json'              => __( 'Invalid data format. Please refresh the page and try again.', 'notifal' ),
     'title_required'            => __( 'Notification title is required.', 'notifal' ),
     'title_too_long'            => __( 'Notification title must be less than 255 characters.', 'notifal' ),
-    'labels_required'            => __( 'At least one notification label must be selected.', 'notifal' ),
-    
+
     // Error Messages
     'security_error'            => __( 'Security check failed. Please refresh the page and try again.', 'notifal' ),
     'permission_error'          => __( 'You do not have permission to save notifications.', 'notifal' ),

@@ -313,6 +313,29 @@ class FilterHooks {
     public const TEMPLATE_HTML_BUILDER_PRIMARY_COLOR = 'notifal/template/html_builder/primary_color';
 
     /**
+     * Filters HTML Builder widget definitions passed to JavaScript and AI prompts.
+     *
+     * Each widget row should include: id, label, category, category_label, icon,
+     * description, default_html, and ai_snippet.
+     *
+     * @param array<int, array<string, string>> $widgets Widget definition rows.
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_WIDGETS = 'notifal/template/html_builder/widgets';
+
+    /**
+     * Filters HTML Builder runtime config localized to JavaScript.
+     *
+     * Modules (e.g. Forms) may append keys such as `forms` for Content panel UX.
+     *
+     * @param array<string, mixed> $config Runtime config array.
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const TEMPLATE_HTML_BUILDER_RUNTIME_CONFIG = 'notifal/template/html_builder/runtime_config';
+
+    /**
      * Filters OnPage notification AI prompt configuration passed to JavaScript.
      *
      * @param array<string, mixed> $config Localized config array.
@@ -329,6 +352,129 @@ class FilterHooks {
      * @author Hossein <hossein@notifal.com>
      */
     public const ONPAGE_AI_PROMPT_EXPORT_SAMPLE = 'notifal/onpage/ai_prompt/export_sample';
+
+    /**
+     * Filters the hosted AI gateway REST base URL.
+     *
+     * @since 3.0.0
+     * @param string $url Gateway REST base URL.
+     */
+    public const AI_GATEWAY_BASE_URL = 'notifal/ai/gateway_base_url';
+
+    /**
+     * Filters the hosted AI support (NAS) REST base URL.
+     *
+     * Used by the backend support widget mint proxy and localized apiBase.
+     *
+     * @since 3.0.0
+     * @param string $url Support REST base URL.
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const AI_SUPPORT_BASE_URL = 'notifal/ai/support_base_url';
+
+    /**
+     * Filters the mandatory AI disclosure version shown in admin UI.
+     *
+     * @since 3.0.0
+     * @param string $version Disclosure version slug.
+     */
+    public const AI_DISCLOSURE_VERSION = 'notifal/ai/disclosure_version';
+
+    /**
+     * Filters services registered by the AI module.
+     *
+     * @since 3.0.0
+     * @param string[] $services Service class names.
+     */
+    public const AI_SERVICES = 'notifal/ai/services';
+
+    /**
+     * Filters the service class list registered for the Setup Wizard module.
+     *
+     * @param string[] $services List of class names with ::register()
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const SETUP_WIZARD_SERVICES = 'notifal/setup_wizard/services';
+
+    /**
+     * Filters the public AI configuration localized into admin scripts.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed> $config Public config array.
+     */
+    public const AI_PUBLIC_CONFIG = 'notifal/ai/public_config';
+
+    /**
+     * Filters the cache lifetime (seconds) for hosted AI generation readiness.
+     *
+     * @since 3.0.0
+     * @param int $ttl Cache lifetime in seconds.
+     */
+    public const AI_READINESS_CACHE_TTL = 'notifal/ai/readiness_cache_ttl';
+
+    /**
+     * Filters selectable industry options for hosted AI wizards.
+     *
+     * @since 3.0.0
+     * @param array<int, array{slug: string, label: string, icon: string}> $options Industry rows.
+     */
+    public const AI_INDUSTRY_OPTIONS = 'notifal/ai/industry_options';
+
+    /**
+     * Filters gateway HTTP request arguments before dispatch.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed> $args Request arguments.
+     * @param string $url Absolute request URL.
+     * @param string $route Route suffix.
+     */
+    public const AI_GATEWAY_REQUEST_ARGS = 'notifal/ai/gateway_request_args';
+
+    /**
+     * Filters the hosted generation request body before it is sent to the gateway.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed> $body Request body.
+     * @param string $feature Feature slug.
+     * @param array<string, mixed> $intent Structured intent payload.
+     */
+    public const AI_GENERATION_REQUEST_BODY = 'notifal/ai/generation_request_body';
+
+    /**
+     * Filters client capability flags sent to the hosted AI gateway.
+     *
+     * @since 3.0.0
+     * @param array<string, bool> $capabilities Capability map.
+     */
+    public const AI_GENERATION_CAPABILITIES = 'notifal/ai/generation_capabilities';
+
+    /**
+     * Filters the active plugin display names sent with hosted AI generation requests.
+     *
+     * Used so the gateway can inject site-specific shortcode guidance into prompts.
+     *
+     * @since 3.0.0
+     * @param string[] $active_plugins Sorted unique plugin display names.
+     */
+    public const AI_GENERATION_ACTIVE_PLUGINS = 'notifal/ai/generation_active_plugins';
+
+    /**
+     * Filters sanitized hosted AI HTML before it is returned to clients.
+     *
+     * @since 3.0.0
+     * @param string $content Sanitized HTML content.
+     * @param string[] $warnings Sanitization warnings.
+     */
+    public const AI_GENERATED_HTML_SANITIZED = 'notifal/ai/generated_html_sanitized';
+
+    /**
+     * Filters allowlisted generation feedback category slugs.
+     *
+     * @since 3.0.0
+     * @param string[] $categories Default category slugs.
+     */
+    public const AI_FEEDBACK_CATEGORIES = 'notifal/ai/feedback_categories';
 
     /**
      * Filters the AJAX search results before returning them.
@@ -682,6 +828,29 @@ class FilterHooks {
      * @since 2.0.0
      */
     public const INFRASTRUCTURE_SERVICES = 'notifal/infrastructure/services';
+
+    /**
+     * Filter hook for the Addons admin page catalog.
+     *
+     * Usage:
+     * apply_filters(FilterHooks::MODULE_REGISTRY, $modules);
+     *
+     * @since 3.0.0
+     */
+    public const MODULE_REGISTRY = 'notifal/modules/registry';
+
+    /**
+     * Filter localized data for the global backend admin script.
+     *
+     * Usage:
+     * add_filter(FilterHooks::ADMIN_GLOBAL_BACKEND_DATA, function ($data) {
+     *     $data['formsMenu'] = [...];
+     *     return $data;
+     * });
+     *
+     * @since 3.0.0
+     */
+    public const ADMIN_GLOBAL_BACKEND_DATA = 'notifal/admin/global_backend_data';
 
 
     /**
@@ -1266,6 +1435,15 @@ class FilterHooks {
     public const ONPAGE_APPEARANCE_SANITIZED_SETTINGS = 'notifal/onpage/appearance/sanitized_settings';
 
     /**
+     * Filters display type options shown in the Appearance tab select field.
+     *
+     * @param array $options Display type options with value and label keys.
+     * @return array Modified display type options.
+     * @since 3.0.0
+     */
+    public const ONPAGE_DISPLAY_TYPE_OPTIONS = 'notifal/onpage/appearance/display_type_options';
+
+    /**
      * Filters the position settings for OnPage notifications.
      *
      * Allows developers to modify the position configuration
@@ -1465,6 +1643,25 @@ class FilterHooks {
     public const ONPAGE_TOPBAR_ABOVE_HEADER_COMPAT_CSS = 'notifal/onpage/topbar/above_header_compat_css';
 
     /**
+     * Filters whether WP Armour (Honeypot Anti Spam) compatibility is enabled
+     * for forms rendered inside dynamically shown OnPage notifications.
+     *
+     * Default is true when the WP Armour plugin is installed and active.
+     * Set to false to disable Notifal's honeypot re-init for popup forms.
+     *
+     * @param bool $enabled Whether WP Armour popup-form compatibility is enabled.
+     * @return bool
+     * @since 3.0.0
+     *
+     * Example:
+     *
+     *     use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+     *
+     *     add_filter( FilterHooks::ONPAGE_WP_ARMOUR_COMPAT_ENABLED, '__return_false' );
+     */
+    public const ONPAGE_WP_ARMOUR_COMPAT_ENABLED = 'notifal/onpage/compat/wp_armour_enabled';
+
+    /**
      * Filters the available animation types for OnPage notifications.
      *
      * Allows developers to modify, extend, or customize the available
@@ -1556,6 +1753,39 @@ class FilterHooks {
      * @since 2.0.0
      */
     public const ONPAGE_ELIGIBILITY_DATA = 'notifal/onpage/eligibility/data';
+
+    /**
+     * Filters whether a notification participates in the global floating injection pipeline.
+     *
+     * Inline notifications should return false so they render only at shortcode or hook mount points.
+     *
+     * @param bool     $is_global_eligible Default eligibility for global injection.
+     * @param \WP_Post $notification       Notification post object.
+     * @param array    $context            Current page context.
+     * @return bool Modified global eligibility decision.
+     * @since 3.0.0
+     */
+    public const ONPAGE_NOTIFICATION_GLOBAL_ELIGIBLE = 'notifal/onpage/eligibility/global_eligible';
+
+    /**
+     * Filters the localized frontend configuration passed to notifalOnPageConfig.
+     *
+     * @param array $config  Localized frontend configuration array.
+     * @param array $context Current page context.
+     * @return array Modified localized configuration.
+     * @since 3.0.0
+     */
+    public const ONPAGE_FRONTEND_LOCALIZED_CONFIG = 'notifal/onpage/frontend/localized_config';
+
+    /**
+     * Filters immediate notifications preloaded during page generation.
+     *
+     * @param array $notifications Prepared immediate notification payloads.
+     * @param array $context       Current page context.
+     * @return array Modified immediate notification payloads.
+     * @since 3.0.0
+     */
+    public const ONPAGE_IMMEDIATE_PRELOAD_NOTIFICATIONS = 'notifal/onpage/frontend/immediate_preload_notifications';
 
     /**
      * Filters the OnPage notification tracking data before processing.
@@ -1786,6 +2016,309 @@ class FilterHooks {
     public const CAMPAIGN_SERVICES = 'notifal/campaign/services';
 
     /**
+     * Filters the service class list registered for the Forms module.
+     *
+     * @param string[] $services List of class names with ::register()
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const FORMS_SERVICES = 'notifal/forms/services';
+
+    /**
+     * Whether multiple Form CPT posts are allowed (Pro license).
+     *
+     * Default false in core. Notifal Pro returns true when license is valid.
+     *
+     * @param bool $allowed Whether multiple forms are allowed.
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public const FORMS_MULTIPLE_ALLOWED = 'notifal_pro_multiple_forms_allowed';
+
+    /**
+     * Filters a parsed Forms schema DTO.
+     *
+     * @param array  $schema Parsed schema.
+     * @param string $html   Source HTML.
+     * @since 3.0.0
+     */
+    public const FORMS_SCHEMA_PARSED = 'notifal/forms/schema_parsed';
+
+    /**
+     * Filters public form submit success response (must not add secrets).
+     *
+     * @param array $response Response payload.
+     * @param int   $submission_id Submission ID.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_RESPONSE = 'notifal/forms/submit_response';
+
+    /**
+     * Filters public form submit success response for a specific form CPT.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_SUBMIT_RESPONSE_FORM, $form_id), $response, $submission_id)
+     *
+     * @param array $response        Response payload.
+     * @param int   $submission_id   Submission ID.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_RESPONSE_FORM = 'notifal/forms/submit_response/%d';
+
+    /**
+     * Filters raw submitted fields before server-side validation.
+     *
+     * @param array<string, mixed> $fields Submitted field map.
+     * @param array<string, mixed> $schema Parsed schema DTO.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_FIELDS = 'notifal/forms/submit/fields';
+
+    /**
+     * Filters raw submitted fields before validation for a specific form CPT.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_SUBMIT_FIELDS_FORM, $form_id), $fields, $schema)
+     *
+     * @param array<string, mixed> $fields Submitted field map.
+     * @param array<string, mixed> $schema Parsed schema DTO.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_FIELDS_FORM = 'notifal/forms/submit/fields/%d';
+
+    /**
+     * Filters whether a form submission may proceed after security checks.
+     *
+     * Return true to allow. Return false or an array with a message key to block.
+     *
+     * @param bool|array<string, mixed> $allowed Whether submit is allowed.
+     * @param array<string, mixed>      $schema  Parsed schema DTO.
+     * @param array<string, mixed>      $fields  Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_ALLOW = 'notifal/forms/submit/allow';
+
+    /**
+     * Filters whether a specific form CPT submission may proceed.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_SUBMIT_ALLOW_FORM, $form_id), $allowed, $schema, $fields)
+     *
+     * @param bool|array<string, mixed> $allowed Whether submit is allowed.
+     * @param array<string, mixed>      $schema  Parsed schema DTO.
+     * @param array<string, mixed>      $fields  Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_ALLOW_FORM = 'notifal/forms/submit/allow/%d';
+
+    /**
+     * Filters per-field validation errors during server-side validation.
+     *
+     * Return a non-empty array to mark the field invalid. Slugs such as required, type, or regex
+     * are informational; any non-empty list fails the field.
+     *
+     * @param string[]                  $field_errors Validation error slugs for the field.
+     * @param array<string, mixed>      $field        Field schema row.
+     * @param mixed                     $value        Sanitized submitted value.
+     * @param array<string, mixed>      $input        Full raw submitted field map.
+     * @param array<string, mixed>      $schema       Parsed schema DTO.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_FIELD = 'notifal/forms/validate/field';
+
+    /**
+     * Filters per-field validation errors for a specific field machine name.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_VALIDATE_FIELD_NAME, $field_name), $field_errors, $field, $value, $input, $schema)
+     *
+     * @param string[]                  $field_errors Validation error slugs for the field.
+     * @param array<string, mixed>      $field        Field schema row.
+     * @param mixed                     $value        Sanitized submitted value.
+     * @param array<string, mixed>      $input        Full raw submitted field map.
+     * @param array<string, mixed>      $schema       Parsed schema DTO.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_FIELD_NAME = 'notifal/forms/validate/field/%s';
+
+    /**
+     * Filters per-field validation errors for a specific form CPT and field machine name.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_VALIDATE_FIELD_FORM, $form_id, $field_name), $field_errors, $field, $value, $input, $schema)
+     *
+     * @param string[]                  $field_errors Validation error slugs for the field.
+     * @param array<string, mixed>      $field        Field schema row.
+     * @param mixed                     $value        Sanitized submitted value.
+     * @param array<string, mixed>      $input        Full raw submitted field map.
+     * @param array<string, mixed>      $schema       Parsed schema DTO.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_FIELD_FORM = 'notifal/forms/validate/field/%d/%s';
+
+    /**
+     * Filters the full server-side validation result.
+     *
+     * @param array{valid: bool, fields: array<string, mixed>, errors: string[]} $result Validation result.
+     * @param array<string, mixed>                                               $schema Parsed schema DTO.
+     * @param array<string, mixed>                                               $input  Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_RESULT = 'notifal/forms/validate/result';
+
+    /**
+     * Filters the full validation result for a specific form CPT.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_VALIDATE_RESULT_FORM, $form_id), $result, $schema, $input)
+     *
+     * @param array{valid: bool, fields: array<string, mixed>, errors: string[]} $result Validation result.
+     * @param array<string, mixed>                                               $schema Parsed schema DTO.
+     * @param array<string, mixed>                                               $input  Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_RESULT_FORM = 'notifal/forms/validate/result/%d';
+
+    /**
+     * Filters a public submit error payload before it is returned to the client.
+     *
+     * @param array<string, mixed> $error   Error payload (ok, message, code, field).
+     * @param array<string, mixed> $schema  Parsed schema DTO.
+     * @param array<string, mixed> $context Failure context (stage, validation, etc.).
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_ERROR = 'notifal/forms/submit/error';
+
+    /**
+     * Filters a public submit error payload for a specific form CPT.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_SUBMIT_ERROR_FORM, $form_id), $error, $schema, $context)
+     *
+     * @param array<string, mixed> $error   Error payload (ok, message, code, field).
+     * @param array<string, mixed> $schema  Parsed schema DTO.
+     * @param array<string, mixed> $context Failure context (stage, validation, etc.).
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_ERROR_FORM = 'notifal/forms/submit/error/%d';
+
+    /**
+     * Filters submission row data before it is stored.
+     *
+     * @param array<string, mixed> $data   Submission insert payload.
+     * @param array<string, mixed> $schema Parsed schema DTO.
+     * @param array<string, mixed> $fields Sanitized submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_DATA = 'notifal/forms/submission/data';
+
+    /**
+     * Filters submission row data before storage for a specific form CPT.
+     *
+     * Usage: apply_filters(sprintf(FilterHooks::FORMS_SUBMISSION_DATA_FORM, $form_id), $data, $schema, $fields)
+     *
+     * @param array<string, mixed> $data   Submission insert payload.
+     * @param array<string, mixed> $schema Parsed schema DTO.
+     * @param array<string, mixed> $fields Sanitized submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_DATA_FORM = 'notifal/forms/submission/data/%d';
+
+    /**
+     * Filters the public message shown when a unique field value was already submitted.
+     *
+     * @param string               $message    Default duplicate message.
+     * @param string               $field_name Field machine name that collided.
+     * @param string               $label      Field label for visitors (falls back to name).
+     * @param int                  $form_id    Form CPT ID.
+     * @param array<string, mixed> $field      Field definition row.
+     * @since 3.0.0
+     */
+    public const FORMS_UNIQUE_VALUE_DUPLICATE_MESSAGE = 'notifal/forms/unique_value_duplicate_message';
+
+    /**
+     * Filters form integration adapter class map.
+     *
+     * @param array<string, class-string> $adapters Adapters.
+     * @since 3.0.0
+     */
+    public const FORMS_INTEGRATION_ADAPTERS = 'notifal/forms/integration_adapters';
+
+    /**
+     * Filters sanitized form field definitions before persistence.
+     *
+     * @param array<int, array<string, mixed>> $fields Field definitions.
+     * @since 3.0.0
+     */
+    public const FORMS_FIELD_DEFINITIONS = 'notifal/forms/field_definitions';
+
+    /**
+     * Filters system merge tags shown in form email templates.
+     *
+     * @param array<int, array<string, string>> $variables System variables.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_SYSTEM_VARIABLES = 'notifal/forms/email_system_variables';
+
+    /**
+     * Filters field merge tags shown in form email templates.
+     *
+     * @param array<int, array<string, string>> $variables Field variables.
+     * @param array<int, array<string, mixed>>  $fields      Field definitions.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_FIELD_VARIABLES = 'notifal/forms/email_field_variables';
+
+    /**
+     * Filters merge tag values before form email rendering.
+     *
+     * @param array<string, string> $context      Replacement map.
+     * @param int                     $formId       Form CPT ID.
+     * @param int                     $submissionId Submission ID.
+     * @param array<string, mixed>    $fields       Sanitized fields.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_CONTEXT = 'notifal/forms/email_context';
+
+    /**
+     * Filters rendered form email template after merge tag replacement.
+     *
+     * @param string               $template Rendered template.
+     * @param array<string, mixed> $context  Replacement map.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_TEMPLATE_RENDERED = 'notifal/forms/email_template_rendered';
+
+    /**
+     * Filters default admin notification email body template.
+     *
+     * @param string $template Default body.
+     * @param string $format   plain|html.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_ADMIN_DEFAULT_BODY = 'notifal/forms/email_admin_default_body';
+
+    /**
+     * Filters default visitor confirmation email body template.
+     *
+     * @param string $template Default body.
+     * @param string $format   plain|html.
+     * @since 3.0.0
+     */
+    public const FORMS_EMAIL_VISITOR_DEFAULT_BODY = 'notifal/forms/email_visitor_default_body';
+
+    /**
+     * Filters columns on the form submissions list screen.
+     *
+     * @param array<string, string> $columns Column key => label map.
+     * @return array<string, string>
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_LIST_COLUMNS = 'notifal/forms/submission_list/columns';
+
+    /**
+     * Filters bulk actions on the form submissions list screen.
+     *
+     * @param array<string, string> $actions Action key => label map.
+     * @return array<string, string>
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_LIST_BULK_ACTIONS = 'notifal/forms/submission_list/bulk_actions';
+
+    /**
      * Filters the campaign settings before they are used/stored.
      *
      * @param array $settings Campaign settings
@@ -1906,6 +2439,18 @@ class FilterHooks {
      * @since 2.3.0
      */
     public const ONPAGE_ANALYTICS_ALL_TIME_START_DATE = 'notifal/onpage/analytics/all_time_start_date';
+
+    /**
+     * Filters whether revenue and order-influence analytics are available on this site.
+     *
+     * Default: true when WooCommerce or Easy Digital Downloads is active.
+     * Form submission conversions are counted separately on all sites via {@see AnalyticsHelper::countsFormConversions()}.
+     *
+     * @param bool $supports Whether revenue metrics should be calculated and shown.
+     * @return bool
+     * @since 3.0.0
+     */
+    public const ONPAGE_ANALYTICS_SUPPORTS_REVENUE = 'notifal/onpage/analytics/supports_revenue';
 
     /**
      * Filter the CSS class (without dot) used on custom template elements to count as analytics clicks.
@@ -2231,4 +2776,18 @@ class FilterHooks {
      * @since 2.3.12
      */
     public const ONPAGE_TEMPLATE_CLASS_PLACEHOLDERS_AFTER = 'notifal/onpage/template/class_placeholders/after';
+
+    /**
+     * Filter template assets after render capture and builder merge.
+     *
+     * Modules such as Forms can append CSS/JS URLs only when the rendered
+     * HTML needs them (for example a Notifal form in a REST payload).
+     *
+     * @param array    $assets   Asset map with optional css/js string lists.
+     * @param string   $html     Rendered template HTML.
+     * @param \WP_Post $template Template post that was rendered.
+     * @return array Modified asset map.
+     * @since 3.0.0
+     */
+    public const ONPAGE_TEMPLATE_RENDERED_ASSETS = 'notifal/onpage/template/rendered_assets';
 }

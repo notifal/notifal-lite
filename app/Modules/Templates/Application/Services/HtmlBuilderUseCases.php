@@ -10,6 +10,7 @@ defined('ABSPATH') || exit;
  * Use case options for the HTML Builder AI prompt helper.
  *
  * @since 2.4.1
+ * @updated 3.0.0 Add product-recommendation-quiz use case.
  * @author Hossein <hossein@notifal.com>
  */
 class HtmlBuilderUseCases
@@ -17,8 +18,9 @@ class HtmlBuilderUseCases
     /**
      * Return localized use case options for the builder UI.
      *
-     * @return array<int, array{slug: string, label: string, description: string}>
+     * @return array<int, array{slug: string, label: string, description: string, icon: string}>
      * @since 2.4.1
+     * @updated 3.0.0 Add product-recommendation-quiz use case.
      */
     public static function getOptions(): array
     {
@@ -28,51 +30,73 @@ class HtmlBuilderUseCases
                 'slug'        => 'increase-sales',
                 'label'       => __('Increase Sales', 'notifal'),
                 'description' => __('Recover lost sales with exit-intent coupons, flash discounts, and cross-sell offers powered by live WooCommerce cart data.', 'notifal'),
+                'icon'        => 'coin',
             ),
             array(
                 'slug'        => 'grow-email-list',
                 'label'       => __('Grow Email List', 'notifal'),
                 'description' => __('Turn visitors into subscribers with newsletter popups, scroll-based forms, and exit-intent lead capture.', 'notifal'),
+                'icon'        => 'file-earmark-person',
+            ),
+            array(
+                'slug'        => 'lead-generation',
+                'label'       => __('Lead Generation', 'notifal'),
+                'description' => __('Capture qualified leads with targeted offers, demo requests, and high-intent signup prompts.', 'notifal'),
+                'icon'        => 'megaphone-fill',
+            ),
+            array(
+                'slug'        => 'product-recommendation-quiz',
+                'label'       => __('Product Recommendation Quiz', 'notifal'),
+                'description' => __('Ask a few preference questions, then recommend the best-fit product, also known as a product finder or guided selling quiz.', 'notifal'),
+                'icon'        => 'ui-checks',
             ),
             array(
                 'slug'        => 'boost-engagement',
                 'label'       => __('Boost Engagement', 'notifal'),
                 'description' => __('Spotlight new posts, products, and reviews the moment they go live with timely on-page notifications.', 'notifal'),
+                'icon'        => 'lightbulb-fill',
             ),
             array(
                 'slug'        => 'build-trust-and-social-proof',
                 'label'       => __('Build Trust and Social Proof', 'notifal'),
                 'description' => __('Show real-time sales, Google and Trustpilot ratings, and testimonials that turn visitors into confident buyers.', 'notifal'),
+                'icon'        => 'bookmark-star',
             ),
             array(
                 'slug'        => 'communicate-with-visitors',
                 'label'       => __('Communicate with Visitors', 'notifal'),
                 'description' => __('Add WhatsApp chat, click-to-call, and live support widgets so visitors can reach you instantly.', 'notifal'),
+                'icon'        => 'chat-left-dots',
             ),
             array(
                 'slug'        => 'recover-or-retain-visitors',
                 'label'       => __('Recover or Retain Visitors', 'notifal'),
                 'description' => __('Win back idle visitors and abandoning carts with perfectly timed exit-intent and inactivity prompts.', 'notifal'),
+                'icon'        => 'arrow-counterclockwise',
             ),
             array(
                 'slug'        => 'promote-social-channels',
                 'label'       => __('Promote Social Channels', 'notifal'),
                 'description' => __('Grow your YouTube and social following with on-page promotion that appears at the right moment.', 'notifal'),
+                'icon'        => 'share',
             ),
             array(
                 'slug'        => 'content-blocking',
                 'label'       => __('Content Blocking', 'notifal'),
                 'description' => __('Gate content with age verification or registration walls, fully customizable for your site rules.', 'notifal'),
+                'icon'        => 'shield-exclamation',
             ),
             array(
                 'slug'        => 'grow-aov',
                 'label'       => __('Grow AOV (Average Order Value)', 'notifal'),
                 'description' => __('Lift average order value with free shipping progress bars, upsells, and cross-sell recommendations.', 'notifal'),
+                'icon'        => 'bag-check',
             ),
             array(
                 'slug'        => 'prevent-cart-abandonment',
                 'label'       => __('Prevent Cart Abandonment', 'notifal'),
                 'description' => __('Catch shoppers right before they leave checkout with a dedicated cart recovery notification.', 'notifal'),
+                'icon'        => 'handbag-fill',
             ),
         );
 
@@ -80,8 +104,9 @@ class HtmlBuilderUseCases
          * Filter HTML Builder use case options before they are sent to JavaScript.
          *
          * @since 2.4.1
+         * @updated 3.0.0 Added icon keys for luxury option-card UIs.
          *
-         * @param array<int, array{slug: string, label: string, description: string}> $options Use case rows.
+         * @param array<int, array{slug: string, label: string, description: string, icon: string}> $options Use case rows.
          */
         return (array) apply_filters(FilterHooks::TEMPLATE_HTML_BUILDER_USE_CASES, $options);
     }

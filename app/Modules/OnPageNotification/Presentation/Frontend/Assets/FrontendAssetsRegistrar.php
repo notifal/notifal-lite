@@ -8,6 +8,7 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\ClientUserRulesBuilder;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\ActiveNotificationsAssetGate;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
 use Notifal\Modules\OnPageNotification\Application\Services\Rules\VisitorAuthContextResolver;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\EligibilityService;
@@ -251,63 +252,54 @@ class FrontendAssetsRegistrar
     /**
      * Determine if OnPageNotification assets should be loaded on the current page.
      *
-     * Analyzes various factors to decide whether to load frontend assets.
-     * Uses multiple detection methods for comprehensive coverage.
-     * Excludes Elementor editor mode and template preview to prevent unwanted notifications.
+     * Loads the minimum frontend bundle only when an active notification can
+     * target the current page (display rules). Never loads for visitors when
+     * no OnPage notification is active.
      *
      * @return bool True if assets should be loaded, false otherwise.
      * @since 2.0.0
      */
     private static function shouldLoadAssets(): bool
     {
-        // Never load in admin area
+        // Never load in admin area.
         if (is_admin()) {
-            return false;
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, false);
         }
 
-        // Never load in Elementor editor mode
+        // Never load in Elementor editor mode.
         if (self::isElementorEditorMode()) {
-            return false;
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, false);
         }
 
-        // Never load in template preview mode
+        // Never load in template preview mode.
         if (self::isTemplatePreviewMode()) {
-            return false;
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, false);
         }
 
-        // Never load during REST API requests for Elementor or template previews
+        // Never load during REST API requests for Elementor or template previews.
         if (self::isPreviewRelatedRestRequest()) {
-            return false;
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, false);
         }
 
-        // Always load when OnPage preview URL is present (valid param + nonce + capability)
+        // Always load when OnPage preview URL is present (valid param + nonce + capability).
         if (self::isPreviewMode()) {
-            return true;
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, true);
         }
 
-        global $post;
-
-        // Load on pages where notifications might appear
-        if (is_front_page() || is_home() || is_singular() || is_archive() || is_404()) {
-            return true;
+        // Site-wide kill switch: no enabled notifications → zero OnPage assets.
+        $hasActive = ActiveNotificationsAssetGate::hasActiveNotifications();
+        $hasActive = (bool) apply_filters(FilterHooks::ONPAGE_HAS_ACTIVE_NOTIFICATIONS, $hasActive);
+        if (!$hasActive) {
+            return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, false);
         }
 
-        // Check if current post contains notification-related content
-        if ($post && self::postContainsNotificationContent($post)) {
-            return true;
-        }
+        // Build the same page context used for eligibility / display rules.
+        $context = self::getCurrentPageContext();
 
-        // Check if page is built with Elementor and might contain notifications
-        if (self::isElementorPage()) {
-            return true;
-        }
+        // Load only when at least one active notification targets this page.
+        $shouldLoad = ActiveNotificationsAssetGate::shouldLoadAssetsForCurrentPage($context);
 
-        // Check if theme or plugins inject notification content
-        if (self::hasNotificationContentInjection()) {
-            return true;
-        }
-
-        return false;
+        return (bool) apply_filters(FilterHooks::ONPAGE_SHOULD_LOAD_ASSETS, $shouldLoad);
     }
 
     /**
@@ -524,7 +516,7 @@ class FrontendAssetsRegistrar
          * @since 2.0.0
          * @param bool $contains_notifications Whether page contains OnPage notification elements.
          */
-        return apply_filters('notifal_page_contains_onpage_notification_elements', false);
+        return (bool) apply_filters(FilterHooks::ONPAGE_PAGE_CONTAINS_NOTIFICATIONS, false);
     }
 
     /**
@@ -592,7 +584,17 @@ class FrontendAssetsRegistrar
             }
         }
 
-        wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', $config);
+        // @since 3.0.0 Tell the frontend when WP Armour honeypot must be re-applied to popup forms.
+        $config['wpArmourActive'] = (bool) apply_filters(
+            FilterHooks::ONPAGE_WP_ARMOUR_COMPAT_ENABLED,
+            PluginDetector::isWpArmourActive()
+        );
+
+        wp_localize_script('notifal-onpage-frontend-bundle', 'notifalOnPageConfig', apply_filters(
+            FilterHooks::ONPAGE_FRONTEND_LOCALIZED_CONFIG,
+            $config,
+            $currentPageContext
+        ));
     }
 
     /**
@@ -625,8 +627,11 @@ class FrontendAssetsRegistrar
                 $immediateNotifications[] = $notification;
             }
 
-
-            return $immediateNotifications;
+            return apply_filters(
+                FilterHooks::ONPAGE_IMMEDIATE_PRELOAD_NOTIFICATIONS,
+                $immediateNotifications,
+                $context
+            );
         } catch (\Throwable $exception) {
             Helper::log(
                 '[Notifal OnPage] Failed to preload immediate notifications: ' . $exception->getMessage()

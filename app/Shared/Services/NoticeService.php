@@ -4,6 +4,10 @@ namespace Notifal\Shared\Services;
 
 use Notifal\Domain\Settings\Constants\Urls;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\Ai\Config\AiCharacter;
+use Notifal\Modules\Ai\Config\Paths as AiPaths;
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardStateService;
+use Notifal\Modules\SetupWizard\Presentation\Admin\Menu\MenuController;
 use Notifal\Shared\Helpers\AdminScreenDetector;
 use Notifal\Shared\Utils\Helper;
 
@@ -16,6 +20,7 @@ defined('ABSPATH') || exit;
  * Provides functionality to show dismissible notices with proper styling.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Prefer Setup Wizard notice while onboarding is incomplete.
  * @package Notifal\Shared\Services
  * @author Hossein <hossein@notifal.com>
  */
@@ -29,9 +34,69 @@ class NoticeService
      */
     public static function register(): void
     {
+        // Load Noti face styles before admin notices render when the wizard invite will show.
+        add_action('admin_enqueue_scripts', [self::class, 'enqueueWizardNoticeAssets']);
         add_action('admin_notices', [self::class, 'renderNotices']);
         add_action('admin_notices', [self::class, 'filterNoticesOnNotifalPages'], 1);
         add_action('wp_ajax_notifal_dismiss_notice', [self::class, 'dismissNotice']);
+    }
+
+    /**
+     * Enqueue Noti face CSS for the Setup Wizard invite notice.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    public static function enqueueWizardNoticeAssets(): void
+    {
+        // Skip when the wizard invite will not render on this request.
+        if (!self::shouldRenderSetupWizardNotice()) {
+            return;
+        }
+
+        // Skip when a parent style already bundled the Noti face rules.
+        if (
+            wp_style_is('notifal-ai-wizard-css', 'enqueued')
+            || wp_style_is('notifal-ai-wizard-css', 'done')
+            || wp_style_is('notifal-noti-face-css', 'enqueued')
+            || wp_style_is('notifal-noti-face-css', 'done')
+        ) {
+            return;
+        }
+
+        // Enqueue the standalone Vite-built Noti face stylesheet.
+        notifal_enqueue_style(
+            'notifal-noti-face-css',
+            AiPaths::cssAdminBuildUrl() . 'NotiFaceStyle.css',
+            ['notifal-global-backend']
+        );
+    }
+
+    /**
+     * Whether the Setup Wizard invite notice should render.
+     *
+     * @return bool
+     * @since 3.0.0
+     */
+    private static function shouldRenderSetupWizardNotice(): bool
+    {
+        // Never show the invite on the fullscreen wizard screen itself.
+        if (MenuController::isCurrentScreen()) {
+            return false;
+        }
+
+        // Resolve Setup Wizard completion state from the module container.
+        $wizardState = notifal_app(SetupWizardStateService::class);
+
+        // Completed setups no longer need the wizard invite.
+        if (!$wizardState->isIncomplete()) {
+            return false;
+        }
+
+        // Respect a prior dismiss so the admin can clear the prompt deliberately.
+        $dismissed_notices = get_option('notifal_dismissed_notices', []);
+
+        return !in_array('setup_wizard', $dismissed_notices, true);
     }
 
     /**
@@ -39,13 +104,23 @@ class NoticeService
      *
      * @return void
      * @since 2.0.0
+     * @updated 3.0.0 Show Setup Wizard notice before the Pro upgrade notice.
      */
     public static function renderNotices(): void
     {
         // Check system requirements first (critical)
         self::renderSystemRequirementsNotices();
 
-        // Check if Notifal Pro is not active (not activated, not just files exist)
+        // Resolve Setup Wizard completion state from the module container.
+        $wizardState = notifal_app(SetupWizardStateService::class);
+
+        // While onboarding is incomplete, prioritize the Setup Wizard CTA over Pro upgrade.
+        if ($wizardState->isIncomplete()) {
+            self::renderSetupWizardNotice();
+            return;
+        }
+
+        // After wizard completion, promote Pro when it is not active yet.
         if (!PluginDetector::isNotifalProActive()) {
             self::renderProUpgradeNotice();
         }
@@ -104,6 +179,59 @@ class NoticeService
                     </p>
                     <p>
                         <a href="#" class="notifal-notice-dismiss" data-notice-id="zip_extension_missing" data-nonce="<?php echo esc_attr(wp_create_nonce('notifal_dismiss_notice')); ?>">
+                            <?php esc_html_e('Dismiss', 'notifal'); ?>
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the Setup Wizard invite notice from Noti's voice.
+     *
+     * Shown while the wizard is incomplete so admins finish guided setup first.
+     *
+     * @return void
+     * @since 3.0.0
+     */
+    private static function renderSetupWizardNotice(): void
+    {
+        // Share eligibility checks with the asset enqueue path.
+        if (!self::shouldRenderSetupWizardNotice()) {
+            return;
+        }
+
+        // Build the admin URL that opens the fullscreen Setup Wizard.
+        $wizard_url = admin_url('admin.php?page=' . MenuController::PAGE_SLUG);
+
+        // Resolve status so the CTA label matches first-run vs resume UX.
+        $wizardState = notifal_app(SetupWizardStateService::class);
+        $wizard_status = $wizardState->getStatus();
+
+        // Use a resume label when the admin already started or skipped setup.
+        $cta_label = in_array($wizard_status, ['in_progress', 'skipped'], true)
+            ? __('Continue Setup', 'notifal')
+            : __('Open Setup Wizard', 'notifal');
+
+        ?>
+        <div class="notice notice-info is-dismissible notifal-pro-notice notifal-wizard-notice" data-notice-id="setup_wizard">
+            <div class="notifal-notice-content">
+                <div class="notifal-notice-icon notifal-notice-icon--noti" aria-hidden="true">
+                    <?php
+                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- AiCharacter::renderFaceHtml() returns fixed safe markup.
+                    echo AiCharacter::renderFaceHtml('md');
+                    ?>
+                </div>
+                <div class="notifal-notice-text">
+                    <h4><?php esc_html_e('Hey! I\'m Noti, ready to set up Notifal for you', 'notifal'); ?></h4>
+                    <p><?php esc_html_e('I\'m already looking at your site. Open the Setup Wizard and I\'ll analyze it, suggest high-impact ideas that help grow sales, and configure Notifal for you from start to finish.', 'notifal'); ?></p>
+                    <p>
+                        <a href="<?php echo esc_url($wizard_url); ?>" class="button button-primary">
+                            <?php echo esc_html($cta_label); ?>
+                        </a>
+                        <a href="#" class="notifal-notice-dismiss" data-notice-id="setup_wizard" data-nonce="<?php echo esc_attr(wp_create_nonce('notifal_dismiss_notice')); ?>">
                             <?php esc_html_e('Dismiss', 'notifal'); ?>
                         </a>
                     </p>

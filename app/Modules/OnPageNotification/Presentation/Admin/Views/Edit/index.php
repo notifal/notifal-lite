@@ -78,6 +78,11 @@ if ( $is_edit && isset( $notification_data['timing_settings'] ) && is_array( $no
 
     <div class="notification-edit-parent notifal-mt-20">
 
+        <a class="notifal-page-back-link" href="<?php echo esc_url( $urlService->getListUrl() ); ?>">
+            <?php echo NotifalIconService::render('arrow-left-short', 16); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- IconService returns safe markup. ?>
+            <?php esc_html_e( 'Back to Notifications', 'notifal' ); ?>
+        </a>
+
         <!-- Page Header with Title and Actions -->
         <div class="notifal-list-header">
             <h1 class="notifal-page-title">
@@ -226,5 +231,8 @@ if ( $is_edit && isset( $notification_data['timing_settings'] ) && is_array( $no
 
 <!-- Pre-created Notifications Modal -->
 <?php include_once __DIR__ . '/../components/precreated-notifications-modal.php'; ?>
+
+<!-- OnPage AI Prompt Modal (Create with AI from the pre-created modal header) -->
+<?php include_once __DIR__ . '/../components/onpage-ai-prompt-modal.php'; ?>
 
 <?php do_action( ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_AFTER ); ?>

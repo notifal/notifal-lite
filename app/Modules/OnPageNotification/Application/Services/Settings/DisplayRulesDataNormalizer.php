@@ -8,6 +8,7 @@ defined('ABSPATH') || exit;
  * Normalizes display rules between legacy (keyed by type) and list (items[]) storage.
  *
  * @since 2.3.5
+ * @updated 3.0.0 Add stripInventedSitewidePostTypeRules for AI import cleanup.
  * @author Hossein <hossein@notifal.com>
  * @package Notifal\Modules\OnPageNotification\Application\Services\Settings
  */
@@ -171,6 +172,43 @@ class DisplayRulesDataNormalizer
     public static function generateRuleId(): string
     {
         return 'rule_' . wp_generate_password(12, false, false);
+    }
+
+    /**
+     * Remove post_type rules that only assert visibility=all (no real targeting).
+     *
+     * Empty items means sitewide. A lone post_type/all rule is a model filler and
+     * must not appear as an Active Rule after AI import. Keep specific/exclude.
+     *
+     * @since 3.0.0
+     * @param array<int, array<string, mixed>> $items Rule items.
+     * @return array<int, array<string, mixed>> Filtered items.
+     */
+    public static function stripInventedSitewidePostTypeRules(array $items): array
+    {
+        $kept = array();
+
+        foreach ($items as $item) {
+            // Skip malformed rows.
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $type = isset($item['type']) ? sanitize_key((string) $item['type']) : '';
+            $data = isset($item['data']) && is_array($item['data']) ? $item['data'] : array();
+
+            // Drop the invented Post Type: All pattern only.
+            if ('post_type' === $type) {
+                $visibility = sanitize_key((string) ($data['visibility'] ?? 'all'));
+                if ('all' === $visibility) {
+                    continue;
+                }
+            }
+
+            $kept[] = $item;
+        }
+
+        return array_values($kept);
     }
 
     /**

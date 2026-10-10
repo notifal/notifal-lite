@@ -32,7 +32,46 @@ class ListAssets
      */
     public static function register(): void
     {
+        // Enqueue list screen scripts and styles.
         add_action('admin_enqueue_scripts', [self::class, 'enqueue']);
+
+        // Inject the centered Notifal AI invite strip under the list header.
+        add_action(ActionHooks::ADMIN_LIST_AFTER_HEADER, [self::class, 'renderAiInviteStrip'], 10, 3);
+    }
+
+    /**
+     * Render the Notifal AI invite strip on the OnPage notifications list.
+     *
+     * Skips trash view and non-OnPage post types so other lists stay unchanged.
+     *
+     * @since 3.0.0
+     * @param string $post_type      Current list post type.
+     * @param string $current_status Current status tab key.
+     * @param mixed  $instance       Current list view instance.
+     * @return void
+     */
+    public static function renderAiInviteStrip(string $post_type, string $current_status, $instance = null): void
+    {
+        // Only show on the OnPage notifications list.
+        if ($post_type !== 'notifal_onpage_notif') {
+            return;
+        }
+
+        // Hide while browsing trash (recovery actions matter more there).
+        if ($current_status === 'trash') {
+            return;
+        }
+
+        // Resolve the invite strip partial path.
+        $strip_path = dirname(__DIR__) . '/Views/components/ai-invite-strip.php';
+
+        // Bail when the partial is missing.
+        if (!is_readable($strip_path)) {
+            return;
+        }
+
+        // Output the centered AI invite banner markup.
+        include $strip_path;
     }
 
     /**
@@ -116,14 +155,30 @@ class ListAssets
         notifal_enqueue_style(
             'notifal-onpage-ai-prompt',
             Paths::cssAdminBuildUrl() . 'OnPageAiPromptStyle.css',
-            ['notifal-shared-admin-css']
+            ['notifal-shared-admin-css', 'notifal-ai-wizard-css']
         );
 
         notifal_enqueue_script(
             'notifal-onpage-ai-prompt',
             Paths::jsAdminBuildUrl() . 'OnPageAiPromptScript.js',
-            ['notifal-shared-admin-js']
+            ['notifal-shared-admin-js', 'notifal-ai-connection-js']
         );
+
+        if (!wp_style_is('notifal-ai-connection-css', 'enqueued') && !wp_style_is('notifal-ai-connection-css', 'done')) {
+            notifal_enqueue_style(
+                'notifal-ai-connection-css',
+                Paths::cssAdminBuildUrl() . 'AiConnectionStyle.css',
+                ['notifal-shared-admin-css']
+            );
+        }
+
+        if (!wp_style_is('notifal-ai-wizard-css', 'enqueued') && !wp_style_is('notifal-ai-wizard-css', 'done')) {
+            notifal_enqueue_style(
+                'notifal-ai-wizard-css',
+                Paths::cssAdminBuildUrl() . 'AiWizardStyle.css',
+                ['notifal-ai-connection-css']
+            );
+        }
 
         wp_localize_script(
             'notifal-onpage-ai-prompt',

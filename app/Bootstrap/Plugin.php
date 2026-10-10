@@ -16,6 +16,9 @@ use Notifal\Domain\Tags\ServiceProvider;
 use Notifal\Domain\Settings\ServiceProvider as SettingsServiceProvider;
 use Notifal\Infrastructure\WordPress\Admin\Assets\AssetsRegistrar;
 use Notifal\Infrastructure\WordPress\Admin\Menu\MenuServiceProvider;
+use Notifal\Infrastructure\WordPress\Admin\Modules\Controllers\ModulesAjaxController;
+use Notifal\Infrastructure\WordPress\Admin\Modules\Controllers\ModulesAssetsController;
+use Notifal\Infrastructure\WordPress\Admin\Modules\Controllers\ModulesMenuController;
 use Notifal\Infrastructure\WordPress\StickyMenu\StickyMenuServiceProvider;
 use Notifal\Infrastructure\WordPress\Bootstrap\Maintenance;
 use Notifal\Shared\Services\NoticeService;
@@ -23,7 +26,6 @@ use Notifal\Infrastructure\WordPress\Database\DatabaseMigrationManager;
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\DeactivationPopup\DeactivationPopupService;
-use Notifal\Infrastructure\WordPress\ActivationPopup\ActivationPopupService;
 use Notifal\Infrastructure\WordPress\WhatsNewPopup\WhatsNewPopupService;
 use Notifal\Infrastructure\WordPress\ChangelogPopup\ChangelogPopupService;
 use Notifal\Infrastructure\WordPress\Admin\Dashboard\DashboardWidget;
@@ -113,10 +115,12 @@ class Plugin
 
         $services = [
             MenuServiceProvider::class,
+            ModulesMenuController::class,
+            ModulesAssetsController::class,
+            ModulesAjaxController::class,
             AssetsRegistrar::class,
             NoticeService::class,
             DeactivationPopupService::class,
-            ActivationPopupService::class,
             WhatsNewPopupService::class,
             ChangelogPopupService::class,
             StickyMenuServiceProvider::class,
