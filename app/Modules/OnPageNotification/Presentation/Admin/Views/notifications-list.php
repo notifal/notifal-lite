@@ -54,10 +54,9 @@ do_action(ActionHooks::ADMIN_ONPAGE_NOTIFICATIONS_BEFORE, $notification_total, $
             'add_new_url'        => esc_url($add_new_url),
             'search_placeholder' => __('Search notifications...', 'notifal'),
             'columns'            => [
-                'title'    => __('Title', 'notifal'),
-                'enabled'  => __('Status', 'notifal'),
-                'labels'   => __('Labels', 'notifal'),
-                'date'     => __('Date', 'notifal'),
+                'title'        => __('Title', 'notifal'),
+                'enabled'      => __('Status', 'notifal'),
+                'display_type' => __('Display Type', 'notifal'),
             ],
             'per_page'     => 15,
             'bulk_actions' => [

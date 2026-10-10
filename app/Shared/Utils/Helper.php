@@ -233,6 +233,7 @@ class Helper {
      *
      * @return string Client IP address
      * @since 2.0.0
+     * @updated 3.0.0 Cast header values before explode/trim for PHP 8.1+ compatibility.
      * @author Hossein <hossein@notifal.com>
      */
     public static function getClientIpAddress(): string
@@ -246,8 +247,9 @@ class Helper {
 
         foreach ($ipKeys as $key) {
             if (array_key_exists($key, $_SERVER) === true) {
-                foreach (explode(',', $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip);
+                // Cast header values to string before explode/trim (PHP 8.1+ null deprecations).
+                foreach (explode(',', (string) $_SERVER[$key]) as $ip) {
+                    $ip = trim((string) $ip);
                     if ($isLocalEnv) {
                         if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
                             return $ip;

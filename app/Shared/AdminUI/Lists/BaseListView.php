@@ -482,7 +482,19 @@ class BaseListView
         }
 
         echo '<div class="notifal-admin-list">';
+        // Title row and primary action buttons.
         $this->renderHeader();
+
+        /**
+         * Fires after the list header so modules can inject invite banners or notices.
+         *
+         * @since 3.0.0
+         * @param string       $post_type      Current list post type.
+         * @param string       $current_status Current status tab key.
+         * @param BaseListView $instance       Current list view instance.
+         */
+        do_action(ActionHooks::ADMIN_LIST_AFTER_HEADER, $this->postType, $this->currentStatus, $this);
+
         $this->renderStatusTabs();
         $this->renderSearchForm();
         $this->renderTable();
@@ -531,10 +543,6 @@ class BaseListView
                 // Import Pre-Created Notifications button (scrolls to precreated section)
                 echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-import-precreated-button">'
                     . NotifalIconService::render('search', 20) . esc_html__('Import Pre-Created Notifications', 'notifal') . '</button>';
-                
-                // Generate with AI button (full notification JSON prompt)
-                echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-generate-ai-button">'
-                    . NotifalIconService::render('ai', 20) . esc_html__('Generate with AI', 'notifal') . '</button>';
 
                 // Import Manually button (existing import functionality)
                 echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-import-button">'
@@ -784,6 +792,7 @@ class BaseListView
                 'type' => true,
                 'title' => true,
                 'aria-label' => true,
+                'aria-disabled' => true,
                 'disabled' => true,
                 'data-campaign-id' => true,
                 'data-current-active' => true,

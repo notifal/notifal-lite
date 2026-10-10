@@ -113,6 +113,24 @@ class SettingsService
     }
 
     /**
+     * Get all Forms-related settings with defaults.
+     *
+     * @return array<string, mixed>
+     * @since 3.0.0
+     */
+    public function getFormsSettings(): array
+    {
+        $defaults = SettingsKeys::getDefaultFormsSettings();
+        $settings = [];
+
+        foreach ($defaults as $key => $defaultValue) {
+            $settings[$key] = $this->get($key, $defaultValue);
+        }
+
+        return $settings;
+    }
+
+    /**
      * Get valid generated post types for tag settings
      *
      * Retrieves and validates post types that have generated tags.

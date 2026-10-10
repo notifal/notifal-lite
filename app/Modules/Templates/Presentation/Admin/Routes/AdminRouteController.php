@@ -232,9 +232,12 @@ class AdminRouteController
 
         do_action(ActionHooks::TEMPLATE_CREATED, $postId);
 
+        // Honor Generate with AI invite: keep open_noti on the builder redirect.
+        $openNoti = Helper::sanitizeInput($_GET['open_noti'] ?? '', 'text') === '1';
+
         /** @var TemplateUrlService $urlService */
         $urlService = notifal_app(TemplateUrlService::class);
-        wp_redirect($urlService->getEditHtmlBuilderUrl($postId));
+        wp_redirect($urlService->getEditHtmlBuilderUrl((int) $postId, $openNoti));
         exit;
     }
 }

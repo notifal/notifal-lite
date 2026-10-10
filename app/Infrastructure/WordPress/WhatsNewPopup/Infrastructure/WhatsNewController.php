@@ -6,12 +6,14 @@
  *
  * @package Notifal\Infrastructure\WordPress\WhatsNewPopup\Infrastructure
  * @since 2.0.0
+ * @updated 3.0.0 Skip Setup Wizard page so guided setup is never covered by What's New.
  * @author Hossein <hossein@notifal.com>
  */
 
 namespace Notifal\Infrastructure\WordPress\WhatsNewPopup\Infrastructure;
 
 use Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain\WhatsNewPopup;
+use Notifal\Modules\SetupWizard\Presentation\Admin\Menu\MenuController;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -62,9 +64,12 @@ class WhatsNewController
      *
      * Shows popup on first visit to any Notifal page after version update.
      * For important updates, also shows on plugins.php page.
+     * Setup Wizard is excluded so fullscreen onboarding stays interruption-free;
+     * other Notifal admin pages still auto-show after an update.
      *
      * @return void
      * @since 2.0.0
+     * @updated 3.0.0 Do not mount What's New on the Setup Wizard screen.
      */
     public function maybeShowWhatsNewPopup(): void
     {
@@ -75,6 +80,10 @@ class WhatsNewController
 
         // Check if this is a Notifal page
         $current_page = isset($_GET['page']) ? Helper::sanitizeInput(wp_unslash($_GET['page']), 'text') : '';
+        // Fullscreen guided setup must never host What's New (auto or sticky).
+        if (MenuController::PAGE_SLUG === $current_page) {
+            return;
+        }
         $is_notifal_page = strpos($current_page, 'notifal') === 0;
 
         // Always render popup HTML on Notifal pages for manual triggering
@@ -150,15 +159,20 @@ class WhatsNewController
      *
      * @return bool True if popup should show on current page
      * @since 2.0.0
+     * @updated 3.0.0 Exclude Setup Wizard so update popups wait for other Notifal pages.
      */
     private function shouldShowOnCurrentPage(): bool
     {
         // Check if this is a Notifal page
         $current_page = isset($_GET['page']) ? Helper::sanitizeInput(wp_unslash($_GET['page']), 'text') : '';
+        // Never auto-show over the Setup Wizard fullscreen experience.
+        if (MenuController::PAGE_SLUG === $current_page) {
+            return false;
+        }
         $is_notifal_page = strpos($current_page, 'notifal') === 0;
 
         if ($is_notifal_page) {
-            // Always show on Notifal pages
+            // Always show on other Notifal admin pages after a qualifying update.
             return true;
         } else {
             // For important updates, also show on plugins.php page

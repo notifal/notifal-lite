@@ -156,6 +156,15 @@ class TemplateContextBuilder
         $frontendContext['_cache_key'] = $cacheKey;
         $frontendContext['_is_cached'] = false;
 
+        // Keep notification/template identity from the original page context.
+        // Tag context building can drop these keys, which breaks form attribution.
+        if (!empty($context['notification_id'])) {
+            $frontendContext['notification_id'] = absint($context['notification_id']);
+        }
+        if (!empty($context['template_id'])) {
+            $frontendContext['template_id'] = absint($context['template_id']);
+        }
+
         // Cache the context for subsequent calls with same parameters
         self::$contextCache[$cacheKey] = $frontendContext;
 

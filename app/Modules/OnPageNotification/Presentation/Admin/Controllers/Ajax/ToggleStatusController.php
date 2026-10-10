@@ -4,6 +4,8 @@ namespace Notifal\Modules\OnPageNotification\Presentation\Admin\Controllers\Ajax
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Modules\OnPageNotification\Application\Services\Core\CacheManager;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\ActiveNotificationsAssetGate;
+use Notifal\Modules\OnPageNotification\Application\Services\Rules\CartDisplayRulesUsageChecker;
 use Notifal\Shared\Utils\Helper;
 
 defined('ABSPATH') || exit;
@@ -102,6 +104,10 @@ class ToggleStatusController
                     'notif_enabled' => $isEnabled,
                 ]
             );
+
+            // @since 3.0.0 Keep frontend asset gate in sync with enable/disable toggles.
+            ActiveNotificationsAssetGate::clearCache();
+            CartDisplayRulesUsageChecker::clearCache();
 
             notifal_json_success([
                 'message' => sprintf(

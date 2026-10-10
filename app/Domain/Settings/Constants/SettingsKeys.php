@@ -131,6 +131,72 @@ class SettingsKeys
     public const TEMPLATES_PREFIX = 'templates.';
 
     /**
+     * Enable/disable the Forms module (kill switch).
+     *
+     * When false, Forms ServiceProvider loads nothing.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_ENABLED = 'forms_enabled';
+
+    /**
+     * Enable/disable Forms honeypot field.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_HONEYPOT_ENABLED = 'forms_honeypot_enabled';
+
+    /**
+     * Max form submissions allowed per rate-limit window.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_RATE_LIMIT_MAX = 'forms_rate_limit_max';
+
+    /**
+     * Rate-limit window length in seconds.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_RATE_LIMIT_WINDOW = 'forms_rate_limit_window';
+
+    /**
+     * Captcha provider: none|google_recaptcha_v2|google_recaptcha_v3|cloudflare_turnstile.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_CAPTCHA_PROVIDER = 'forms_captcha_provider';
+
+    /**
+     * Public captcha site key.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_CAPTCHA_SITE_KEY = 'forms_captcha_site_key';
+
+    /**
+     * Captcha secret key (server only).
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_CAPTCHA_SECRET_KEY = 'forms_captcha_secret_key';
+
+    /**
+     * Default admin email for form submission notifications.
+     *
+     * @var string
+     * @since 3.0.0
+     */
+    public const FORMS_DEFAULT_ADMIN_EMAIL = 'forms_default_admin_email';
+
+    /**
      * Get all tag-related setting keys
      * 
      * Returns array of all tag category setting keys for bulk operations.
@@ -149,6 +215,46 @@ class SettingsKeys
             self::PRODUCT_TAGS_ENABLED,
             self::ORDER_TAGS_ENABLED,
             self::CART_TAGS_ENABLED,
+        ];
+    }
+
+    /**
+     * Get all Forms setting keys.
+     *
+     * @return array<int, string>
+     * @since 3.0.0
+     */
+    public static function getFormsKeys(): array
+    {
+        return [
+            self::FORMS_ENABLED,
+            self::FORMS_HONEYPOT_ENABLED,
+            self::FORMS_RATE_LIMIT_MAX,
+            self::FORMS_RATE_LIMIT_WINDOW,
+            self::FORMS_CAPTCHA_PROVIDER,
+            self::FORMS_CAPTCHA_SITE_KEY,
+            self::FORMS_CAPTCHA_SECRET_KEY,
+            self::FORMS_DEFAULT_ADMIN_EMAIL,
+        ];
+    }
+
+    /**
+     * Default Forms settings values.
+     *
+     * @return array<string, mixed>
+     * @since 3.0.0
+     */
+    public static function getDefaultFormsSettings(): array
+    {
+        return [
+            self::FORMS_ENABLED            => true,
+            self::FORMS_HONEYPOT_ENABLED   => true,
+            self::FORMS_RATE_LIMIT_MAX     => 5,
+            self::FORMS_RATE_LIMIT_WINDOW  => 300,
+            self::FORMS_CAPTCHA_PROVIDER   => 'none',
+            self::FORMS_CAPTCHA_SITE_KEY   => '',
+            self::FORMS_CAPTCHA_SECRET_KEY => '',
+            self::FORMS_DEFAULT_ADMIN_EMAIL => '',
         ];
     }
 

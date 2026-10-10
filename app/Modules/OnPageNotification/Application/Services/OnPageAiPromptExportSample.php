@@ -3,12 +3,10 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
-use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\AppearanceSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\BehaviorSettingsService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\ContentSourceService;
 use Notifal\Modules\OnPageNotification\Application\Services\Settings\TimingSettingsService;
-use Notifal\Modules\OnPageNotification\Application\Services\Settings\WooCommerceCartDisplayRulesService;
 use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 
 defined('ABSPATH') || exit;
@@ -19,6 +17,7 @@ defined('ABSPATH') || exit;
  * Uses real default settings keys so AI output matches the Notifal import format.
  *
  * @since 2.4.1
+ * @updated 3.0.0 Sample display_rules.items defaults to empty (no invented targeting).
  * @author Hossein <hossein@notifal.com>
  */
 class OnPageAiPromptExportSample
@@ -101,37 +100,17 @@ class OnPageAiPromptExportSample
     /**
      * Example display rules block using the supported items[] format.
      *
+     * Defaults to an empty items array so prompts do not teach a filler
+     * post_type/all rule. Targeting examples belong in prose when needed.
+     *
      * @since 2.4.1
+     * @updated 3.0.0 Default to empty items unless documenting a targeting sample.
      * @return array<string, mixed>
      */
     private static function getDisplayRulesExample(): array
     {
-        // Default to a product page post_type rule in lite environments.
-        $items = array(
-            array(
-                'id'   => 'rule_example_product_pages',
-                'type' => 'post_type',
-                'data' => array(
-                    'visibility'       => 'specific',
-                    'post_types'       => array('product'),
-                    'items_visibility' => 'all',
-                    'post_items'       => array(),
-                ),
-            ),
-        );
-
-        // Add a WooCommerce cart rule example when WooCommerce is active.
-        if (PluginDetector::isWooCommerceActive()) {
-            $items[] = array(
-                'id'   => 'rule_example_cart_not_empty',
-                'type' => WooCommerceCartDisplayRulesService::RULE_TYPE,
-                'data' => array(
-                    'condition' => 'cart_not_empty',
-                ),
-            );
-        }
-
-        return array('items' => $items);
+        // Empty items = sitewide; matches "no targeting requested" imports.
+        return array('items' => array());
     }
 
     /**

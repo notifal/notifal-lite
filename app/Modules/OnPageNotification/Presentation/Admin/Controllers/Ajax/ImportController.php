@@ -17,6 +17,7 @@ defined('ABSPATH') || exit;
  * and pasted JSON payloads.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Include connected-form warnings in success responses.
  * @author Hossein <hossein@notifal.com>
  */
 class ImportController extends BaseImportController
@@ -155,11 +156,27 @@ class ImportController extends BaseImportController
                 ? static::getZipImportTitle()
                 : ($result['first_title'] ?? '');
 
-            notifal_json_success([
+            $response = [
                 'success' => $result['success'] ?? 0,
                 'failed' => $result['failed'] ?? 0,
                 'title' => $title,
-            ]);
+            ];
+
+            // Pass recoverable form warnings so the UI can prompt reconnect / retry.
+            if (!empty($result['form_warnings']) && is_array($result['form_warnings'])) {
+                $response['warnings'] = array_values(
+                    array_filter(
+                        array_map(
+                            static function ($warning): string {
+                                return sanitize_text_field((string) $warning);
+                            },
+                            $result['form_warnings']
+                        )
+                    )
+                );
+            }
+
+            notifal_json_success($response);
         } catch (\Exception $e) {
             // Handle unexpected errors without exposing internal details.
             error_log('Notifal: Import failed - ' . $e->getMessage());

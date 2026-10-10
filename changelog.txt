@@ -1,5 +1,31 @@
 == Changelog ==
 
+3.0.0 [2026-08-05]
+Added: Setup Wizard with Noti onboarding, site analysis, industry-matched suggestion cards, Build my own path, account connection, and AI draft generation.
+Added: Domain analysis package preflight so Setup Wizard can reuse cached site analysis and skip unnecessary scrape or AI spend.
+Added: Setup Wizard site readiness checks for empty or sample sites, with clear messaging and Try again without consuming the monthly analysis package.
+Added: Forms module, a professional form builder inside Notifal notifications, with an HTML Builder form widget and a dedicated Forms admin menu.
+Added: Build any form with validation, multi-step flows, conditional fields, success messages, and redirect after submit.
+Added: Form submissions inbox with detail view and CSV export, plus admin and visitor email notifications on submit.
+Added: Built-in spam protection, optional Google reCAPTCHA or Cloudflare Turnstile, and the option to turn Forms off from Settings.
+Added: Mailchimp and webhook integrations so submissions can reach your email list or other tools.
+Added: HTML Builder widgets system with Structure and Widgets tabs, click-to-insert and drag-and-drop placement.
+Added: Core widgets for heading, paragraph, image, featured image, button, close button, list, countdown, divider, spacer, and form.
+Added: Structure panel drag and drop to reorder or nest elements, with clear insertion guides.
+Added: Delete and Backspace remove the selected Structure element (same as right-click Remove).
+Added: Action Button Content settings in HTML Builder (copy coupon, one-click add to cart, custom trigger, and more).
+Added: Spacer height and countdown layout controls in the Style panel, plus flex layout controls for containers.
+Improved: Style panel background and typography editing for containers and nested text.
+Improved: AI prompts guide better HTML structure for the HTML Builder widgets.
+Improved: Tag preview keeps your styling when dynamic content refreshes.
+Added: Hosted Notifal AI generation for OnPage notifications, HTML Builder templates, and Forms, with monthly plan allowance.
+Added: HTML Builder AI wizard to create a new template or edit the current one, including a before/after preview before applying edits.
+Improved: OnPage and HTML Builder AI modals use a guided step-by-step wizard powered by Notifal AI.
+Improved: Forms work smoothly with WP Armour when that plugin is installed and active.
+
+2.4.5 [2026-07-17]
+Improved: Pre-created notifications UX, Import Pre-Created scrolls to the library while it is still loading, and details popup builder import buttons appear only after template details finish loading.
+
 2.4.4 [2026-07-11]
 Fixed: HTML Builder HTML tab now keeps style attribute edits when you remove CSS properties and click Update HTML, without restoring stylesheet-matched rules as inline styles.
 Added: Content Source now shows an info note for cart tags explaining that cart tag limits are not available, matching the user tags behavior.

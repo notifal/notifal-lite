@@ -443,21 +443,6 @@ class DeactivationController
                         <?php esc_html_e('Support', 'notifal'); ?>
                     </a>
                 </div>
-                <div class="notifal-deactivation-help-row notifal-deactivation-help-row--setup">
-                    <span class="notifal-deactivation-help-row__icon dashicons dashicons-admin-tools" aria-hidden="true"></span>
-                    <p class="notifal-deactivation-help-row__text">
-                        <strong><?php esc_html_e('Free configuration', 'notifal'); ?></strong>
-                        <?php esc_html_e('We set up notifications on your site for free.', 'notifal'); ?>
-                    </p>
-                    <a
-                        class="notifal-deactivation-help-row__btn notifal-deactivation-help-row__btn--secondary"
-                        href="<?php echo esc_url($free_configuration_url); ?>"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <?php esc_html_e('Get setup', 'notifal'); ?>
-                    </a>
-                </div>
             </div>
         </div>
         <?php
@@ -473,7 +458,7 @@ class DeactivationController
     {
         ?>
         <p class="notifal-deactivation-team-note">
-            <?php esc_html_e('Our team spent 18+ months building Notifal. Please choose the reason that fits best, your answer helps us improve the plugin for everyone.', 'notifal'); ?>
+            <?php esc_html_e('Our team spent 24+ months building Notifal. Please choose the reason that fits best, your answer helps us improve the plugin for everyone.', 'notifal'); ?>
         </p>
         <?php
     }

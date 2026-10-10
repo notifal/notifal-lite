@@ -44,6 +44,37 @@ class ActionHooks {
     public const PLUGIN_ACTIVATED = 'notifal/activated';
 
     /**
+     * Fires when the Setup Wizard reaches a new step.
+     *
+     * @since 3.0.0
+     * @param string $step Step slug.
+     */
+    public const SETUP_WIZARD_STEP_REACHED = 'notifal/setup_wizard/step_reached';
+
+    /**
+     * Fires after the Setup Wizard is skipped.
+     *
+     * @since 3.0.0
+     */
+    public const SETUP_WIZARD_SKIPPED = 'notifal/setup_wizard/skipped';
+
+    /**
+     * Fires after the Setup Wizard is completed.
+     *
+     * @since 3.0.0
+     */
+    public const SETUP_WIZARD_COMPLETED = 'notifal/setup_wizard/completed';
+
+    /**
+     * Fires after Setup Wizard experience feedback is accepted locally.
+     *
+     * @since 3.0.0
+     * @param string               $rating  Rating slug (good|needs_improvement).
+     * @param array<string, mixed> $payload Sanitized feedback payload.
+     */
+    public const SETUP_WIZARD_FEEDBACK_SUBMITTED = 'notifal/setup_wizard/feedback_submitted';
+
+    /**
      * Fires on plugin deactivation.
      *
      * @since 2.0.0
@@ -362,6 +393,20 @@ class ActionHooks {
     public const ADMIN_ONPAGE_TAB_SECTION_AFTER = 'notifal/admin/onpage/%s/%s/after';
 
     /**
+     * Fires before rendering the inline placement section on the Appearance tab.
+     *
+     * @since 3.0.0
+     */
+    public const ADMIN_ONPAGE_APPEARANCE_INLINE_PLACEMENT_BEFORE = 'notifal/admin/onpage/appearance/inline_placement/before';
+
+    /**
+     * Fires after rendering the inline placement section on the Appearance tab.
+     *
+     * @since 3.0.0
+     */
+    public const ADMIN_ONPAGE_APPEARANCE_INLINE_PLACEMENT_AFTER = 'notifal/admin/onpage/appearance/inline_placement/after';
+
+    /**
      * Fires when a campaign is saved successfully.
      *
      * @since 2.0.0
@@ -618,6 +663,19 @@ class ActionHooks {
      * @since 2.0.0
      */
     public const ADMIN_LIST_BEFORE_RENDER = 'notifal/admin/list/before_render';
+
+    /**
+     * Fires right after the list header row (title and primary action buttons).
+     *
+     * Useful for injecting feature banners (for example Notifal AI invite strip)
+     * between the header and status tabs without coupling BaseListView to a module.
+     *
+     * @since 3.0.0
+     * @param string $post_type      Current list post type.
+     * @param string $current_status Current status tab key (all, publish, trash, ...).
+     * @param mixed  $instance       Current BaseListView instance.
+     */
+    public const ADMIN_LIST_AFTER_HEADER = 'notifal/admin/list/after_header';
 
     /**
      * Fires when templates are loaded via AJAX for the load more functionality.
@@ -1324,6 +1382,29 @@ class ActionHooks {
     public const PRE_CREATED_NOTIFICATIONS_API_CACHE_CLEARED = 'notifal/pre_created_notifications/api/cache_cleared';
 
     /**
+     * Fires after a Notifal AI account connection is stored locally.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed> $installation Safe installation metadata.
+     */
+    public const AI_ACCOUNT_CONNECTED = 'notifal/ai/account_connected';
+
+    /**
+     * Fires after the local Notifal AI connection is cleared.
+     *
+     * @since 3.0.0
+     */
+    public const AI_ACCOUNT_DISCONNECTED = 'notifal/ai/account_disconnected';
+
+    /**
+     * Fires after the hosted AI site profile is saved.
+     *
+     * @since 3.0.0
+     * @param array<string, string> $profile Saved profile snapshot.
+     */
+    public const AI_SITE_PROFILE_SAVED = 'notifal/ai/site_profile_saved';
+
+    /**
      * Fires before rendering the pre-created notifications archive.
      *
      * @since 2.0.0
@@ -1503,4 +1584,218 @@ class ActionHooks {
      * @since 2.0.0
      */
     public const ONPAGE_CONVERSION_STATUS_UPDATED = 'notifal/onpage/conversion/status_updated';
+
+    /**
+     * Fires before a form submission is validated and stored.
+     *
+     * @param array $schema Schema DTO.
+     * @param array $fields Submitted fields.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_BEFORE = 'notifal/forms/submit/before';
+
+    /**
+     * Fires before validation for a specific form CPT.
+     *
+     * Usage: do_action(sprintf(ActionHooks::FORMS_SUBMIT_BEFORE_FORM, $form_id), $schema, $fields)
+     *
+     * @param array $schema Schema DTO.
+     * @param array $fields Submitted fields.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_BEFORE_FORM = 'notifal/forms/submit/before/%d';
+
+    /**
+     * Fires after a form submission is stored.
+     *
+     * @param int   $submission_id Submission ID.
+     * @param array $schema Schema DTO.
+     * @param array $fields Sanitized fields.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_AFTER = 'notifal/forms/submit/after';
+
+    /**
+     * Fires after a specific form CPT submission is stored.
+     *
+     * Usage: do_action(sprintf(ActionHooks::FORMS_SUBMIT_AFTER_FORM, $form_id), $submission_id, $schema, $fields)
+     *
+     * @param int   $submission_id Submission ID.
+     * @param array $schema        Schema DTO.
+     * @param array $fields        Sanitized fields.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_AFTER_FORM = 'notifal/forms/submit/after/%d';
+
+    /**
+     * Fires before server-side validation begins.
+     *
+     * @param array $schema Parsed schema DTO.
+     * @param array $fields Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_BEFORE = 'notifal/forms/validate/before';
+
+    /**
+     * Fires before validation for a specific form CPT.
+     *
+     * Usage: do_action(sprintf(ActionHooks::FORMS_VALIDATE_BEFORE_FORM, $form_id), $schema, $fields)
+     *
+     * @param array $schema Parsed schema DTO.
+     * @param array $fields Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_BEFORE_FORM = 'notifal/forms/validate/before/%d';
+
+    /**
+     * Fires after server-side validation completes.
+     *
+     * @param array $result Validation result (valid, fields, errors).
+     * @param array $schema Parsed schema DTO.
+     * @param array $fields Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_AFTER = 'notifal/forms/validate/after';
+
+    /**
+     * Fires after validation for a specific form CPT.
+     *
+     * Usage: do_action(sprintf(ActionHooks::FORMS_VALIDATE_AFTER_FORM, $form_id), $result, $schema, $fields)
+     *
+     * @param array $result Validation result (valid, fields, errors).
+     * @param array $schema Parsed schema DTO.
+     * @param array $fields Raw submitted field map.
+     * @since 3.0.0
+     */
+    public const FORMS_VALIDATE_AFTER_FORM = 'notifal/forms/validate/after/%d';
+
+    /**
+     * Fires when a public form submit fails after schema verification.
+     *
+     * @param array $error   Error payload returned to the client.
+     * @param array $schema  Parsed schema DTO.
+     * @param array $context Failure context (stage, validation, etc.).
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_FAILED = 'notifal/forms/submit/failed';
+
+    /**
+     * Fires when a specific form CPT submit fails after schema verification.
+     *
+     * Usage: do_action(sprintf(ActionHooks::FORMS_SUBMIT_FAILED_FORM, $form_id), $error, $schema, $context)
+     *
+     * @param array $error   Error payload returned to the client.
+     * @param array $schema  Parsed schema DTO.
+     * @param array $context Failure context (stage, validation, etc.).
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMIT_FAILED_FORM = 'notifal/forms/submit/failed/%d';
+
+    /**
+     * Fires after form integrations have been dispatched.
+     *
+     * @param int   $form_id Form CPT ID.
+     * @param int   $submission_id Submission ID.
+     * @param array $fields Sanitized fields.
+     * @since 3.0.0
+     */
+    public const FORMS_INTEGRATIONS_DISPATCHED = 'notifal/forms/integrations/dispatched';
+
+    /**
+     * Fires after a Form CPT is saved.
+     *
+     * @param int   $form_id Form CPT ID.
+     * @param array $data Request data.
+     * @since 3.0.0
+     */
+    public const FORMS_FORM_SAVED = 'notifal/forms/form/saved';
+
+    /**
+     * Fires after a Form CPT is moved to trash.
+     *
+     * @param int    $form_id Form CPT ID.
+     * @param string $status  List status context.
+     * @since 3.0.0
+     */
+    public const FORMS_FORM_TRASHED = 'notifal/forms/form/trashed';
+
+    /**
+     * Fires after a Form CPT is permanently deleted.
+     *
+     * @param int    $form_id Form CPT ID.
+     * @param string $status  List status context.
+     * @since 3.0.0
+     */
+    public const FORMS_FORM_DELETED = 'notifal/forms/form/deleted';
+
+    /**
+     * Fires after a Form CPT is duplicated from the list.
+     *
+     * @param int $source_id Source form ID.
+     * @param int $new_id    New form ID.
+     * @since 3.0.0
+     */
+    public const FORMS_FORM_DUPLICATED = 'notifal/forms/form/duplicated';
+
+    /**
+     * Fires after the Form CPT trash is emptied.
+     *
+     * @param int $deleted_count Number of permanently deleted forms.
+     * @since 3.0.0
+     */
+    public const FORMS_TRASH_EMPTIED = 'notifal/forms/trash/emptied';
+
+    /**
+     * Fires after form field definitions are synced to the Form CPT.
+     *
+     * @param int   $form_id Form CPT ID.
+     * @param array $fields  Saved field definitions.
+     * @param string $source Sync source slug (html|payload).
+     * @since 3.0.0
+     */
+    public const FORMS_FIELDS_SYNCED = 'notifal/forms/fields/synced';
+
+    /**
+     * Fires after a single form submission is deleted.
+     *
+     * @param int $submission_id Deleted submission ID.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_DELETED = 'notifal/forms/submission/deleted';
+
+    /**
+     * Fires after submissions are deleted via bulk action.
+     *
+     * @param array<int, int> $submission_ids Deleted submission IDs.
+     * @param int             $deleted_count  Number of rows removed.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSIONS_BULK_DELETED = 'notifal/forms/submissions/bulk_deleted';
+
+    /**
+     * Fires after submissions are marked as read via bulk action.
+     *
+     * @param array<int, int> $submission_ids Targeted submission IDs.
+     * @param int             $updated_count  Number of rows updated.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSIONS_BULK_MARKED_READ = 'notifal/forms/submissions/bulk_marked_read';
+
+    /**
+     * Fires after a submission status changes (e.g. new → read).
+     *
+     * @param int    $submission_id Submission ID.
+     * @param string $status        New status slug.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_STATUS_UPDATED = 'notifal/forms/submission/status_updated';
+
+    /**
+     * Fires after an admin note is saved on a submission.
+     *
+     * @param int    $submission_id Submission ID.
+     * @param string $note          Saved note text.
+     * @since 3.0.0
+     */
+    public const FORMS_SUBMISSION_NOTE_UPDATED = 'notifal/forms/submission/note_updated';
 }

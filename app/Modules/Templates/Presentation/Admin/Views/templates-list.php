@@ -16,6 +16,7 @@ use Notifal\Shared\AdminUI\Lists\BaseListView;
 use Notifal\Shared\AdminUI\Toast\ToastRenderer;
 use Notifal\Infrastructure\WordPress\Admin\Helpers\AdminStatsService;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
+use Notifal\Shared\Services\NotifalIconService;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -71,12 +72,27 @@ do_action(ActionHooks::ADMIN_TEMPLATES_BEFORE, $template_total, $status_tabs, $a
             ]);
 
             // Add custom header actions hook for template creation modal button
-            add_action('notifal_list_header_actions', function() {
+            add_action('notifal_list_header_actions', function () {
                 echo '<button type="button" class="notifal-button secondary notifal-flex notifal-gap-10" id="notifal-create-template-btn">'
-                    . \Notifal\Shared\Services\NotifalIconService::render('plus-circle', 20)
+                    . NotifalIconService::render('plus-circle', 20)
                     . esc_html__('Create New Template', 'notifal')
                     . '</button>';
             });
+
+            // Inject the Noti invite strip under the list header (same pattern as OnPage list).
+            add_action(
+                ActionHooks::ADMIN_LIST_AFTER_HEADER,
+                static function (string $post_type, string $current_status): void {
+                    // Only show on the templates list, skip trash.
+                    if ($post_type !== 'notifal_template' || $current_status === 'trash') {
+                        return;
+                    }
+
+                    include __DIR__ . '/components/ai-invite-strip.php';
+                },
+                10,
+                2
+            );
 
             $listView->render();
             ?>
@@ -92,7 +108,7 @@ do_action(ActionHooks::ADMIN_TEMPLATES_BEFORE, $template_total, $status_tabs, $a
 </div>
 
 <!-- Template Creation Modal -->
-<div class="notifal-modal-backdrop" id="notifal-template-creation-modal" style="display: none;">
+<div class="notifal-modal-backdrop" id="notifal-template-creation-modal">
     <div class="notifal-modal notifal-template-create-modal">
         <div class="notifal-modal-header">
             <h2><?php esc_html_e('Create New Template', 'notifal'); ?></h2>
@@ -102,14 +118,15 @@ do_action(ActionHooks::ADMIN_TEMPLATES_BEFORE, $template_total, $status_tabs, $a
             <?php
             // Set variables for the component
             $plugin_detector = notifal_app(\Notifal\Infrastructure\WordPress\Support\PluginDetector::class);
-            $url_service = notifal_app(\Notifal\Modules\Templates\Application\Services\TemplateUrlService::class);
+            $url_service = notifal_app(TemplateUrlService::class);
             $elementor_installed = $plugin_detector->isElementorActive();
             $urls = [
-                'install_elementor'   => $url_service->getElementorInstallUrl(),
-                'create_editor'       => $url_service->getCreateEditorUrl(),
-                'create_elementor'    => $url_service->getCreateElementorUrl(),
-                'create_html_builder' => $url_service->getCreateHtmlBuilderUrl(),
-                'import_nonce'        => $url_service->getImportNonce(),
+                'install_elementor'            => $url_service->getElementorInstallUrl(),
+                'create_editor'                => $url_service->getCreateEditorUrl(),
+                'create_elementor'             => $url_service->getCreateElementorUrl(),
+                'create_html_builder'          => $url_service->getCreateHtmlBuilderUrl(),
+                'create_html_builder_with_noti'=> $url_service->getCreateHtmlBuilderUrl(true),
+                'import_nonce'                 => $url_service->getImportNonce(),
             ];
             include_once __DIR__ . '/components/template-creation-options.php';
             ?>

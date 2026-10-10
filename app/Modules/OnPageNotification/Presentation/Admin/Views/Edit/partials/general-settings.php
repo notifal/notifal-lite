@@ -69,13 +69,14 @@ do_action(sprintf(ActionHooks::ADMIN_ONPAGE_TAB_BEFORE, $tab));
                 [ "placeholder" => __( 'Add Notification Title', 'notifal' ) ]
             );
 
-            // Notification Label Field (taxonomy)
+            // Notification labels are optional taxonomy badges used for admin organization.
+            // @since 3.0.0 Labels are optional and saving without any label is allowed.
             FieldRenderer::badgeSelector(
                 'notifal_labels',
                 notifal_app(LabelProviderInterface::class)->getOptions(),
                 $general_settings['notifal_labels'],
                 __( 'Notification Labels', 'notifal' ),
-                __( 'Choose relevant tags to describe this notification. Click labels to assign them.', 'notifal' ),
+                __( 'Optional. Choose relevant tags to describe this notification. Click labels to assign them.', 'notifal' ),
                 true
             );
 

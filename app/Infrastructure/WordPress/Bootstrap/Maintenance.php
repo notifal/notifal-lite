@@ -3,6 +3,7 @@
 namespace Notifal\Infrastructure\WordPress\Bootstrap;
 
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardEligibilityService;
 
 defined('ABSPATH') || exit;
 
@@ -31,7 +32,7 @@ class Maintenance
     /**
      * Plugin activation logic.
      *
-     * Sets up activation popup for first-time users and records activation time.
+     * Records Setup Wizard first-run state on activation.
      *
      * @since 2.0.0
      */
@@ -40,11 +41,8 @@ class Maintenance
         // Flush rewrite rules once
         flush_rewrite_rules();
 
-        // Show activation popup only for first-time activation
-        if (!get_option('notifal_activation_popup_shown', false)) {
-            set_transient('notifal_pending_activation_redirect', true, 5 * MINUTE_IN_SECONDS);
-            update_option('notifal_activation_time', time());
-        }
+        // Record Setup Wizard first-run state before modules boot on init.
+        SetupWizardEligibilityService::markFirstInstallOnActivation();
 
         /**
          * Fires on plugin activation.
@@ -78,7 +76,7 @@ class Maintenance
      */
     public static function uninstall(): void
     {
-        // Clean up activation popup options
+        // Clean up legacy activation popup options from older releases.
         delete_option('notifal_activation_popup_shown');
         delete_option('notifal_activation_time');
 
@@ -89,8 +87,15 @@ class Maintenance
         delete_option('notifal_deactivation_daily_reports');
 
         // Clean up transients
-        delete_transient('notifal_activation_popup_pending');
         delete_transient('notifal_pending_activation_redirect');
+        delete_transient('notifal_pending_setup_wizard_redirect');
+        delete_option('notifal_setup_wizard_session');
+
+        // Clean up Setup Wizard options.
+        delete_option('notifal_setup_wizard_first_install');
+        delete_option('notifal_setup_wizard_eligible');
+        delete_option('notifal_setup_wizard_status');
+        delete_option('notifal_setup_wizard_last_step');
 
         /**
          * Fires on plugin uninstall.

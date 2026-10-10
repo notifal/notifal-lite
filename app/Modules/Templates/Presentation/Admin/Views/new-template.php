@@ -14,7 +14,6 @@
 use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
-use Notifal\Shared\Services\NotifalIconService;
 
 if (!defined('ABSPATH')) {
     exit;
@@ -35,11 +34,12 @@ $url_service     = notifal_app(TemplateUrlService::class);
 // Get configuration data
 $elementor_installed = $plugin_detector->isElementorActive();
 $urls = [
-    'install_elementor' => $url_service->getElementorInstallUrl(),
-    'create_editor'     => $url_service->getCreateEditorUrl(),
-    'create_elementor'  => $url_service->getCreateElementorUrl(),
-    'create_html_builder' => $url_service->getCreateHtmlBuilderUrl(),
-    'import_nonce'      => $url_service->getImportNonce(),
+    'install_elementor'             => $url_service->getElementorInstallUrl(),
+    'create_editor'                 => $url_service->getCreateEditorUrl(),
+    'create_elementor'              => $url_service->getCreateElementorUrl(),
+    'create_html_builder'           => $url_service->getCreateHtmlBuilderUrl(),
+    'create_html_builder_with_noti' => $url_service->getCreateHtmlBuilderUrl(true),
+    'import_nonce'                  => $url_service->getImportNonce(),
 ];
 
 $is_modal = isset($as_modal) && $as_modal === true;
@@ -60,17 +60,10 @@ $is_modal = isset($as_modal) && $as_modal === true;
         </div>
     </div>
 <?php else: ?>
+    <?php
+    // Empty-state layout: show Noti invite and builder options only (no intro heading).
+    ?>
     <div class="notifal-no-templates notifal-card notifal-flex notifal-direction-column notifal-align-center notifal-justify-center notifal-mt-20 notifal-text-center">
-        <div class="notifal-no-templates__icon">
-            <?php echo NotifalIconService::render('file-plus', 40); ?>
-        </div>
-
-        <h2><?php esc_html_e('Create Your First Template', 'notifal'); ?></h2>
-
-        <p class="notifal-text-base notifal-text-muted notifal-mt-10">
-            <?php esc_html_e("You haven't created any templates yet. Get started by choosing your preferred builder.", 'notifal'); ?>
-        </p>
-
         <?php include __DIR__ . '/components/template-creation-options.php'; ?>
     </div>
 <?php endif; ?>

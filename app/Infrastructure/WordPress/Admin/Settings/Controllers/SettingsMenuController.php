@@ -143,6 +143,7 @@ class SettingsMenuController
             'nonce_name' => 'notifal_settings_nonce',
             'nonce_value' => $this->nonceManager->create('notifal_settings_save'),
             'tag_settings' => $this->settingsService->getTagSettings(),
+            'forms_settings' => $this->settingsService->getFormsSettings(),
             'available_tabs' => $this->getAvailableTabs(),
             'woocommerce_active' => PluginDetector::isWooCommerceActive(),
             'notifal_pro_active' => apply_filters('notifal_pro_tags_generator_allowed', false),
@@ -236,6 +237,10 @@ class SettingsMenuController
             'tags' => [
                 'label' => __('Tags', 'notifal'),
                 'description' => __('Manage tag categories and visibility settings', 'notifal'),
+            ],
+            'forms' => [
+                'label' => __('Forms', 'notifal'),
+                'description' => __('Configure captcha, rate limits, honeypot, and default notification email', 'notifal'),
             ],
         ];
     }

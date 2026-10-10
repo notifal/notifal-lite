@@ -9,6 +9,10 @@ return [
     'unexpected_response'     => __( 'Unexpected response from server.', 'notifal' ),
     'loading'                 => __( 'Loading...', 'notifal' ),
     'loading_templates'       => __( 'Loading templates...', 'notifal' ),
+    'loading_preview'         => __( 'Loading preview...', 'notifal' ),
+    'preview_load_failed'     => __( 'Failed to load preview', 'notifal' ),
+    'preview_load_timeout'    => __( 'Loading timeout', 'notifal' ),
+    'view_in_new_tab'         => __( 'View in new tab', 'notifal' ),
     'analyzing_template'      => __( 'Analyzing Template...', 'notifal' ),
     'please_wait'            => __( 'Please wait while we analyze the template content.', 'notifal' ),
     'filtering_templates'     => __( 'Filtering templates...', 'notifal' ),
@@ -23,6 +27,10 @@ return [
     'select_post_type'       => __( 'Please select at least one post type.', 'notifal' ),
     'free_version_limit'     => __( 'You can only have one active notification in the free version. Upgrade to Notifal Pro to activate multiple notifications simultaneously.', 'notifal' ),
     'unexpected_error'       => __( 'An unexpected error occurred. Please try again.', 'notifal' ),
+    'inline_preview_unavailable_list' => __(
+        'Preview is not available for inline layouts yet. Open the page where you placed the shortcode or Automatic Insert to see this notification.',
+        'notifal'
+    ),
     'select_post_items'      => __( 'Please select at least one post item.', 'notifal' ),
     'preview_url_required'   => __( 'Please enter a path or URL.', 'notifal' ),
     'preview_url_invalid'    => __( 'Please enter a valid path or URL.', 'notifal' ),

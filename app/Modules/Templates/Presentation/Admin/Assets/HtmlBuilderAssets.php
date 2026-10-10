@@ -8,10 +8,13 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
+use Notifal\Modules\Ai\Application\Services\AiIndustryOptions;
+use Notifal\Modules\Ai\Application\Services\SiteProfileService;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderAiPromptExamples;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderDisplayLayouts;
 use Notifal\Domain\Tags\Infrastructure\WordPress\Registration\DynamicKeysApiRegistrar;
 use Notifal\Modules\Templates\Application\Services\HtmlBuilderUseCases;
+use Notifal\Modules\Templates\Application\Services\HtmlBuilderWidgets;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
 use Notifal\Modules\Templates\Infrastructure\Shared\Traits\TagsPanelTrait;
 use Notifal\Modules\Templates\Presentation\Admin\Controllers\HtmlBuilderPageController;
@@ -23,6 +26,7 @@ defined('ABSPATH') || exit;
  * Enqueues HTML Builder admin assets on the builder screen only.
  *
  * @since 2.4.0
+ * @updated 3.0.0 Pass icons_font_url so the canvas iframe can render icon markers.
  * @author Hossein <hossein@notifal.com>
  */
 class HtmlBuilderAssets
@@ -112,13 +116,32 @@ class HtmlBuilderAssets
             'NotifalHtmlBuilderStrings'
         );
 
+        // wp-hooks lets Pro / third-party code filter widgets on the client.
+        // @since 3.0.0
         notifal_enqueue_script(
             'notifal-html-builder-script',
             $jsUrl . 'HtmlBuilderScript.js',
-            ['notifal-shared-admin-js', 'notifal-tags-js', 'notifal-html-builder-boot', 'wp-api', 'media-upload', 'media-views'],
+            ['notifal-shared-admin-js', 'notifal-tags-js', 'notifal-html-builder-boot', 'notifal-ai-connection-js', 'wp-api', 'wp-hooks', 'media-upload', 'media-views'],
             [],
             null
         );
+
+        // Ensure hosted AI styles are available on the builder screen.
+        if (!wp_style_is('notifal-ai-connection-css', 'enqueued') && !wp_style_is('notifal-ai-connection-css', 'done')) {
+            notifal_enqueue_style(
+                'notifal-ai-connection-css',
+                Paths::cssAdminBuildUrl() . 'AiConnectionStyle.css',
+                ['notifal-shared-admin-css', 'notifal-loader-css']
+            );
+        }
+
+        if (!wp_style_is('notifal-ai-wizard-css', 'enqueued') && !wp_style_is('notifal-ai-wizard-css', 'done')) {
+            notifal_enqueue_style(
+                'notifal-ai-wizard-css',
+                Paths::cssAdminBuildUrl() . 'AiWizardStyle.css',
+                ['notifal-ai-connection-css']
+            );
+        }
 
         do_action(ActionHooks::TEMPLATE_HTML_BUILDER_ASSETS_AFTER);
     }
@@ -185,6 +208,7 @@ class HtmlBuilderAssets
      * @param array $strings Localized translation strings.
      * @return array Merged configuration array.
      * @since 2.4.0
+     * @updated 3.0.0 Include icons_font_url for canvas hidden-step markers.
      */
     private static function appendRuntimeConfig(array $strings): array
     {
@@ -192,6 +216,9 @@ class HtmlBuilderAssets
         $template = $templateId ? get_post($templateId) : null;
         /** @var TemplateUrlService $urlService */
         $urlService = notifal_app(TemplateUrlService::class);
+
+        // Detect Generate with AI / open_noti deep-link from the templates list invite.
+        $openAiChat = isset($_GET['open_noti']) && (string) wp_unslash($_GET['open_noti']) === '1';
 
         $strings['config'] = [
             'template_id'        => $templateId,
@@ -205,18 +232,35 @@ class HtmlBuilderAssets
             'templates_list_url' => admin_url('admin.php?page=notifal_templates'),
             'preview_url'        => $templateId ? $urlService->getPreviewUrl($templateId, $template) : '',
             'logo_url'           => Paths::buildImagesUrl() . 'notifal-builder-logo.jpg',
+            // Absolute WOFF URL so the canvas iframe can render notifal-icon glyphs.
+            'icons_font_url'     => Paths::fontsUrl() . 'notifal-icon.woff',
             'nonce'              => [
                 'save'    => NonceManager::create('notifal_save_html_template'),
                 'preview' => NonceManager::create('notifal_html_builder_preview'),
             ],
             'user_id'            => get_current_user_id(),
             'rtl'                => is_rtl(),
+            // WordPress local hour (0-23) for Noti time-of-day greetings (@since 3.0.0).
+            'wp_local_hour'      => (int) current_time('G'),
+            // Expand Noti chat when arriving from Generate with AI (@since 3.0.0).
+            'open_ai_chat'       => $openAiChat,
             'primary_color'      => self::resolvePrimaryColor(),
             'active_plugins'     => PluginDetector::getActivePluginNames(),
             'use_cases'          => HtmlBuilderUseCases::getOptions(),
+            'industries'         => AiIndustryOptions::getOptions(),
             'display_layouts'    => HtmlBuilderDisplayLayouts::getOptions(),
             'ai_prompt_examples' => HtmlBuilderAiPromptExamples::getExamples(),
+            // Widget palette + AI structure reference (@since 3.0.0).
+            'widgets'            => HtmlBuilderWidgets::getWidgets(),
+            'site_profile'       => notifal_app(SiteProfileService::class)->get(),
+            'woocommerce_active' => PluginDetector::isWooCommerceActive(),
         ];
+
+        // Allow modules (Forms, etc.) to append runtime config keys.
+        $strings['config'] = (array) apply_filters(
+            FilterHooks::TEMPLATE_HTML_BUILDER_RUNTIME_CONFIG,
+            $strings['config']
+        );
 
         return $strings;
     }
@@ -229,6 +273,12 @@ class HtmlBuilderAssets
      */
     private static function resolvePrimaryColor(): string
     {
+        // Prefer the last generation color saved in the AI site profile.
+        $siteProfile = notifal_app(SiteProfileService::class)->get();
+        if (!empty($siteProfile['primary_color'])) {
+            return (string) $siteProfile['primary_color'];
+        }
+
         // Allow extensions to override the default brand color used in prompts.
         $color = (string) apply_filters(FilterHooks::TEMPLATE_HTML_BUILDER_PRIMARY_COLOR, '#7e2bd2');
 

@@ -365,6 +365,137 @@ class PreCreatedNotificationsApiService
     }
 
     /**
+     * Fetch archive bootstrap payloads (taxonomies, trending, notifications) for the admin archive.
+     *
+     * Uses parallel HTTP when multiple endpoints are cache-cold to avoid 3x sequential timeouts.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed> $args Notification query arguments.
+     * @return array<string, mixed> {
+     *     @type array<string, array> $taxonomies Taxonomy groups for filters.
+     *     @type array<int, array<string, string>> $trending Trending use-case tags.
+     *     @type array<string, mixed> $api_response Notifications list API payload or error shape.
+     * }
+     */
+    public function fetchArchiveBootstrap(array $args = []): array
+    {
+        // Build sanitized notification query params once for cache key + remote request.
+        $queryParams = $this->buildQueryParameters($args);
+
+        // Resolve transient keys for the three bootstrap endpoints.
+        $taxonomiesCacheKey = $this->generateCacheKey('taxonomies', []);
+        $trendingCacheKey = $this->generateCacheKey('trending_categories', []);
+        $notificationsCacheKey = $this->generateCacheKey('notifications', $queryParams);
+
+        // Read any warm cache entries first.
+        $taxonomies = $this->getCachedResponse($taxonomiesCacheKey);
+        $trending = $this->getCachedResponse($trendingCacheKey);
+        $notificationsResponse = $this->getCachedResponse($notificationsCacheKey);
+
+        // Determine which remote endpoints still need fetching.
+        $needsTaxonomies = ($taxonomies === false);
+        $needsTrending = ($trending === false || !is_array($trending));
+        $needsNotifications = ($notificationsResponse === false || !is_array($notificationsResponse));
+
+        // Build parallel request map only for cache misses.
+        $parallelJobs = [];
+        if ($needsTaxonomies) {
+            $parallelJobs['taxonomies'] = [
+                'endpoint' => 'taxonomies',
+                'params'   => [],
+            ];
+        }
+        if ($needsTrending) {
+            $parallelJobs['trending'] = [
+                'endpoint' => 'trending-categories',
+                'params'   => [],
+            ];
+        }
+        if ($needsNotifications) {
+            // Respect local rate limiting before scheduling notifications fetch.
+            $rateLimitCheck = $this->checkRateLimit('notifications');
+            if (!$rateLimitCheck['allowed']) {
+                $notificationsResponse = [
+                    'success' => false,
+                    'error'   => __('Too many requests. Please wait a moment and try again.', 'notifal'),
+                    'rate_limit' => true,
+                ];
+                $needsNotifications = false;
+            } else {
+                $parallelJobs['notifications'] = [
+                    'endpoint' => 'notifications',
+                    'params'   => $queryParams,
+                ];
+            }
+        }
+
+        // Execute remaining remote calls concurrently when caches are cold.
+        if (!empty($parallelJobs)) {
+            $parallelResponses = $this->fetchEndpointsParallel($parallelJobs);
+
+            if ($needsTaxonomies) {
+                $taxonomies = $this->buildTaxonomiesFromHttpResponse($parallelResponses['taxonomies'] ?? null);
+                $this->setCachedResponse($taxonomiesCacheKey, $taxonomies, self::CACHE_EXPIRATION_TAXONOMIES);
+            }
+
+            if ($needsTrending) {
+                $trending = $this->buildTrendingFromHttpResponse($parallelResponses['trending'] ?? null);
+                $this->setCachedResponse($trendingCacheKey, $trending, self::CACHE_EXPIRATION_TRENDING);
+            }
+
+            if ($needsNotifications) {
+                $notificationsResponse = $this->buildNotificationsFromHttpResponse(
+                    $parallelResponses['notifications'] ?? null,
+                    $queryParams
+                );
+                if (is_array($notificationsResponse)
+                    && (!isset($notificationsResponse['success']) || $notificationsResponse['success'] !== false)
+                ) {
+                    $this->setCachedResponse(
+                        $notificationsCacheKey,
+                        $notificationsResponse,
+                        self::CACHE_EXPIRATION_NOTIFICATIONS
+                    );
+                }
+            }
+        }
+
+        // Guarantee taxonomy shape even when remote fetch failed.
+        if (!is_array($taxonomies)) {
+            $taxonomies = [
+                'use_cases'    => [],
+                'events'       => [],
+                'industries'   => [],
+                'layouts'      => [],
+                'used_plugins' => [],
+            ];
+        }
+
+        // Guarantee trending list shape.
+        if (!is_array($trending)) {
+            $trending = [];
+        }
+
+        // Guarantee notifications response shape for the archive view.
+        if (!is_array($notificationsResponse)) {
+            $notificationsResponse = [
+                'success' => false,
+                'error'   => __('Failed to load notifications.', 'notifal'),
+            ];
+        }
+
+        return [
+            'taxonomies'    => $taxonomies,
+            'trending'      => $trending,
+            'api_response'  => $this->attachCacheExpiresAt(
+                $notificationsResponse,
+                $notificationsCacheKey,
+                self::CACHE_EXPIRATION_NOTIFICATIONS
+            ),
+        ];
+    }
+
+    /**
      * Build query parameters for API request.
      *
      * @since 2.0.0
@@ -384,6 +515,8 @@ class PreCreatedNotificationsApiService
             'layouts' => [],
             'used_plugins' => [],
             'is_pro' => '',
+            'html_builder_available' => '',
+            'elementor_available' => '',
         ];
 
         $args = array_merge($defaults, $args);
@@ -415,6 +548,14 @@ class PreCreatedNotificationsApiService
             $params['is_pro'] = Helper::sanitizeInput($args['is_pro'], 'text');
         }
 
+        // Add builder availability filters for Setup Wizard recommendations.
+        if (isset($args['html_builder_available']) && $args['html_builder_available'] !== '') {
+            $params['html_builder_available'] = Helper::sanitizeInput($args['html_builder_available'], 'text');
+        }
+        if (isset($args['elementor_available']) && $args['elementor_available'] !== '') {
+            $params['elementor_available'] = Helper::sanitizeInput($args['elementor_available'], 'text');
+        }
+
         /**
          * Filter the API query parameters before making the request.
          *
@@ -440,6 +581,8 @@ class PreCreatedNotificationsApiService
 
         $args = [
             'timeout' => self::API_TIMEOUT,
+            // Align connect timeout with request timeout (Requests defaults to 10s).
+            'connect_timeout' => self::API_TIMEOUT,
             'user-agent' => self::USER_AGENT,
             'headers' => [
                 'Accept' => 'application/json',
@@ -481,6 +624,232 @@ class PreCreatedNotificationsApiService
         }
 
         return wp_remote_get($url, $args);
+    }
+
+    /**
+     * Build a full marketplace endpoint URL with optional query parameters.
+     *
+     * @since 3.0.0
+     * @param string               $endpoint API endpoint slug.
+     * @param array<string, mixed> $params   Optional query parameters.
+     * @return string Fully qualified marketplace URL.
+     */
+    private function buildEndpointUrl(string $endpoint, array $params = []): string
+    {
+        // Start from the marketplace REST base URL.
+        $url = self::API_BASE_URL . '/' . ltrim($endpoint, '/');
+
+        // Append query string when params are provided.
+        if (!empty($params)) {
+            $queryParts = [];
+            foreach ($params as $key => $value) {
+                if (is_array($value)) {
+                    foreach ($value as $item) {
+                        $queryParts[] = urlencode($key) . '[]=' . urlencode((string) $item);
+                    }
+                } else {
+                    $queryParts[] = urlencode($key) . '=' . urlencode((string) $value);
+                }
+            }
+            $url .= '?' . implode('&', $queryParts);
+        }
+
+        return $url;
+    }
+
+    /**
+     * Execute multiple marketplace GET requests in parallel via WordPress Requests library.
+     *
+     * @since 3.0.0
+     * @param array<string, array{endpoint:string,params:array<string,mixed>}> $jobs Endpoint jobs keyed by label.
+     * @return array<string, array|\WP_Error> Normalized wp_remote-style responses keyed by label.
+     */
+    private function fetchEndpointsParallel(array $jobs): array
+    {
+        // Abort early when there is nothing to fetch.
+        if (empty($jobs)) {
+            return [];
+        }
+
+        // Build Requests-compatible job map.
+        $requests = [];
+        foreach ($jobs as $key => $job) {
+            $requests[$key] = [
+                'url'     => $this->buildEndpointUrl($job['endpoint'], $job['params']),
+                'type'    => 'GET',
+                'headers' => [
+                    'Accept'       => 'application/json',
+                    'Content-Type' => 'application/json',
+                ],
+            ];
+        }
+
+        // Fire all requests concurrently.
+        $rawResponses = \WpOrg\Requests\Requests::request_multiple(
+            $requests,
+            [
+                'timeout'         => self::API_TIMEOUT,
+                'connect_timeout' => self::API_TIMEOUT,
+                'useragent'       => self::USER_AGENT,
+            ]
+        );
+
+        // Normalize each response into wp_remote-style arrays for shared parsers.
+        $normalized = [];
+        foreach ($rawResponses as $key => $rawResponse) {
+            $normalized[$key] = $this->normalizeParallelResponse($rawResponse, (string) $key);
+        }
+
+        return $normalized;
+    }
+
+    /**
+     * Convert a Requests library response into wp_remote-compatible structure.
+     *
+     * @since 3.0.0
+     * @param mixed  $rawResponse Requests response or exception instance.
+     * @param string $label       Endpoint label for error context.
+     * @return array<string, mixed>|\WP_Error Normalized response.
+     */
+    private function normalizeParallelResponse($rawResponse, string $label)
+    {
+        // Handle transport-level exceptions from Requests.
+        if ($rawResponse instanceof \WpOrg\Requests\Exception) {
+            return new \WP_Error('http_request_failed', $rawResponse->getMessage());
+        }
+
+        // Unexpected payload types are treated as hard failures.
+        if (!$rawResponse instanceof \WpOrg\Requests\Response) {
+            return new \WP_Error(
+                'http_request_failed',
+                sprintf(__('Unexpected parallel response for %s.', 'notifal'), $label)
+            );
+        }
+
+        // Map Requests response fields to wp_remote_retrieve_* compatible shape.
+        return [
+            'headers'  => $rawResponse->headers->getAll(),
+            'body'     => $rawResponse->body,
+            'response' => [
+                'code'    => (int) $rawResponse->status_code,
+                'message' => get_status_header_desc((int) $rawResponse->status_code),
+            ],
+        ];
+    }
+
+    /**
+     * Parse taxonomies payload from a normalized HTTP response.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed>|\WP_Error|null $response Normalized HTTP response.
+     * @return array<string, array<int, mixed>> Taxonomy groups for archive filters.
+     */
+    private function buildTaxonomiesFromHttpResponse($response): array
+    {
+        // Default empty taxonomy groups used by the archive sidebar.
+        $empty = [
+            'use_cases'    => [],
+            'events'       => [],
+            'industries'   => [],
+            'layouts'      => [],
+            'used_plugins' => [],
+        ];
+
+        if (is_wp_error($response) || !$this->validateHttpStatus($response, 200, 'taxonomies')) {
+            return $empty;
+        }
+
+        $data = $this->parseJsonResponse($response, 'taxonomies');
+        if ($data === null) {
+            return $empty;
+        }
+
+        return [
+            'use_cases'    => $data['data']['use_cases'] ?? [],
+            'events'       => $data['data']['events'] ?? [],
+            'industries'   => $data['data']['industries'] ?? [],
+            'layouts'      => $data['data']['layouts'] ?? [],
+            'used_plugins' => $data['data']['plugins'] ?? [],
+        ];
+    }
+
+    /**
+     * Parse trending categories payload from a normalized HTTP response.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed>|\WP_Error|null $response Normalized HTTP response.
+     * @return array<int, array{title:string,use_case_slug:string}> Trending tags.
+     */
+    private function buildTrendingFromHttpResponse($response): array
+    {
+        if (is_wp_error($response) || !$this->validateHttpStatus($response, 200, 'trending-categories')) {
+            return [];
+        }
+
+        $data = $this->parseJsonResponse($response, 'trending-categories');
+        if ($data === null || empty($data['data']['trending']) || !is_array($data['data']['trending'])) {
+            return [];
+        }
+
+        $trending = [];
+        foreach ($data['data']['trending'] as $item) {
+            if (!empty($item['title']) && !empty($item['use_case_slug'])) {
+                $trending[] = [
+                    'title'         => is_string($item['title']) ? sanitize_text_field($item['title']) : '',
+                    'use_case_slug' => is_string($item['use_case_slug']) ? sanitize_text_field($item['use_case_slug']) : '',
+                ];
+            }
+        }
+
+        return $trending;
+    }
+
+    /**
+     * Parse notifications list payload from a normalized HTTP response.
+     *
+     * @since 3.0.0
+     * @param array<string, mixed>|\WP_Error|null $response Normalized HTTP response.
+     * @param array<string, mixed>                  $args      Original query arguments.
+     * @return array<string, mixed> Notifications API payload or error array.
+     */
+    private function buildNotificationsFromHttpResponse($response, array $args): array
+    {
+        if (is_wp_error($response)) {
+            return [
+                'success' => false,
+                'error'   => $response->get_error_message(),
+            ];
+        }
+
+        if (!$this->validateHttpStatus($response, 200, 'notifications list')) {
+            return [
+                'success' => false,
+                'error'   => sprintf(
+                    /* translators: %d: HTTP status code */
+                    __('API request failed with status %d', 'notifal'),
+                    wp_remote_retrieve_response_code($response)
+                ),
+            ];
+        }
+
+        $data = $this->parseJsonResponse($response, 'notifications list');
+        if ($data === null) {
+            return [
+                'success' => false,
+                'error'   => __('Invalid JSON response from API', 'notifal'),
+            ];
+        }
+
+        /**
+         * Fires after successfully fetching notifications from API.
+         *
+         * @since 3.0.0
+         * @param array $data API response data
+         * @param array $args Original query arguments
+         */
+        do_action(ActionHooks::PRE_CREATED_NOTIFICATIONS_API_FETCHED, $data, $args);
+
+        return $data;
     }
 
     /**

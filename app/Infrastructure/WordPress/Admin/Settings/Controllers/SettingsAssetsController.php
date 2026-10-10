@@ -8,6 +8,8 @@ use Notifal\Infrastructure\WordPress\Admin\Localization\LangLoader;
 use Notifal\Infrastructure\WordPress\Security\NonceManager;
 use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Services\Utility\UrlService;
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardStateService;
+use Notifal\Modules\SetupWizard\Presentation\Admin\Menu\MenuController as SetupWizardMenuController;
 use Notifal\Shared\Config\Paths;
 
 defined('ABSPATH') || exit;
@@ -18,6 +20,7 @@ defined('ABSPATH') || exit;
  * Handles asset enqueuing and plugin page links for the settings module.
  *
  * @since 2.0.0
+ * @updated 3.0.0 Point Resources action link to documentation; replace Free Configuration row meta with Setup Wizard when incomplete.
  * @author Hossein <hossein@notifal.com>
  */
 class SettingsAssetsController
@@ -139,11 +142,16 @@ class SettingsAssetsController
      * @param array $links Existing plugin action links
      * @return array Modified links array
      * @since 2.0.0
+     * @updated 3.0.0 Keep Resources label and point it at the documentation hub.
      */
     public function addSettingsLink(array $links): array
     {
-        // Add Resources link
-        $resourcesUrl = Urls::KNOWLEDGE_BASE;
+        // Keep the Resources label; route it to documentation while knowledge base is unavailable.
+        $resourcesUrl = Urls::withCustomUtm(Urls::DOCUMENTATION, [
+            'utm_medium' => 'plugin_action_links',
+            'utm_campaign' => 'notifal_resources',
+            'utm_content' => 'resources_action_link',
+        ]);
         $resourcesLink = sprintf(
             '<a href="%s" target="_blank" rel="noopener noreferrer">%s</a>',
             esc_url($resourcesUrl),
@@ -177,13 +185,13 @@ class SettingsAssetsController
     /**
      * Add row meta links below plugin name
      *
-     * Adds "Free Configuration" for all installs and "Upgrade for Free" when Pro is not installed.
+     * Adds "Setup Wizard" while onboarding is incomplete, and "Upgrade for Free" when Pro is not installed.
      *
      * @param array $links Existing plugin row meta links
      * @param string $file Plugin file name
      * @return array Modified links array
      * @since 2.0.0
-     * @since 2.3.5 Adds Free Configuration row-meta link (Urls::FREE_CONFIGURATION) with plugin_row_meta UTM tracking.
+     * @updated 3.0.0 Replace Free Configuration with Setup Wizard when the wizard is still incomplete.
      */
     public function addPluginRowMeta(array $links, string $file): array
     {
@@ -191,17 +199,20 @@ class SettingsAssetsController
             return $links;
         }
 
-        $free_configuration_url = Urls::withCustomUtm(Urls::FREE_CONFIGURATION, [
-            'utm_medium' => 'plugin_row_meta',
-            'utm_campaign' => 'notifal_free_configuration',
-            'utm_content' => 'free_configuration_row_meta_link',
-        ]);
+        // Resolve wizard completion from the shared state service.
+        $wizardState = new SetupWizardStateService();
 
-        $links[] = sprintf(
-            '<a href="%s" target="_blank" rel="noopener noreferrer" class="notifal-menu-free-configuration">%s</a>',
-            esc_url($free_configuration_url),
-            esc_html__('Free Configuration', 'notifal')
-        );
+        // Offer Setup Wizard only while the guided flow is still incomplete.
+        if ($wizardState->shouldShowMenuItem()) {
+            // Admin URL for the fullscreen Setup Wizard screen.
+            $wizard_url = admin_url('admin.php?page=' . SetupWizardMenuController::PAGE_SLUG);
+
+            $links[] = sprintf(
+                '<a href="%s" class="notifal-menu-setup-wizard">%s</a>',
+                esc_url($wizard_url),
+                esc_html__('Setup Wizard', 'notifal')
+            );
+        }
 
         // Show upgrade CTA only when Pro plugin files are not present on disk (not merely deactivated).
         if (!PluginDetector::isNotifalProInstalled()) {

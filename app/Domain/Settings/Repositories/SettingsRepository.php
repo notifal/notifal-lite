@@ -140,14 +140,17 @@ class SettingsRepository
      */
     public function getDefaults(): array
     {
-        return [
-            SettingsKeys::USER_TAGS_ENABLED => true,
-            SettingsKeys::POST_TAGS_ENABLED => true,
-            SettingsKeys::PAGE_TAGS_ENABLED => true,
-            // SettingsKeys::COMMENT_TAGS_ENABLED => true, // Moved to Notifal Pro
-            SettingsKeys::PRODUCT_TAGS_ENABLED => true,
-            SettingsKeys::ORDER_TAGS_ENABLED => true,
-        ];
+        return array_merge(
+            [
+                SettingsKeys::USER_TAGS_ENABLED => true,
+                SettingsKeys::POST_TAGS_ENABLED => true,
+                SettingsKeys::PAGE_TAGS_ENABLED => true,
+                // SettingsKeys::COMMENT_TAGS_ENABLED => true, // Moved to Notifal Pro
+                SettingsKeys::PRODUCT_TAGS_ENABLED => true,
+                SettingsKeys::ORDER_TAGS_ENABLED => true,
+            ],
+            SettingsKeys::getDefaultFormsSettings()
+        );
     }
 
     /**

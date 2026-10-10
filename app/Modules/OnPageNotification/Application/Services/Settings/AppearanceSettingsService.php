@@ -3,6 +3,7 @@
 namespace Notifal\Modules\OnPageNotification\Application\Services\Settings;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Infrastructure\WordPress\Support\PluginDetector;
 use Notifal\Modules\OnPageNotification\Application\Traits\SettingsServiceTrait;
 use Notifal\Shared\Utils\Helper;
 
@@ -171,7 +172,14 @@ class AppearanceSettingsService
 
             // Select options
             case 'notification_display_type':
-                return $this->sanitizeSelect($value, self::DISPLAY_TYPES, 'toast');
+                // Sanitize against known display types, then block inline without an active Pro license.
+                $displayType = $this->sanitizeSelect($value, self::DISPLAY_TYPES, 'toast');
+
+                if ($displayType === 'inline' && ! self::isInlineDisplayTypeAllowed()) {
+                    return 'toast';
+                }
+
+                return $displayType;
             
             case 'desktop_position':
                 return $this->sanitizeSelect($value, [
@@ -908,11 +916,47 @@ class AppearanceSettingsService
      * @author Hossein <hossein@notifal.com>
      */
     public static function getDisplayTypeOptions(): array {
-        return [
+        // Determine whether inline can be selected (Pro plugin installed with active license).
+        $isInlineAllowed = self::isInlineDisplayTypeAllowed();
+        // Append PRO suffix to upsell label when inline is visible but locked.
+        $inlineProLabel = ! $isInlineAllowed ? ' (PRO)' : '';
+
+        // Build display type options; inline is always listed for discoverability.
+        $options = [
             ['value' => 'toast', 'label' => __('Floating Side Box', 'notifal')],
             ['value' => 'popup', 'label' => __('Popup (Modal)', 'notifal')],
-            ['value' => 'topbar', 'label' => __('Floating Bar (Top Bar)', 'notifal')],
+            ['value' => 'topbar', 'label' => __('Floating Bar', 'notifal')],
+            [
+                'value' => 'inline',
+                'label' => __('Inline (in content)', 'notifal') . $inlineProLabel,
+                'disabled' => ! $isInlineAllowed,
+                'data-pro-feature' => 'inline',
+                'pro_only' => true,
+            ],
         ];
+
+        // Allow Pro or extensions to adjust display type metadata (for example, enable inline).
+        return apply_filters(FilterHooks::ONPAGE_DISPLAY_TYPE_OPTIONS, $options);
+    }
+
+    /**
+     * Whether the inline display type is allowed for the current site.
+     *
+     * Inline requires Notifal Pro to be active with a connected, valid license.
+     *
+     * @return bool True when inline can be selected and saved.
+     * @since 3.0.0
+     * @author Hossein <hossein@notifal.com>
+     */
+    public static function isInlineDisplayTypeAllowed(): bool
+    {
+        // Pro must be installed and booted before license helpers are available.
+        if (! PluginDetector::isNotifalProActive()) {
+            return false;
+        }
+
+        // Delegate license validation to the centralized Pro helper when present.
+        return function_exists('is_notifal_pro_active') && is_notifal_pro_active();
     }
 
     /**

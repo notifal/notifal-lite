@@ -30,6 +30,11 @@ class AdminScreenDetector {
             return true;
         }
 
+        // Addons page under Notifal.
+        if (strpos($screen->id, 'notifal-addons') !== false) {
+            return true;
+        }
+
         // Check for notifal_page in screen ID (submenu pages under Notifal)
         if (strpos($screen->id, 'notifal_page') !== false) {
             return true;

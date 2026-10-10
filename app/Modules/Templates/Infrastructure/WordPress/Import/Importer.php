@@ -3,6 +3,7 @@
 namespace Notifal\Modules\Templates\Infrastructure\WordPress\Import;
 
 use Notifal\Infrastructure\WordPress\Hooks\FilterHooks;
+use Notifal\Modules\Forms\Application\Services\ConnectedFormPortabilityService;
 use Notifal\Shared\Services\MediaImportService;
 use Notifal\Shared\Utils\FileImportHelper;
 use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
@@ -44,10 +45,16 @@ class Importer
     public static function importFromFile(string $filePath): array
     {
         $firstTitle = '';
+        $formWarnings = [];
 
         // Define processor for JSON imports (single template)
-        $jsonProcessor = function ($json) use (&$firstTitle) {
+        $jsonProcessor = function ($json) use (&$firstTitle, &$formWarnings) {
             $result = self::importFromData($json);
+
+            // Collect recoverable form warnings (license limit, addon disabled).
+            if (!empty($result['form_warnings']) && is_array($result['form_warnings'])) {
+                $formWarnings = array_merge($formWarnings, $result['form_warnings']);
+            }
 
             // Extract title for response metadata on success
             if ($result['success'] && isset($json['title'])) {
@@ -58,8 +65,13 @@ class Importer
         };
 
         // Define processor for ZIP imports (multiple templates with bundled media)
-        $zipProcessor = function ($jsonData, $bundledMedia = []) use (&$firstTitle) {
+        $zipProcessor = function ($jsonData, $bundledMedia = []) use (&$firstTitle, &$formWarnings) {
             $result = self::importFromData($jsonData, $bundledMedia);
+
+            // Collect recoverable form warnings across ZIP entries.
+            if (!empty($result['form_warnings']) && is_array($result['form_warnings'])) {
+                $formWarnings = array_merge($formWarnings, $result['form_warnings']);
+            }
 
             // Extract title from first successful import for response metadata
             if (empty($firstTitle) && $result['success'] && isset($jsonData['title'])) {
@@ -75,6 +87,11 @@ class Importer
         // Add template-specific metadata
         $result['first_title'] = $firstTitle;
 
+        // Deduplicate warnings so the UI can offer a clear try-again message.
+        if ($formWarnings !== []) {
+            $result['form_warnings'] = array_values(array_unique($formWarnings));
+        }
+
         // Apply filter for extensibility
         return apply_filters(FilterHooks::TEMPLATE_IMPORT_RESULT, $result, $filePath);
     }
@@ -85,8 +102,10 @@ class Importer
      * Performs validation, duplicate detection, and creates or updates
      * template posts based on content hash. Supports bundled media files
      * for marketplace imports where source URLs may not be accessible.
+     * Recreates connected Form CPTs and remaps data-form-id on new templates.
      *
      * @since 2.0.0
+     * @updated 3.0.0 Import connected forms and return form_warnings when needed.
      * @param array $data Template data array with 'builder' and 'content' keys.
      * @param array $bundledMedia Map of bundled path => temp file path for bundled media.
      * @return array Array with 'success' boolean and 'error' string if failed.
@@ -235,9 +254,11 @@ class Importer
      * Create new template from validated import data.
      *
      * Handles both URL-based media imports (from live servers) and bundled media
-     * imports (from marketplace ZIP packages).
+     * imports (from marketplace ZIP packages). Recreates connected Form CPTs and
+     * remaps data-form-id in template content before save.
      *
      * @since 2.0.0
+     * @updated 3.0.0 Import connected Form CPTs and reassign data-form-id.
      * @param array $templateData Validated template data.
      * @param array $bundledMedia Map of bundled path => temp file path for marketplace imports.
      * @return array Array with 'success' boolean, 'template_id' int or 'error' string.
@@ -293,11 +314,17 @@ class Importer
         // Pass bundled media for marketplace imports (bundled files take priority over URL downloads)
         $templateData = MediaImportService::importMediaAndUpdateData($templateData, $builder, $bundledMedia);
 
+        // Recreate connected Form CPTs and rewrite data-form-id before content save.
+        $formImport = self::importConnectedForms($templateData);
+        $templateData['content'] = $formImport['content'];
+
         // Save content based on builder type
         $contentResult = self::saveTemplateContent($postId, $builder, $templateData['content']);
         if (!$contentResult['success']) {
             // Clean up post on content save failure
             wp_delete_post($postId, true);
+            // Also remove forms created for this failed template to avoid orphans.
+            self::rollbackImportedForms($formImport['created']);
             return $contentResult;
         }
 
@@ -310,10 +337,74 @@ class Importer
         $contentHash = md5(serialize($templateData['content']));
         update_post_meta($postId, '_notifal_content_hash', $contentHash);
 
-        return [
+        $result = [
             'success' => true,
-            'template_id' => $postId
+            'template_id' => $postId,
+            'form_ids' => $formImport['created'],
         ];
+
+        // Surface recoverable form warnings so the merchant can retry after upgrading.
+        if (!empty($formImport['warnings'])) {
+            $result['form_warnings'] = $formImport['warnings'];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Import connected Form CPTs from export payload and remap template content.
+     *
+     * @since 3.0.0
+     * @param array $templateData Template export data (may include forms[]).
+     * @return array{
+     *     content: mixed,
+     *     created: int[],
+     *     warnings: string[]
+     * }
+     */
+    private static function importConnectedForms(array $templateData): array
+    {
+        $content = $templateData['content'] ?? '';
+        $forms = isset($templateData['forms']) && is_array($templateData['forms'])
+            ? $templateData['forms']
+            : [];
+
+        // Older exports without forms[] keep content unchanged.
+        if ($forms === []) {
+            return [
+                'content'  => $content,
+                'created'  => [],
+                'warnings' => [],
+            ];
+        }
+
+        $portability = ConnectedFormPortabilityService::createDefault();
+        $imported = $portability->importFormsAndRemapContent($forms, $content);
+
+        return [
+            'content'  => $imported['content'],
+            'created'  => $imported['created'],
+            'warnings' => $imported['warnings'],
+        ];
+    }
+
+    /**
+     * Delete Form CPTs created during a failed template import.
+     *
+     * @since 3.0.0
+     * @param int[] $formIds Form post IDs created for this import attempt.
+     * @return void
+     */
+    private static function rollbackImportedForms(array $formIds): void
+    {
+        foreach ($formIds as $formId) {
+            $formId = absint($formId);
+            if ($formId <= 0 || get_post_type($formId) !== 'notifal_form') {
+                continue;
+            }
+
+            wp_delete_post($formId, true);
+        }
     }
 
     /**

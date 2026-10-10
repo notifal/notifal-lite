@@ -2,6 +2,7 @@
 
 namespace Notifal\Domain\Settings\Services;
 
+use Notifal\Core\Modules\ModuleRegistry;
 use Notifal\Domain\Settings\Constants\SettingsKeys;
 use Notifal\Shared\Utils\Helper;
 
@@ -50,13 +51,116 @@ class SettingsSanitizationService
     {
         $sanitized = [];
 
-        // Sanitize core and plugin-dependent tag category settings
-        foreach (SettingsKeys::getTagKeys() as $key) {
-            $sanitized[$key] = isset($input[$key]) && $input[$key] === '1';
+        // Determine which settings tab is being saved to avoid wiping other tabs.
+        $tab = isset($input['settings_tab'])
+            ? sanitize_key((string) wp_unslash($input['settings_tab']))
+            : '';
+
+        // Legacy requests without a tab still target Tags.
+        if ($tab === '' || $tab === 'tags') {
+            // Sanitize core and plugin-dependent tag category settings.
+            foreach (SettingsKeys::getTagKeys() as $key) {
+                $sanitized[$key] = isset($input[$key]) && (string) $input[$key] === '1';
+            }
+
+            // Sanitize custom post type tag settings dynamically.
+            $this->sanitizeCustomPostTypeTagSettings($input, $sanitized);
         }
 
-        // Sanitize custom post type tag settings dynamically
-        $this->sanitizeCustomPostTypeTagSettings($input, $sanitized);
+        // Forms tab: captcha, rate limit, honeypot, default email (module toggle lives on Modules page).
+        if ($tab === 'forms') {
+            $sanitized = array_merge($sanitized, $this->sanitizeFormsSettingsInput($input));
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize module toggle input from the Modules admin page.
+     *
+     * @param array<string, mixed> $input Raw POST data.
+     * @return array<string, bool>
+     * @since 3.0.0
+     */
+    public function sanitizeModulesSettingsInput(array $input): array
+    {
+        $sanitized = [];
+
+        // Only accept keys registered for available modules.
+        foreach (ModuleRegistry::getToggleableSettingKeys() as $settingsKey) {
+            $sanitized[$settingsKey] = isset($input[$settingsKey])
+                && (string) $input[$settingsKey] === '1';
+        }
+
+        return $sanitized;
+    }
+
+    /**
+     * Sanitize Forms tab settings input.
+     *
+     * Empty captcha secret does not wipe an existing secret unless clear flag is set.
+     *
+     * @param array<string, mixed> $input Raw input.
+     * @return array<string, mixed>
+     * @since 3.0.0
+     */
+    private function sanitizeFormsSettingsInput(array $input): array
+    {
+        $sanitized = [];
+
+        // Honeypot is a checkbox (unchecked means off).
+        $sanitized[SettingsKeys::FORMS_HONEYPOT_ENABLED] = isset($input[SettingsKeys::FORMS_HONEYPOT_ENABLED])
+            && (string) $input[SettingsKeys::FORMS_HONEYPOT_ENABLED] === '1';
+
+        // Rate limit numeric bounds.
+        $max = isset($input[SettingsKeys::FORMS_RATE_LIMIT_MAX])
+            ? absint($input[SettingsKeys::FORMS_RATE_LIMIT_MAX])
+            : 5;
+        $sanitized[SettingsKeys::FORMS_RATE_LIMIT_MAX] = max(1, min(100, $max));
+
+        $window = isset($input[SettingsKeys::FORMS_RATE_LIMIT_WINDOW])
+            ? absint($input[SettingsKeys::FORMS_RATE_LIMIT_WINDOW])
+            : 300;
+        $sanitized[SettingsKeys::FORMS_RATE_LIMIT_WINDOW] = max(30, min(86400, $window));
+
+        // Captcha provider allowlist.
+        $provider = isset($input[SettingsKeys::FORMS_CAPTCHA_PROVIDER])
+            ? sanitize_key((string) wp_unslash($input[SettingsKeys::FORMS_CAPTCHA_PROVIDER]))
+            : 'none';
+        $allowedProviders = [
+            'none',
+            'google_recaptcha_v2',
+            'google_recaptcha_v3',
+            'cloudflare_turnstile',
+        ];
+        $sanitized[SettingsKeys::FORMS_CAPTCHA_PROVIDER] = in_array($provider, $allowedProviders, true)
+            ? $provider
+            : 'none';
+
+        // Public site key.
+        $siteKey = isset($input[SettingsKeys::FORMS_CAPTCHA_SITE_KEY])
+            ? sanitize_text_field(wp_unslash((string) $input[SettingsKeys::FORMS_CAPTCHA_SITE_KEY]))
+            : '';
+        $sanitized[SettingsKeys::FORMS_CAPTCHA_SITE_KEY] = $siteKey;
+
+        // Secret: write-only; empty keeps existing unless explicit clear.
+        $clearSecret = isset($input['forms_captcha_secret_clear'])
+            && (string) $input['forms_captcha_secret_clear'] === '1';
+        $secretRaw = isset($input[SettingsKeys::FORMS_CAPTCHA_SECRET_KEY])
+            ? sanitize_text_field(wp_unslash((string) $input[SettingsKeys::FORMS_CAPTCHA_SECRET_KEY]))
+            : '';
+
+        if ($clearSecret) {
+            $sanitized[SettingsKeys::FORMS_CAPTCHA_SECRET_KEY] = '';
+        } elseif ($secretRaw !== '') {
+            $sanitized[SettingsKeys::FORMS_CAPTCHA_SECRET_KEY] = $secretRaw;
+        }
+
+        // Default admin email for submissions.
+        $email = isset($input[SettingsKeys::FORMS_DEFAULT_ADMIN_EMAIL])
+            ? sanitize_email(wp_unslash((string) $input[SettingsKeys::FORMS_DEFAULT_ADMIN_EMAIL]))
+            : '';
+        $sanitized[SettingsKeys::FORMS_DEFAULT_ADMIN_EMAIL] = is_email($email) ? $email : '';
 
         return $sanitized;
     }

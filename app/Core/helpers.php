@@ -3,6 +3,73 @@ defined('ABSPATH') || exit;
 use Notifal\Core\Foundation\Container;
 use Notifal\Core\View\ViewRenderer;
 
+/*
+ * PHP 8.0 string helpers for PHP 7.4 runtimes.
+ * WordPress 5.9+ ships the same polyfills; we define them when missing so
+ * Notifal never fatals on PHP 7.4 regardless of load order or WP version.
+ *
+ * @since 3.0.0
+ */
+if (!function_exists('str_contains')) {
+    /**
+     * Polyfill for str_contains().
+     *
+     * @param string $haystack String to search in.
+     * @param string $needle   Substring to search for.
+     * @return bool
+     * @since 3.0.0
+     */
+    function str_contains($haystack, $needle)
+    {
+        // Match PHP 8 behavior: empty needle is always found.
+        return '' === $needle || false !== strpos((string) $haystack, (string) $needle);
+    }
+}
+
+if (!function_exists('str_starts_with')) {
+    /**
+     * Polyfill for str_starts_with().
+     *
+     * @param string $haystack String to inspect.
+     * @param string $needle   Expected prefix.
+     * @return bool
+     * @since 3.0.0
+     */
+    function str_starts_with($haystack, $needle)
+    {
+        $haystack = (string) $haystack;
+        $needle = (string) $needle;
+
+        // Match PHP 8 behavior: empty needle is always a valid prefix.
+        return '' === $needle || 0 === strncmp($haystack, $needle, strlen($needle));
+    }
+}
+
+if (!function_exists('str_ends_with')) {
+    /**
+     * Polyfill for str_ends_with().
+     *
+     * @param string $haystack String to inspect.
+     * @param string $needle   Expected suffix.
+     * @return bool
+     * @since 3.0.0
+     */
+    function str_ends_with($haystack, $needle)
+    {
+        $haystack = (string) $haystack;
+        $needle = (string) $needle;
+
+        // Match PHP 8 behavior: empty needle is always a valid suffix.
+        if ('' === $needle) {
+            return true;
+        }
+
+        $needleLength = strlen($needle);
+
+        return substr($haystack, -$needleLength) === $needle;
+    }
+}
+
 if (! function_exists('notifal_app')) {
     /**
      * Resolve a service from Notifal container.

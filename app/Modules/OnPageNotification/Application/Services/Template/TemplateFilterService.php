@@ -98,24 +98,26 @@ class TemplateFilterService
         // When offset > 0 (load more), do not prepend selected template — it was already sent on the first page.
         $prependSelected = ($offset === 0);
 
-        // First, check if selected template exists and belongs to this builder (only prepend on first page)
+        // Always prepend the currently selected template on the first page so the
+        // assigned template stays visible even when static/dynamic filter would hide it.
         if ($prependSelected && $selectedTemplateId > 0) {
             $selectedPost = TemplateQuery::get($selectedTemplateId);
-            if ($selectedPost && self::templateBelongsToBuilder($selectedPost, $builder) && TemplateQuery::hasTemplateContent($selectedPost, $builder)) {
-                $hasNotifalTags = TemplateQuery::hasNotifalTags($selectedPost, $builder);
-
-                // Check if selected template matches the content source type
-                $matchesType = ($contentSourceType === 'static' && !$hasNotifalTags) ||
-                              ($contentSourceType === 'dynamic' && $hasNotifalTags);
-
-                if ($matchesType) {
-                    $selectedTemplate = $selectedPost;
-                    $filteredTemplates[] = $selectedPost;
-                }
+            if (
+                $selectedPost
+                && self::templateBelongsToBuilder($selectedPost, $builder)
+                && TemplateQuery::hasTemplateContent($selectedPost, $builder)
+            ) {
+                $selectedTemplate = $selectedPost;
+                $filteredTemplates[] = $selectedPost;
             }
         } elseif ($selectedTemplateId > 0) {
+            // Track the selected template on later pages so it is not duplicated in the list.
             $selectedPost = TemplateQuery::get($selectedTemplateId);
-            if ($selectedPost && self::templateBelongsToBuilder($selectedPost, $builder) && TemplateQuery::hasTemplateContent($selectedPost, $builder)) {
+            if (
+                $selectedPost
+                && self::templateBelongsToBuilder($selectedPost, $builder)
+                && TemplateQuery::hasTemplateContent($selectedPost, $builder)
+            ) {
                 $selectedTemplate = $selectedPost;
             }
         }

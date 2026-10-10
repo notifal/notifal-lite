@@ -91,6 +91,8 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
 
                     <!-- Settings Form -->
                     <form method="post" class="notifal-settings-form">
+                        <!-- Identify tab so sanitize only updates Tags keys. -->
+                        <input type="hidden" name="settings_tab" value="tags" />
                         <!-- AJAX handling - no action needed -->
 
                         <!-- Core WordPress Tags -->
@@ -524,6 +526,292 @@ use Notifal\Infrastructure\WordPress\Hooks\ActionHooks;
                                     id="notifal-reset-settings">
                                 <span class="notifal-icon notifal-icon-arrow-repeat"></span>
                                 <?php echo esc_html__('Reset to Defaults', 'notifal'); ?>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        <?php elseif ($current_tab === 'forms'): ?>
+            <?php
+            // Forms settings with safe defaults for the view.
+            $forms_settings = isset($forms_settings) && is_array($forms_settings)
+                ? $forms_settings
+                : \Notifal\Domain\Settings\Constants\SettingsKeys::getDefaultFormsSettings();
+            // Coerce booleans for checked() helpers.
+            $forms_honeypot = !empty($forms_settings['forms_honeypot_enabled']);
+            // Rate limit integers with sane fallbacks.
+            $forms_rate_max = isset($forms_settings['forms_rate_limit_max'])
+                ? (int) $forms_settings['forms_rate_limit_max']
+                : 5;
+            $forms_rate_window = isset($forms_settings['forms_rate_limit_window'])
+                ? (int) $forms_settings['forms_rate_limit_window']
+                : 300;
+            // Captcha provider and keys (secret never echoed back).
+            $forms_captcha_provider = isset($forms_settings['forms_captcha_provider'])
+                ? (string) $forms_settings['forms_captcha_provider']
+                : 'none';
+            $forms_site_key = isset($forms_settings['forms_captcha_site_key'])
+                ? (string) $forms_settings['forms_captcha_site_key']
+                : '';
+            $forms_has_secret = !empty($forms_settings['forms_captcha_secret_key']);
+            $forms_admin_email = isset($forms_settings['forms_default_admin_email'])
+                ? (string) $forms_settings['forms_default_admin_email']
+                : '';
+            // Keys row is only needed when a provider is selected.
+            $forms_captcha_keys_visible = ($forms_captcha_provider !== 'none');
+            ?>
+            <div class="notifal-tab-panel" id="notifal-forms-panel">
+                <div class="notifal-settings-section notifal-forms-settings">
+                    <h2 class="notifal-section-title">
+                        <?php echo esc_html__('Forms', 'notifal'); ?>
+                    </h2>
+                    <p class="notifal-section-description">
+                        <?php echo esc_html__('Tune spam protection and configure captcha keys used by all forms. Enable or disable the Forms addon from Addons.', 'notifal'); ?>
+                    </p>
+
+                    <form method="post" class="notifal-settings-form" id="notifal-forms-settings-form">
+                        <!-- Tab scope so sanitize only updates Forms keys. -->
+                        <input type="hidden" name="settings_tab" value="forms" />
+
+                        <!-- Honeypot + rate limit -->
+                        <div class="notifal-settings-group notifal-forms-group">
+                            <h3 class="notifal-group-title">
+                                <?php echo esc_html__('Spam protection', 'notifal'); ?>
+                            </h3>
+                            <div class="notifal-forms-row notifal-forms-row--toggle">
+                                <label class="notifal-forms-toggle" for="forms_honeypot_enabled">
+                                    <input type="checkbox"
+                                           id="forms_honeypot_enabled"
+                                           name="forms_honeypot_enabled"
+                                           value="1"
+                                           <?php checked($forms_honeypot); ?>
+                                           class="notifal-setting-checkbox">
+                                    <span class="notifal-forms-toggle__body">
+                                        <span class="notifal-setting-title">
+                                            <?php echo esc_html__('Honeypot protection', 'notifal'); ?>
+                                        </span>
+                                        <span class="notifal-forms-help">
+                                            <?php echo esc_html__('Adds a hidden field bots tend to fill. Those submissions succeed quietly without storing data.', 'notifal'); ?>
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="notifal-forms-fields notifal-forms-fields--2">
+                                <div class="notifal-forms-field">
+                                    <label class="notifal-forms-label" for="forms_rate_limit_max">
+                                        <?php echo esc_html__('Max submissions', 'notifal'); ?>
+                                    </label>
+                                    <input type="number"
+                                           id="forms_rate_limit_max"
+                                           name="forms_rate_limit_max"
+                                           min="1"
+                                           max="100"
+                                           value="<?php echo esc_attr((string) $forms_rate_max); ?>"
+                                           class="notifal-setting-input">
+                                    <p class="notifal-forms-help">
+                                        <?php echo esc_html__('Successful attempts per visitor (IP hash) inside the window.', 'notifal'); ?>
+                                    </p>
+                                </div>
+                                <div class="notifal-forms-field">
+                                    <label class="notifal-forms-label" for="forms_rate_limit_window">
+                                        <?php echo esc_html__('Window (seconds)', 'notifal'); ?>
+                                    </label>
+                                    <input type="number"
+                                           id="forms_rate_limit_window"
+                                           name="forms_rate_limit_window"
+                                           min="30"
+                                           max="86400"
+                                           value="<?php echo esc_attr((string) $forms_rate_window); ?>"
+                                           class="notifal-setting-input">
+                                    <p class="notifal-forms-help">
+                                        <?php echo esc_html__('How long the rate-limit window lasts (30-86400).', 'notifal'); ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Captcha: provider + keys (keys for Google and Cloudflare Turnstile) -->
+                        <div class="notifal-settings-group notifal-forms-group">
+                            <h3 class="notifal-group-title">
+                                <?php echo esc_html__('Captcha', 'notifal'); ?>
+                            </h3>
+                            <p class="notifal-group-description">
+                                <?php echo esc_html__('Google reCAPTCHA and Cloudflare Turnstile both use a public site key and a private secret key from their dashboards.', 'notifal'); ?>
+                            </p>
+                            <div class="notifal-forms-field">
+                                <label class="notifal-forms-label" for="forms_captcha_provider">
+                                    <?php echo esc_html__('Provider', 'notifal'); ?>
+                                </label>
+                                <select id="forms_captcha_provider"
+                                        name="forms_captcha_provider"
+                                        class="notifal-setting-select"
+                                        data-notifal-forms-captcha-provider>
+                                    <option value="none" <?php selected($forms_captcha_provider, 'none'); ?>>
+                                        <?php echo esc_html__('None', 'notifal'); ?>
+                                    </option>
+                                    <option value="google_recaptcha_v2" <?php selected($forms_captcha_provider, 'google_recaptcha_v2'); ?>>
+                                        <?php echo esc_html__('Google reCAPTCHA v2', 'notifal'); ?>
+                                    </option>
+                                    <option value="google_recaptcha_v3" <?php selected($forms_captcha_provider, 'google_recaptcha_v3'); ?>>
+                                        <?php echo esc_html__('Google reCAPTCHA v3', 'notifal'); ?>
+                                    </option>
+                                    <option value="cloudflare_turnstile" <?php selected($forms_captcha_provider, 'cloudflare_turnstile'); ?>>
+                                        <?php echo esc_html__('Cloudflare Turnstile', 'notifal'); ?>
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="notifal-forms-captcha-keys"
+                                 data-notifal-forms-captcha-keys
+                                 <?php echo $forms_captcha_keys_visible ? '' : ' hidden'; ?>>
+                                <?php
+                                // Official dashboards where admins create site + secret keys.
+                                $google_recaptcha_admin_url = 'https://www.google.com/recaptcha/admin';
+                                $cloudflare_turnstile_url = 'https://dash.cloudflare.com/?to=/:account/turnstile';
+                                $google_guide_visible = (
+                                    $forms_captcha_provider === 'google_recaptcha_v2'
+                                    || $forms_captcha_provider === 'google_recaptcha_v3'
+                                );
+                                $turnstile_guide_visible = ($forms_captcha_provider === 'cloudflare_turnstile');
+                                ?>
+                                <div class="notifal-forms-captcha-guide<?php echo $google_guide_visible ? '' : ' notifal-hidden'; ?>"
+                                     data-notifal-forms-captcha-guide="google"
+                                     <?php echo $google_guide_visible ? '' : 'hidden'; ?>>
+                                    <p class="notifal-forms-captcha-guide__title">
+                                        <?php echo esc_html__('How to get Google reCAPTCHA keys', 'notifal'); ?>
+                                    </p>
+                                    <ol class="notifal-forms-captcha-guide__list">
+                                        <li>
+                                            <?php
+                                            echo wp_kses(
+                                                sprintf(
+                                                    /* translators: 1: opening anchor tag, 2: closing anchor tag */
+                                                    __('Open the %1$sGoogle reCAPTCHA admin%2$s and sign in with your Google account.', 'notifal'),
+                                                    '<a href="' . esc_url($google_recaptcha_admin_url) . '" target="_blank" rel="noopener noreferrer">',
+                                                    '</a>'
+                                                ),
+                                                [
+                                                    'a' => [
+                                                        'href'   => true,
+                                                        'target' => true,
+                                                        'rel'    => true,
+                                                    ],
+                                                ]
+                                            );
+                                            ?>
+                                        </li>
+                                        <li>
+                                            <?php echo esc_html__('Click the plus (+) to register a new site, then choose reCAPTCHA v2 ("I\'m not a robot" Checkbox) or reCAPTCHA v3 to match the provider above.', 'notifal'); ?>
+                                        </li>
+                                        <li>
+                                            <?php echo esc_html__('Add your website domain, submit, then copy the Site key and Secret key into the fields below.', 'notifal'); ?>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="notifal-forms-captcha-guide<?php echo $turnstile_guide_visible ? '' : ' notifal-hidden'; ?>"
+                                     data-notifal-forms-captcha-guide="turnstile"
+                                     <?php echo $turnstile_guide_visible ? '' : 'hidden'; ?>>
+                                    <p class="notifal-forms-captcha-guide__title">
+                                        <?php echo esc_html__('How to get Cloudflare Turnstile keys', 'notifal'); ?>
+                                    </p>
+                                    <ol class="notifal-forms-captcha-guide__list">
+                                        <li>
+                                            <?php
+                                            echo wp_kses(
+                                                sprintf(
+                                                    /* translators: 1: opening anchor tag, 2: closing anchor tag */
+                                                    __('Open %1$sCloudflare Turnstile%2$s in the Cloudflare dashboard and sign in.', 'notifal'),
+                                                    '<a href="' . esc_url($cloudflare_turnstile_url) . '" target="_blank" rel="noopener noreferrer">',
+                                                    '</a>'
+                                                ),
+                                                [
+                                                    'a' => [
+                                                        'href'   => true,
+                                                        'target' => true,
+                                                        'rel'    => true,
+                                                    ],
+                                                ]
+                                            );
+                                            ?>
+                                        </li>
+                                        <li>
+                                            <?php echo esc_html__('Create a new widget, add your website domain, then choose a widget mode that fits your site.', 'notifal'); ?>
+                                        </li>
+                                        <li>
+                                            <?php echo esc_html__('Copy the Site key and Secret key from the widget details into the fields below.', 'notifal'); ?>
+                                        </li>
+                                    </ol>
+                                </div>
+                                <div class="notifal-forms-fields notifal-forms-fields--2">
+                                    <div class="notifal-forms-field">
+                                        <label class="notifal-forms-label" for="forms_captcha_site_key">
+                                            <?php echo esc_html__('Site key', 'notifal'); ?>
+                                        </label>
+                                        <input type="text"
+                                               id="forms_captcha_site_key"
+                                               name="forms_captcha_site_key"
+                                               value="<?php echo esc_attr($forms_site_key); ?>"
+                                               class="notifal-setting-input"
+                                               autocomplete="off"
+                                               data-notifal-forms-site-key>
+                                        <p class="notifal-forms-help" data-notifal-forms-site-key-help>
+                                            <?php echo esc_html__('Public key shown in the widget (Google site key or Cloudflare Turnstile site key).', 'notifal'); ?>
+                                        </p>
+                                    </div>
+                                    <div class="notifal-forms-field">
+                                        <label class="notifal-forms-label" for="forms_captcha_secret_key">
+                                            <?php echo esc_html__('Secret key', 'notifal'); ?>
+                                        </label>
+                                        <input type="password"
+                                               id="forms_captcha_secret_key"
+                                               name="forms_captcha_secret_key"
+                                               value=""
+                                               placeholder="<?php echo $forms_has_secret
+                                                   ? esc_attr__('Secret saved (leave blank to keep)', 'notifal')
+                                                   : esc_attr__('Enter secret key', 'notifal'); ?>"
+                                               class="notifal-setting-input"
+                                               autocomplete="new-password">
+                                        <p class="notifal-forms-help">
+                                            <?php echo esc_html__('Private key used only on the server for verification. Never put this in template HTML.', 'notifal'); ?>
+                                        </p>
+                                        <label class="notifal-forms-inline-check" for="forms_captcha_secret_clear">
+                                            <input type="checkbox"
+                                                   id="forms_captcha_secret_clear"
+                                                   name="forms_captcha_secret_clear"
+                                                   value="1"
+                                                   class="notifal-setting-checkbox">
+                                            <span><?php echo esc_html__('Clear saved secret', 'notifal'); ?></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notification defaults (separate from captcha) -->
+                        <div class="notifal-settings-group notifal-forms-group">
+                            <h3 class="notifal-group-title">
+                                <?php echo esc_html__('Notifications', 'notifal'); ?>
+                            </h3>
+                            <div class="notifal-forms-field notifal-forms-field--max">
+                                <label class="notifal-forms-label" for="forms_default_admin_email">
+                                    <?php echo esc_html__('Default admin email', 'notifal'); ?>
+                                </label>
+                                <input type="email"
+                                       id="forms_default_admin_email"
+                                       name="forms_default_admin_email"
+                                       value="<?php echo esc_attr($forms_admin_email); ?>"
+                                       class="notifal-setting-input"
+                                       placeholder="<?php echo esc_attr((string) get_option('admin_email')); ?>">
+                                <p class="notifal-forms-help">
+                                    <?php echo esc_html__('Used when a Form does not set its own admin notification address. Leave blank to use the WordPress admin email.', 'notifal'); ?>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="notifal-form-actions">
+                            <button type="submit" class="notifal-button notifal-save-button" id="notifal-save-settings">
+                                <span class="notifal-icon notifal-icon-check"></span>
+                                <?php echo esc_html__('Save Settings', 'notifal'); ?>
                             </button>
                         </div>
                     </form>
