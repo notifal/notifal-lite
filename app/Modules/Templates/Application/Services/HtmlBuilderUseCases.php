@@ -9,8 +9,11 @@ defined('ABSPATH') || exit;
 /**
  * Use case options for the HTML Builder AI prompt helper.
  *
+ * Shared by OnPage AI modal, HTML Builder AI, and Setup Wizard build-own.
+ *
  * @since 2.4.1
  * @updated 3.0.0 Add product-recommendation-quiz use case.
+ * @updated 3.0.1 Add collect-feedback, events-webinars, announcements, gamification; quiz icon.
  * @author Hossein <hossein@notifal.com>
  */
 class HtmlBuilderUseCases
@@ -21,6 +24,7 @@ class HtmlBuilderUseCases
      * @return array<int, array{slug: string, label: string, description: string, icon: string}>
      * @since 2.4.1
      * @updated 3.0.0 Add product-recommendation-quiz use case.
+     * @updated 3.0.1 Add collect-feedback, events-webinars, announcements, gamification; quiz icon.
      */
     public static function getOptions(): array
     {
@@ -45,10 +49,34 @@ class HtmlBuilderUseCases
                 'icon'        => 'megaphone-fill',
             ),
             array(
+                'slug'        => 'collect-feedback',
+                'label'       => __('Collect Feedback', 'notifal'),
+                'description' => __('Ask for ratings, NPS, reviews, or short survey answers so you can improve products and support with real visitor input.', 'notifal'),
+                'icon'        => 'hand-thumbs-feedback',
+            ),
+            array(
                 'slug'        => 'product-recommendation-quiz',
                 'label'       => __('Product Recommendation Quiz', 'notifal'),
                 'description' => __('Ask a few preference questions, then recommend the best-fit product, also known as a product finder or guided selling quiz.', 'notifal'),
-                'icon'        => 'ui-checks',
+                'icon'        => 'product-recommendation-quiz',
+            ),
+            array(
+                'slug'        => 'events-webinars',
+                'label'       => __('Events & Webinars', 'notifal'),
+                'description' => __('Promote upcoming events, webinars, and workshops with registration prompts timed to keep seats filling.', 'notifal'),
+                'icon'        => 'play-circle',
+            ),
+            array(
+                'slug'        => 'announcements',
+                'label'       => __('Announcements', 'notifal'),
+                'description' => __('Share product launches, policy updates, shipping news, and important site messages without burying them in a blog post.', 'notifal'),
+                'icon'        => 'megaphone',
+            ),
+            array(
+                'slug'        => 'gamification',
+                'label'       => __('Gamification', 'notifal'),
+                'description' => __('Boost engagement with spin-to-win, scratch cards, challenges, and reward prompts that make taking action feel fun.', 'notifal'),
+                'icon'        => 'crown',
             ),
             array(
                 'slug'        => 'boost-engagement',
@@ -105,6 +133,7 @@ class HtmlBuilderUseCases
          *
          * @since 2.4.1
          * @updated 3.0.0 Added icon keys for luxury option-card UIs.
+         * @updated 3.0.1 Extended default goal set with feedback, events, announcements, and gamification.
          *
          * @param array<int, array{slug: string, label: string, description: string, icon: string}> $options Use case rows.
          */

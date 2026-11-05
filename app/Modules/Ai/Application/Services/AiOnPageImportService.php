@@ -2,9 +2,11 @@
 
 namespace Notifal\Modules\Ai\Application\Services;
 
+use Notifal\Modules\Forms\Application\Services\ConnectedFormPortabilityService;
 use Notifal\Modules\OnPageNotification\Infrastructure\WordPress\Import\Importer;
 use Notifal\Modules\Templates\Application\Services\TemplateBuilderDetector;
 use Notifal\Modules\Templates\Application\Services\TemplateUrlService;
+use WP_Post;
 
 defined('ABSPATH') || exit;
 
@@ -13,6 +15,8 @@ defined('ABSPATH') || exit;
  *
  * @since 3.0.0
  * @updated 3.0.0 Reuse Form CPT binds and expose skip_reason when free limit blocks create.
+ * @updated 3.0.1 Prefer template.forms[] portability remap before save and return remapped HTML.
+ * @updated 3.0.1 Remap/bind forms before HTML sanitize so portable ids are not unbound first.
  * @author Hossein <hossein@notifal.com>
  */
 class AiOnPageImportService
@@ -82,27 +86,74 @@ class AiOnPageImportService
             isset($document['notification']['template']['content'])
             && is_string($document['notification']['template']['content'])
         ) {
-            $sanitized = $this->sanitizer->sanitizeHtml($document['notification']['template']['content']);
-            $templateHtml = $sanitized['content'];
+            $rawContent = (string) $document['notification']['template']['content'];
 
-            // Create Form CPTs for data-form-id="0" roots before the importer stores HTML.
+            // Read portable forms bundle before sanitize. Sanitize used to delete
+            // portable data-form-id roots (missing local CPT), so remap must run first.
+            $formsBundle = (
+                isset($document['notification']['template']['forms'])
+                && is_array($document['notification']['template']['forms'])
+            ) ? $document['notification']['template']['forms'] : [];
+
             $notificationTitle = sanitize_text_field(
                 (string) ($document['notification']['title'] ?? '')
             );
-            $formBind = $this->formAutoConnect->connectUnboundForms(
-                $templateHtml,
-                $notificationTitle
-            );
-            $templateHtml = $formBind['html'];
-            $formsConnected = (int) $formBind['connected'];
-            $formsReused = (int) ($formBind['reused'] ?? 0);
-            $formsSkipped = (int) $formBind['skipped'];
-            $formsFailed = (int) $formBind['failed'];
-            $formsInjected = !empty($formBind['injected']);
-            $formsSkipReason = sanitize_key((string) ($formBind['skip_reason'] ?? ''));
-            $connectedFormIds = is_array($formBind['form_ids'] ?? null)
-                ? array_map('absint', $formBind['form_ids'])
-                : [];
+            $templateHtml = $rawContent;
+
+            if ($formsBundle !== []) {
+                // Recreate Form CPTs and remap portable data-form-id values before sanitize.
+                $portability = ConnectedFormPortabilityService::createDefault();
+                $portableImport = $portability->importFormsAndRemapContent($formsBundle, $templateHtml);
+                $templateHtml = is_string($portableImport['content'] ?? null)
+                    ? (string) $portableImport['content']
+                    : $templateHtml;
+                $connectedFormIds = array_values(
+                    array_filter(array_map('absint', (array) ($portableImport['created'] ?? [])))
+                );
+                $formsConnected = count($connectedFormIds);
+
+                // Prevent the nested template importer from creating duplicate Form CPTs.
+                $document['notification']['template']['forms'] = [];
+
+                // Bind any leftover unbound/orphan roots after portability remap.
+                $formBind = $this->formAutoConnect->connectUnboundForms(
+                    $templateHtml,
+                    $notificationTitle
+                );
+                $templateHtml = $formBind['html'];
+                $formsConnected += (int) $formBind['connected'];
+                $formsReused = (int) ($formBind['reused'] ?? 0);
+                $formsSkipped = (int) $formBind['skipped'];
+                $formsFailed = (int) $formBind['failed'];
+                $formsInjected = !empty($formBind['injected']);
+                $formsSkipReason = sanitize_key((string) ($formBind['skip_reason'] ?? ''));
+                foreach ((array) ($formBind['form_ids'] ?? []) as $boundId) {
+                    $boundId = absint($boundId);
+                    if ($boundId > 0 && !in_array($boundId, $connectedFormIds, true)) {
+                        $connectedFormIds[] = $boundId;
+                    }
+                }
+            } else {
+                // No forms bundle: create Form CPTs for unbound or orphan placeholder roots.
+                $formBind = $this->formAutoConnect->connectUnboundForms(
+                    $templateHtml,
+                    $notificationTitle
+                );
+                $templateHtml = $formBind['html'];
+                $formsConnected = (int) $formBind['connected'];
+                $formsReused = (int) ($formBind['reused'] ?? 0);
+                $formsSkipped = (int) $formBind['skipped'];
+                $formsFailed = (int) $formBind['failed'];
+                $formsInjected = !empty($formBind['injected']);
+                $formsSkipReason = sanitize_key((string) ($formBind['skip_reason'] ?? ''));
+                $connectedFormIds = is_array($formBind['form_ids'] ?? null)
+                    ? array_map('absint', $formBind['form_ids'])
+                    : [];
+            }
+
+            // Sanitize after local Form CPT ids exist so orphan-form cleanup cannot wipe them.
+            $sanitized = $this->sanitizer->sanitizeHtml($templateHtml);
+            $templateHtml = $sanitized['content'];
 
             $document['notification']['template']['content'] = $templateHtml;
         }
@@ -150,9 +201,16 @@ class AiOnPageImportService
         $template = is_array($notification['template'] ?? null) ? $notification['template'] : [];
         $layout = sanitize_key((string) ($appearance['notification_display_type'] ?? ''));
         $builder = sanitize_key((string) ($template['builder'] ?? ''));
-        $templateHtml = (
-            !empty($template['content']) && is_string($template['content'])
-        ) ? (string) $template['content'] : '';
+
+        // Prefer the saved template HTML so success preview uses remapped form ids.
+        $savedTemplateHtml = $this->loadSavedTemplateHtml($templateId);
+        $templateHtml = '' !== $savedTemplateHtml
+            ? $savedTemplateHtml
+            : (
+                (!empty($template['content']) && is_string($template['content']))
+                    ? (string) $template['content']
+                    : ''
+            );
         $hasTemplate = '' !== trim($templateHtml);
 
         // Desktop corner/edge position drives floating sidebox placement in the success preview.
@@ -188,6 +246,30 @@ class AiOnPageImportService
             'forms_skip_reason' => $formsSkipReason,
             'form_ids'        => $connectedFormIds,
         ];
+    }
+
+    /**
+     * Load the saved HTML Builder template markup for success preview.
+     *
+     * @since 3.0.1
+     * @param int $templateId Template post ID.
+     * @return string Remapped template HTML or empty string.
+     */
+    private function loadSavedTemplateHtml(int $templateId): string
+    {
+        // Skip invalid ids early.
+        if ($templateId <= 0) {
+            return '';
+        }
+
+        // Only HTML Builder templates store the AI fragment in post_content.
+        $template = get_post($templateId);
+        if (!$template instanceof WP_Post || 'notifal_template' !== $template->post_type) {
+            return '';
+        }
+
+        // Return the persisted markup after form id remapping.
+        return trim((string) $template->post_content);
     }
 
     /**

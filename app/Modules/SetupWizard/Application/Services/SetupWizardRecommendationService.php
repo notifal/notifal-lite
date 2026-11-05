@@ -9,6 +9,7 @@ defined('ABSPATH') || exit;
  *
  * @since 3.0.0
  * @updated 3.0.0 Map product-recommendation-quiz goal to marketplace suggestion vocabulary.
+ * @updated 3.0.1 Map feedback, events, announcements, and gamification goals.
  * @author Hossein <hossein@notifal.com>
  */
 class SetupWizardRecommendationService
@@ -100,6 +101,7 @@ class SetupWizardRecommendationService
      * Map wizard goal slugs to marketplace use-case taxonomy slugs.
      *
      * @since 3.0.0
+     * @updated 3.0.1 Map collect-feedback, events-webinars, announcements, and gamification goals.
      * @param string $goalSlug Goal slug from HtmlBuilderUseCases.
      * @return string[] Marketplace use-case slugs.
      */
@@ -110,7 +112,11 @@ class SetupWizardRecommendationService
             'increase-sales'               => ['urgency', 'discount', 'seasonal_promo'],
             'grow-email-list'              => ['newsletter', 'lead_capture'],
             'lead-generation'              => ['lead_capture', 'welcome_offer'],
+            'collect-feedback'             => ['announcement', 'lead_capture'],
             'product-recommendation-quiz'  => ['product_recommendation_quiz'],
+            'events-webinars'              => ['announcement', 'lead_capture'],
+            'announcements'                => ['announcement'],
+            'gamification'                 => ['announcement', 'urgency'],
             'boost-engagement'             => ['announcement', 'social_proof'],
             'build-trust-and-social-proof' => ['social_proof', 'trust_badges'],
             'communicate-with-visitors'    => ['announcement', 'lead_capture'],

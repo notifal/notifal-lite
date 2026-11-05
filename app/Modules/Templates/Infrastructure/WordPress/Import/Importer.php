@@ -106,6 +106,7 @@ class Importer
      *
      * @since 2.0.0
      * @updated 3.0.0 Import connected forms and return form_warnings when needed.
+     * @updated 3.0.1 Remap portable forms onto duplicate templates instead of skipping.
      * @param array $data Template data array with 'builder' and 'content' keys.
      * @param array $bundledMedia Map of bundled path => temp file path for bundled media.
      * @return array Array with 'success' boolean and 'error' string if failed.
@@ -126,11 +127,8 @@ class Importer
             // Check for existing template by content hash
             $existingTemplate = self::findExistingTemplate($data);
             if ($existingTemplate) {
-                // Template already exists, return success
-                return [
-                    'success' => true,
-                    'template_id' => $existingTemplate->ID
-                ];
+                // Duplicate content still needs portable Form CPT remap / reconnect.
+                return self::refreshExistingTemplateForms($existingTemplate, $data);
             }
 
 
@@ -146,6 +144,78 @@ class Importer
                 'error' => sprintf(__('Template import failed: %s', 'notifal'), $e->getMessage())
             ];
         }
+    }
+
+    /**
+     * Remap portable forms onto an existing duplicate template and refresh content.
+     *
+     * Keeps the duplicate short-circuit for identical HTML while ensuring AI /
+     * marketplace form bundles still recreate local Form CPT connections.
+     *
+     * @since 3.0.1
+     * @param \WP_Post $existingTemplate Existing template post.
+     * @param array    $templateData     Incoming template payload.
+     * @return array{success: bool, template_id: int, form_ids?: int[], form_warnings?: string[]}
+     */
+    private static function refreshExistingTemplateForms(\WP_Post $existingTemplate, array $templateData): array
+    {
+        $templateId = (int) $existingTemplate->ID;
+        $result = [
+            'success'     => true,
+            'template_id' => $templateId,
+        ];
+
+        // Nothing to remap when the payload has no portable forms bundle.
+        $forms = isset($templateData['forms']) && is_array($templateData['forms'])
+            ? $templateData['forms']
+            : [];
+        if ($forms === []) {
+            return $result;
+        }
+
+        // Prefer the stored HTML Builder markup; fall back to the incoming content.
+        $content = (string) $existingTemplate->post_content;
+        if (trim($content) === '' && isset($templateData['content']) && is_string($templateData['content'])) {
+            $content = (string) $templateData['content'];
+        }
+
+        // Recreate Form CPTs and rewrite data-form-id on the duplicate template.
+        $portability = ConnectedFormPortabilityService::createDefault();
+        $imported = $portability->importFormsAndRemapContent($forms, $content);
+        $remappedContent = is_string($imported['content'] ?? null)
+            ? (string) $imported['content']
+            : $content;
+
+        // Persist remapped markup for HTML Builder templates so preview/frontend keep forms.
+        $builder = TemplateBuilderDetector::normalizeBuilderSlug(
+            Helper::sanitizeInput(
+                (string) (
+                    $templateData['builder']
+                    ?? get_post_meta($templateId, '_notifal_builder', true)
+                ),
+                'key'
+            )
+        );
+        if (
+            $builder === TemplateBuilderDetector::BUILDER_HTML
+            && trim($remappedContent) !== ''
+            && $remappedContent !== (string) $existingTemplate->post_content
+        ) {
+            $saveResult = self::saveHtmlBuilderContent($templateId, $remappedContent);
+            if (!empty($saveResult['success'])) {
+                update_post_meta($templateId, '_notifal_content_hash', md5(serialize($remappedContent)));
+            }
+        }
+
+        // Surface created form ids and recoverable warnings to the AI import layer.
+        if (!empty($imported['created']) && is_array($imported['created'])) {
+            $result['form_ids'] = array_map('absint', $imported['created']);
+        }
+        if (!empty($imported['warnings']) && is_array($imported['warnings'])) {
+            $result['form_warnings'] = $imported['warnings'];
+        }
+
+        return $result;
     }
 
     /**

@@ -323,10 +323,12 @@ class PreCreatedNotificationsApiService
     /**
      * Get trending categories from notifal.com (from precreate-archive-trending-notification menu).
      *
-     * Each item contains title and use_case_slug for filtering the archive by use case.
+     * Each item contains title, taxonomy key, and term slug so the archive can filter
+     * by use cases, events, industries, layouts, or used plugins.
      *
      * @since 2.0.0
-     * @return array<int, array{title: string, use_case_slug: string}> List of trending items
+     * @updated 3.0.1 Accept taxonomy + slug for all archive taxonomies.
+     * @return array<int, array{title: string, taxonomy: string, slug: string, use_case_slug: string}> List of trending items
      */
     public function getTrendingCategories(): array
     {
@@ -349,15 +351,8 @@ class PreCreatedNotificationsApiService
             return [];
         }
 
-        $trending = [];
-        foreach ($data['data']['trending'] as $item) {
-            if (!empty($item['title']) && !empty($item['use_case_slug'])) {
-                $trending[] = [
-                    'title' => is_string($item['title']) ? sanitize_text_field($item['title']) : '',
-                    'use_case_slug' => is_string($item['use_case_slug']) ? sanitize_text_field($item['use_case_slug']) : '',
-                ];
-            }
-        }
+        // Normalize API payload into the archive tag shape.
+        $trending = $this->normalizeTrendingItems($data['data']['trending']);
 
         $this->setCachedResponse($cacheKey, $trending, self::CACHE_EXPIRATION_TRENDING);
 
@@ -373,7 +368,7 @@ class PreCreatedNotificationsApiService
      * @param array<string, mixed> $args Notification query arguments.
      * @return array<string, mixed> {
      *     @type array<string, array> $taxonomies Taxonomy groups for filters.
-     *     @type array<int, array<string, string>> $trending Trending use-case tags.
+     *     @type array<int, array<string, string>> $trending Trending taxonomy tags.
      *     @type array<string, mixed> $api_response Notifications list API payload or error shape.
      * }
      */
@@ -660,7 +655,11 @@ class PreCreatedNotificationsApiService
     /**
      * Execute multiple marketplace GET requests in parallel via WordPress Requests library.
      *
+     * Falls back to sequential wp_remote requests when curl multi is unavailable,
+     * so archive bootstrap never fatals on restricted PHP builds.
+     *
      * @since 3.0.0
+     * @updated 3.0.1
      * @param array<string, array{endpoint:string,params:array<string,mixed>}> $jobs Endpoint jobs keyed by label.
      * @return array<string, array|\WP_Error> Normalized wp_remote-style responses keyed by label.
      */
@@ -671,33 +670,66 @@ class PreCreatedNotificationsApiService
             return [];
         }
 
-        // Build Requests-compatible job map.
-        $requests = [];
-        foreach ($jobs as $key => $job) {
-            $requests[$key] = [
-                'url'     => $this->buildEndpointUrl($job['endpoint'], $job['params']),
-                'type'    => 'GET',
-                'headers' => [
-                    'Accept'       => 'application/json',
-                    'Content-Type' => 'application/json',
-                ],
-            ];
+        // Requests::request_multiple() requires curl_multi_init(); avoid a fatal on hosts without it.
+        if (!function_exists('curl_multi_init')) {
+            return $this->fetchEndpointsSequentially($jobs);
         }
 
-        // Fire all requests concurrently.
-        $rawResponses = \WpOrg\Requests\Requests::request_multiple(
-            $requests,
-            [
-                'timeout'         => self::API_TIMEOUT,
-                'connect_timeout' => self::API_TIMEOUT,
-                'useragent'       => self::USER_AGENT,
-            ]
-        );
+        try {
+            // Build Requests-compatible job map.
+            $requests = [];
+            foreach ($jobs as $key => $job) {
+                $requests[$key] = [
+                    'url'     => $this->buildEndpointUrl($job['endpoint'], $job['params']),
+                    'type'    => 'GET',
+                    'headers' => [
+                        'Accept'       => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ],
+                ];
+            }
 
-        // Normalize each response into wp_remote-style arrays for shared parsers.
+            // Fire all requests concurrently when the transport supports multi handles.
+            $rawResponses = \WpOrg\Requests\Requests::request_multiple(
+                $requests,
+                [
+                    'timeout'         => self::API_TIMEOUT,
+                    'connect_timeout' => self::API_TIMEOUT,
+                    'useragent'       => self::USER_AGENT,
+                ]
+            );
+
+            // Normalize each response into wp_remote-style arrays for shared parsers.
+            $normalized = [];
+            foreach ($rawResponses as $key => $rawResponse) {
+                $normalized[$key] = $this->normalizeParallelResponse($rawResponse, (string) $key);
+            }
+
+            return $normalized;
+        } catch (\Throwable $throwable) {
+            // Keep bootstrap alive if the parallel transport fails unexpectedly.
+            return $this->fetchEndpointsSequentially($jobs);
+        }
+    }
+
+    /**
+     * Execute marketplace GET jobs one by one through the existing HTTP helper.
+     *
+     * Used when parallel Requests transport cannot run safely on the current host.
+     *
+     * @since 3.0.1
+     * @param array<string, array{endpoint:string,params:array<string,mixed>}> $jobs Endpoint jobs keyed by label.
+     * @return array<string, array|\WP_Error> wp_remote-style responses keyed by label.
+     */
+    private function fetchEndpointsSequentially(array $jobs): array
+    {
         $normalized = [];
-        foreach ($rawResponses as $key => $rawResponse) {
-            $normalized[$key] = $this->normalizeParallelResponse($rawResponse, (string) $key);
+
+        // Reuse makeApiRequest so headers, filters, and timeouts stay identical to other API calls.
+        foreach ($jobs as $key => $job) {
+            $endpoint = isset($job['endpoint']) ? (string) $job['endpoint'] : '';
+            $params   = (isset($job['params']) && is_array($job['params'])) ? $job['params'] : [];
+            $normalized[$key] = $this->makeApiRequest($endpoint, $params, 'GET');
         }
 
         return $normalized;
@@ -777,8 +809,9 @@ class PreCreatedNotificationsApiService
      * Parse trending categories payload from a normalized HTTP response.
      *
      * @since 3.0.0
+     * @updated 3.0.1 Normalize taxonomy + slug for all archive taxonomies.
      * @param array<string, mixed>|\WP_Error|null $response Normalized HTTP response.
-     * @return array<int, array{title:string,use_case_slug:string}> Trending tags.
+     * @return array<int, array{title:string,taxonomy:string,slug:string,use_case_slug:string}> Trending tags.
      */
     private function buildTrendingFromHttpResponse($response): array
     {
@@ -791,14 +824,60 @@ class PreCreatedNotificationsApiService
             return [];
         }
 
+        return $this->normalizeTrendingItems($data['data']['trending']);
+    }
+
+    /**
+     * Normalize trending API items into a stable archive tag shape.
+     *
+     * Supports new taxonomy/slug payloads and legacy use_case_slug-only items.
+     *
+     * @since 3.0.1
+     * @param array<int, mixed> $items Raw trending items from API.
+     * @return array<int, array{title:string,taxonomy:string,slug:string,use_case_slug:string}>
+     */
+    private function normalizeTrendingItems(array $items): array
+    {
+        // Allowed archive taxonomy keys shared with filter UI and API query args.
+        $allowedTaxonomies = [
+            'use_cases',
+            'events',
+            'industries',
+            'layouts',
+            'used_plugins',
+        ];
+
         $trending = [];
-        foreach ($data['data']['trending'] as $item) {
-            if (!empty($item['title']) && !empty($item['use_case_slug'])) {
-                $trending[] = [
-                    'title'         => is_string($item['title']) ? sanitize_text_field($item['title']) : '',
-                    'use_case_slug' => is_string($item['use_case_slug']) ? sanitize_text_field($item['use_case_slug']) : '',
-                ];
+        foreach ($items as $item) {
+            // Skip malformed entries early.
+            if (!is_array($item) || empty($item['title'])) {
+                continue;
             }
+
+            // Prefer explicit taxonomy/slug, then fall back to legacy use_case_slug.
+            $taxonomy = isset($item['taxonomy']) && is_string($item['taxonomy'])
+                ? sanitize_key($item['taxonomy'])
+                : 'use_cases';
+            $slug = '';
+            if (!empty($item['slug']) && is_string($item['slug'])) {
+                $slug = sanitize_text_field($item['slug']);
+            } elseif (!empty($item['use_case_slug']) && is_string($item['use_case_slug'])) {
+                $slug = sanitize_text_field($item['use_case_slug']);
+                $taxonomy = 'use_cases';
+            }
+
+            // Ignore unknown taxonomies or empty slugs so tags always filter correctly.
+            if ($slug === '' || !in_array($taxonomy, $allowedTaxonomies, true)) {
+                continue;
+            }
+
+            $trending[] = [
+                'title'         => is_string($item['title']) ? sanitize_text_field($item['title']) : '',
+                'taxonomy'      => $taxonomy,
+                'slug'          => $slug,
+                // Preserve legacy key for older consumers when taxonomy is use_cases.
+                'use_case_slug' => ('use_cases' === $taxonomy) ? $slug : '',
+            ];
         }
 
         return $trending;

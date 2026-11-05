@@ -7,13 +7,18 @@ use Notifal\Modules\Forms\Config\AttributeContract;
 defined('ABSPATH') || exit;
 
 /**
- * Removes connected Notifal forms whose Form CPT no longer exists.
+ * Reconciles connected Notifal forms whose Form CPT no longer exists.
  *
  * Templates may keep a stale data-form-id after a Form post is deleted or
- * trashed. This guard strips those roots so builder and frontend never show
- * a connected form that cannot accept submissions.
+ * trashed, and AI/marketplace imports may ship portable placeholder ids
+ * (for example data-form-id="1") before local Form CPTs are created.
+ *
+ * Builder sanitize paths unbind those roots (data-form-id="0") so markup
+ * survives for reconnect / portability remap. Frontend render paths may
+ * still remove roots that cannot accept submissions.
  *
  * @since 3.0.0
+ * @updated 3.0.1 Support unbind mode so portable AI form ids are not destroyed during sanitize.
  * @author Hossein <hossein@notifal.com>
  */
 class ConnectedFormMarkupGuard
@@ -85,19 +90,52 @@ class ConnectedFormMarkupGuard
      */
     public function removeMissingConnectedForms(string $html): array
     {
+        return $this->reconcileMissingConnectedForms($html, 'remove');
+    }
+
+    /**
+     * Reset orphan data-form-id values to 0 without deleting form markup.
+     *
+     * Used by HTML Builder sanitize so AI portable placeholders and deleted
+     * Form CPT references stay editable instead of being wiped.
+     *
+     * @param string $html Template HTML document or fragment.
+     * @return array{html: string, removed_ids: int[]} Markup with unbound orphans and affected ids.
+     * @since 3.0.1
+     */
+    public function unbindMissingConnectedForms(string $html): array
+    {
+        return $this->reconcileMissingConnectedForms($html, 'unbind');
+    }
+
+    /**
+     * Find orphan connected form roots and either remove or unbind them.
+     *
+     * @param string $html Template HTML document or fragment.
+     * @param string $mode `remove` deletes the root, `unbind` sets data-form-id to 0.
+     * @return array{html: string, removed_ids: int[]} Reconciled markup and affected ids.
+     * @since 3.0.1
+     */
+    private function reconcileMissingConnectedForms(string $html, string $mode): array
+    {
+        $mode = sanitize_key($mode);
+        if ($mode !== 'unbind') {
+            $mode = 'remove';
+        }
+
         // Fast path when markup has no Notifal form roots.
         if ($html === '' || strpos($html, AttributeContract::CLASS_FORM) === false) {
             return [
-                'html'         => $html,
-                'removed_ids'  => [],
+                'html'        => $html,
+                'removed_ids' => [],
             ];
         }
 
         $parsed = $this->createDocument($html);
         if ($parsed === null) {
             return [
-                'html'         => $html,
-                'removed_ids'  => [],
+                'html'        => $html,
+                'removed_ids' => [],
             ];
         }
 
@@ -111,13 +149,13 @@ class ConnectedFormMarkupGuard
 
         if (!$forms || $forms->length === 0) {
             return [
-                'html'         => $html,
-                'removed_ids'  => [],
+                'html'        => $html,
+                'removed_ids' => [],
             ];
         }
 
         // Collect first so live NodeList mutations stay safe.
-        $toRemove = [];
+        $orphans = [];
         foreach ($forms as $form) {
             if (!$form instanceof \DOMElement) {
                 continue;
@@ -134,31 +172,39 @@ class ConnectedFormMarkupGuard
                 continue;
             }
 
-            $toRemove[] = [
+            $orphans[] = [
                 'node' => $form,
                 'id'   => $formId,
             ];
         }
 
-        if ($toRemove === []) {
+        if ($orphans === []) {
             return [
-                'html'         => $html,
-                'removed_ids'  => [],
+                'html'        => $html,
+                'removed_ids' => [],
             ];
         }
 
-        $removedIds = [];
-        foreach ($toRemove as $item) {
+        $affectedIds = [];
+        foreach ($orphans as $item) {
             $node = $item['node'];
-            if ($node instanceof \DOMElement && $node->parentNode) {
+            if (!$node instanceof \DOMElement) {
+                continue;
+            }
+
+            if ($mode === 'unbind') {
+                // Preserve designed markup; clear the dead / portable connection only.
+                $node->setAttribute('data-form-id', '0');
+            } elseif ($node->parentNode) {
                 $node->parentNode->removeChild($node);
             }
-            $removedIds[] = (int) $item['id'];
+
+            $affectedIds[] = (int) $item['id'];
         }
 
         return [
-            'html'         => $this->serializeDocument($document, $parsed['wrapped']),
-            'removed_ids'  => array_values(array_unique($removedIds)),
+            'html'        => $this->serializeDocument($document, $parsed['wrapped']),
+            'removed_ids' => array_values(array_unique($affectedIds)),
         ];
     }
 

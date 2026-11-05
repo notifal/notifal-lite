@@ -3,6 +3,7 @@
 namespace Notifal\Modules\Ai\Application\Services;
 
 use Notifal\Domain\Settings\Services\SettingsService;
+use Notifal\Modules\Forms\Application\Services\ConnectedFormMarkupGuard;
 use Notifal\Modules\Forms\Application\Services\FormFieldSanitizer;
 use Notifal\Modules\Forms\Application\Services\FormLicenseGuard;
 use Notifal\Modules\Forms\Application\Services\FormPresentationSettings;
@@ -25,6 +26,7 @@ defined('ABSPATH') || exit;
  * @updated 3.0.0 Inject a complete Notifal form when signup copy exists without .notifal-form.
  * @updated 3.0.0 Reuse the free-tier Form CPT when create is blocked so data-form-id stays > 0.
  * @updated 3.0.0 Detect capture for inject via markup structure only (language-agnostic).
+ * @updated 3.0.1 Treat portable/orphan positive data-form-id values as unbound when no local Form CPT exists.
  * @author Hossein <hossein@notifal.com>
  */
 class AiOnPageFormAutoConnectService
@@ -36,9 +38,15 @@ class AiOnPageFormAutoConnectService
      * blocks create, reuses the existing Form CPT and rewrites data-form-id so
      * the builder never keeps an unbound "Select a form first" shell.
      *
+     * Positive data-form-id values are kept only when they already point at a
+     * live local notifal_form CPT. AI/gateway portable placeholders (for example
+     * data-form-id="1" with template.forms[]) are reset to 0 and bound here when
+     * the Forms bundle path did not remap them yet.
+     *
      * @since 3.0.0
      * @updated 3.0.0 Inject capture form markup when signup chrome exists without a form root.
      * @updated 3.0.0 Reuse existing Form CPT when FormLicenseGuard::canCreate() is false.
+     * @updated 3.0.1 Bind orphan portable form ids instead of skipping every data-form-id > 0.
      * @param string $html            Sanitized template HTML.
      * @param string $fallbackTitle   Title used when markup has no nearby label.
      * @return array{html: string, connected: int, reused: int, skipped: int, failed: int, form_ids: int[], injected: bool, skip_reason: string}
@@ -118,6 +126,9 @@ class AiOnPageFormAutoConnectService
         $reuseFormId = 0;
         $reuseFieldsSynced = false;
 
+        // Reuse one existence guard so portable AI placeholders are detected once per import.
+        $formGuard = new ConnectedFormMarkupGuard();
+
         // Process forms in document order so license limits stay predictable.
         $formIndex = 0;
         foreach ($formNodes as $formNode) {
@@ -125,10 +136,14 @@ class AiOnPageFormAutoConnectService
                 continue;
             }
 
-            // Already-connected forms keep their merchant-selected CPT id.
+            // Keep only live local Form CPT connections; unbind portable/orphan placeholders.
             $existingId = absint($formNode->getAttribute('data-form-id'));
-            if ($existingId > 0) {
+            if ($existingId > 0 && $formGuard->formExists($existingId)) {
                 continue;
+            }
+            if ($existingId > 0) {
+                // Gateway/marketplace portable ids are not local CPT ids until remapped.
+                $formNode->setAttribute('data-form-id', '0');
             }
 
             // Empty AI form shells get a real email + submit so preview is not a placeholder.

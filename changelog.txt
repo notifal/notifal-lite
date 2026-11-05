@@ -1,5 +1,12 @@
 == Changelog ==
 
+3.0.1 [2026-11-02]
+Fixed: AI OnPage and Setup Wizard imports now remap portable Form ids from the gateway forms bundle before save, so lead-capture email fields stay visible after import and in success preview.
+Fixed: Orphan positive data-form-id placeholders are treated as unbound when no local Form CPT exists, instead of being skipped and later stripped.
+Fixed: Duplicate template imports still recreate and reconnect portable forms instead of reusing stale Form ids.
+Improved: Success preview prefers the remapped template HTML so forms are not hidden by the missing-Form CPT guard on the authenticated preview route.
+Added: Collect Feedback, Events & Webinars, Announcements, and Gamification use cases in OnPage AI and Setup Wizard goal grids.
+
 3.0.0 [2026-08-05]
 Added: Setup Wizard with Noti onboarding, site analysis, industry-matched suggestion cards, Build my own path, account connection, and AI draft generation.
 Added: Domain analysis package preflight so Setup Wizard can reuse cached site analysis and skip unnecessary scrape or AI spend.

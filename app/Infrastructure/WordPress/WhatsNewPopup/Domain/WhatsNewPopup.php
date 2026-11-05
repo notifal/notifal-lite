@@ -7,6 +7,7 @@
  * @package Notifal\Infrastructure\WordPress\WhatsNewPopup\Domain
  * @since 2.0.0
  * @updated 3.0.0 Keep latest What's New entries including Setup Wizard site readiness.
+ * @updated 3.0.1 Add 3.0.1 What's New for form import remapping and expanded AI use cases.
  * @author Hossein <hossein@notifal.com>
  */
 
@@ -146,7 +147,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '3.0.0';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '3.0.1';
     }
 
     /**
@@ -219,6 +220,13 @@ class WhatsNewPopup
     private function getAllVersionsConfig(): array
     {
         return [
+            '3.0.1' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '3.0.1'),
+                'content' => $this->getVersion301Content(),
+                'action_buttons' => [],
+            ],
             '3.0.0' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -238,13 +246,6 @@ class WhatsNewPopup
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.4'),
                 'content' => $this->getVersion244Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.3' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.3'),
-                'content' => $this->getVersion243Content(),
                 'action_buttons' => [],
             ],
         ];
@@ -291,6 +292,48 @@ class WhatsNewPopup
             'title' => $config['title'],
             'content' => $config['content'],
         ];
+    }
+
+    /**
+     * Get content for version 3.0.1
+     *
+     * @return string HTML content for version 3.0.1
+     * @since 3.0.1
+     */
+    private function getVersion301Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 3.0.1", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">📝</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('AI lead-capture forms stay after import', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('OnPage and Setup Wizard AI imports now remap portable Form ids from the generation payload before save, so email signup fields remain visible in success preview and on the live draft.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔗</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Safer Form reconnect for AI templates', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Placeholder Form ids that do not exist locally are treated as unbound and reconnected, and duplicate template imports still recreate connected forms instead of keeping stale ids.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎯</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('More AI use cases for OnPage and Setup Wizard', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Collect Feedback, Events & Webinars, Announcements, and Gamification join the goal grids, and Product Recommendation Quiz now has a dedicated icon.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     /**
@@ -462,39 +505,4 @@ class WhatsNewPopup
         return (string) ob_get_clean();
     }
 
-    /**
-     * Get content for version 2.4.3
-     *
-     * @return string HTML content for version 2.4.3
-     * @since 2.4.3
-     * @updated 3.0.0 Restore 2.4.3 in the in-plugin last-four What's New list.
-     */
-    private function getVersion243Content(): string
-    {
-        ob_start();
-        ?>
-        <div class="notifal-whatsnew-content">
-            <div class="notifal-whatsnew-section">
-                <h3><?php echo '✨ ' . esc_html(__("What's New in 2.4.3", 'notifal')); ?></h3>
-                <div class="notifal-whatsnew-features">
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">📦</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('HTML Builder import for pre-created notifications', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Pre-created notification import now supports HTML Builder templates, and the library checks each template minimum Notifal version before import.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                    <div class="notifal-feature-item">
-                        <span class="notifal-feature-icon">🔗</span>
-                        <div class="notifal-feature-content">
-                            <h4><?php esc_html_e('Clearer update guidance when a template needs a newer Notifal', 'notifal'); ?></h4>
-                            <p><?php esc_html_e('Archive cards and the details popup show when your installed version is too old, with a link to update from Plugins, and import requests are blocked server-side when required.', 'notifal'); ?></p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <?php
-        return (string) ob_get_clean();
-    }
 }

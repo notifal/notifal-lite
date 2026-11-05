@@ -75,6 +75,15 @@ class ActionHooks {
     public const SETUP_WIZARD_FEEDBACK_SUBMITTED = 'notifal/setup_wizard/feedback_submitted';
 
     /**
+     * Fires before a Setup Wizard analytics event is queued to notifal.com.
+     *
+     * @since 3.0.1
+     * @param string               $event   Event slug (opened|skipped|completed).
+     * @param array<string, mixed> $payload Sanitized analytics payload.
+     */
+    public const SETUP_WIZARD_TELEMETRY_QUEUED = 'notifal/setup_wizard/telemetry_queued';
+
+    /**
      * Fires on plugin deactivation.
      *
      * @since 2.0.0
