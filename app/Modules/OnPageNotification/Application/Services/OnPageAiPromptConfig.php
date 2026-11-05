@@ -18,6 +18,7 @@ defined('ABSPATH') || exit;
  *
  * @since 2.4.1
  * @updated 3.0.0 Expose is_woocommerce on site_context for inline preview mocks.
+ * @updated 3.0.1 Pulls expanded HtmlBuilderUseCases goal set for the hosted wizard grid.
  * @author Hossein <hossein@notifal.com>
  */
 class OnPageAiPromptConfig

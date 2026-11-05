@@ -73,14 +73,18 @@ class Constants
     public const DEFAULT_DISCLOSURE_VERSION = '2026-07-19';
 
     /**
-     * Gateway knowledge versions sent with every generation request.
+     * Client prompt contract version sent to the gateway.
+     *
+     * Gateway accepts any prompt_version >= its MIN_SUPPORTED_PROMPT_VERSION.
+     * Keep this at the released Notifal 3.0.0 value (1.9.6) unless a client-side
+     * AI contract change requires a Notifal release. Do not bump only to match gateway.
      *
      * @var string
      */
     public const PROMPT_VERSION = '1.9.6';
 
     /**
-     * Gateway schema version sent with every generation request.
+     * Client schema contract version sent to the gateway (exact match required).
      *
      * @var string
      */

@@ -31,6 +31,7 @@ class FormsHtmlBuilderIntegration
      * @return void
      * @since 3.0.0
      * @updated 3.0.0 Strip deleted Form CPT references from builder HTML.
+     * @updated 3.0.1 Unbind orphan form ids on sanitize so AI portable placeholders survive.
      */
     public static function register(): void
     {
@@ -43,19 +44,24 @@ class FormsHtmlBuilderIntegration
     }
 
     /**
-     * Remove connected form roots whose Form CPT no longer exists.
+     * Unbind connected form roots whose Form CPT no longer exists.
      *
-     * @param string               $html     Sanitized HTML.
-     * @param array<int, string>   $warnings Sanitizer warnings (unused).
+     * Builder sanitize must keep the designed form shell so AI portable
+     * placeholders (data-form-id="1" + forms[]) and deleted CPT references
+     * can be remapped or reconnected instead of wiping the markup.
+     *
+     * @param string             $html     Sanitized HTML.
+     * @param array<int, string> $warnings Sanitizer warnings (unused).
      * @return string Cleaned HTML.
      * @since 3.0.0
+     * @updated 3.0.1 Unbind orphan ids instead of deleting form roots.
      */
     public static function stripMissingConnectedForms(string $html, $warnings = []): string
     {
         unset($warnings);
 
         $guard = new ConnectedFormMarkupGuard();
-        $cleaned = $guard->removeMissingConnectedForms($html);
+        $cleaned = $guard->unbindMissingConnectedForms($html);
 
         return $cleaned['html'];
     }
@@ -67,14 +73,15 @@ class FormsHtmlBuilderIntegration
      * @return array<string, mixed>
      * @since 3.0.0
      * @updated 3.0.0 Clean stale Form connections from initial_html on builder load.
+     * @updated 3.0.1 Unbind orphan form ids on builder load instead of deleting markup.
      */
     public static function appendRuntimeConfig(array $config): array
     {
-        // Drop deleted Form CPT roots before the canvas hydrates saved HTML.
+        // Unbind deleted Form CPT roots before the canvas hydrates saved HTML.
         $removedMissingIds = [];
         if (!empty($config['initial_html']) && is_string($config['initial_html'])) {
             $guard = new ConnectedFormMarkupGuard();
-            $cleaned = $guard->removeMissingConnectedForms($config['initial_html']);
+            $cleaned = $guard->unbindMissingConnectedForms($config['initial_html']);
             $config['initial_html'] = $cleaned['html'];
             $removedMissingIds = $cleaned['removed_ids'];
         }

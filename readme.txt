@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, popup builder, woocommerce, marketing, AI
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 3.0.0
+Stable tag: 3.0.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -444,6 +444,13 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 27. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+3.0.1 [2026-11-02]
+Fixed: AI OnPage and Setup Wizard imports now remap portable Form ids from the gateway forms bundle before save, so lead-capture email fields stay visible after import and in success preview.
+Fixed: Orphan positive data-form-id placeholders are treated as unbound when no local Form CPT exists, instead of being skipped and later stripped.
+Fixed: Duplicate template imports still recreate and reconnect portable forms instead of reusing stale Form ids.
+Improved: Success preview prefers the remapped template HTML so forms are not hidden by the missing-Form CPT guard on the authenticated preview route.
+Added: Collect Feedback, Events & Webinars, Announcements, and Gamification use cases in OnPage AI and Setup Wizard goal grids.
+
 3.0.0 [2026-08-05]
 Added: Setup Wizard with Noti onboarding, site analysis, industry-matched suggestion cards, Build my own path, account connection, and AI draft generation.
 Added: Domain analysis package preflight so Setup Wizard can reuse cached site analysis and skip unnecessary scrape or AI spend.
@@ -477,13 +484,6 @@ Improved: HTML Source modal now opens with indented, readable HTML (including CS
 Added: HTML Source modal search with highlighted matches, scroll-to-first result, and previous/next navigation.
 Improved: Properties panel HTML tab now opens with indented element markup and the same find-in-HTML search with previous/next navigation.
 Added: Notifal countdown placeholder (`notifal-countdown`) with AI prompt guidance, Content panel minutes/seconds and when-timer-ends settings in HTML Builder, and frontend timer runtime.
-
-2.4.3 [2026-07-06]
-Added: Pre-created notification import now supports HTML Builder.
-Added: Pre-created notification library now checks each template's minimum Notifal version before import.
-Improved: Import buttons in the pre-created notification popup use shared click handling for archive and modal views.
-Improved: Archive cards and the details popup show when your installed Notifal version is too old, with a link to update from Plugins.
-Improved: Import requests are blocked server-side when the template requires a newer Notifal version.
 
 [See changelog for all versions.](https://notifal.com/changelog/)
 

@@ -24,6 +24,7 @@ use Notifal\Modules\SetupWizard\Application\Services\SetupWizardSessionService;
 use Notifal\Modules\SetupWizard\Application\Services\SetupWizardSiteAnalysisStoreService;
 use Notifal\Modules\SetupWizard\Application\Services\SetupWizardSiteScrapeService;
 use Notifal\Modules\SetupWizard\Application\Services\SetupWizardStateService;
+use Notifal\Modules\SetupWizard\Application\Services\SetupWizardTelemetryService;
 use Notifal\Modules\SetupWizard\Application\Services\SetupWizardUpgradeService;
 use Notifal\Modules\SetupWizard\Presentation\Admin\Assets\SetupWizardAssets;
 use Notifal\Modules\SetupWizard\Presentation\Admin\Controllers\Ajax\SetupWizardAjaxController;
@@ -34,6 +35,7 @@ defined('ABSPATH') || exit;
  * Service provider for the Setup Wizard onboarding module.
  *
  * @since 3.0.0
+ * @updated 3.0.1 Register non-blocking notifal.com wizard telemetry.
  * @author Hossein <hossein@notifal.com>
  */
 class ServiceProvider extends AbstractServiceProvider
@@ -65,6 +67,7 @@ class ServiceProvider extends AbstractServiceProvider
         SetupWizardProInstallService::class,
         SetupWizardProLicenseConnectService::class,
         SetupWizardConfigService::class,
+        SetupWizardTelemetryService::class,
         SetupWizardAssets::class,
         MenuController::class,
         SetupWizardRedirectController::class,
@@ -79,6 +82,7 @@ class ServiceProvider extends AbstractServiceProvider
      * Boot AJAX controllers and activation listeners.
      *
      * @since 3.0.0
+     * @updated 3.0.1 Register non-blocking notifal.com wizard telemetry.
      * @return void
      */
     public function boot(): void
@@ -87,6 +91,8 @@ class ServiceProvider extends AbstractServiceProvider
         SetupWizardAjaxController::register();
         // Backfill wizard state for sites upgrading below 3.0.0.
         SetupWizardUpgradeService::register();
+        // Queue install / open / skip / complete analytics to notifal.com without blocking UX.
+        SetupWizardTelemetryService::register();
         // Mark first-install eligibility during the shared activation hook.
         add_action(ActionHooks::PLUGIN_ACTIVATED, [self::class, 'handlePluginActivated']);
     }

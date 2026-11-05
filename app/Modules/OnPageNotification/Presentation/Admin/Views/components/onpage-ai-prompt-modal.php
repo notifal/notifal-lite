@@ -9,6 +9,7 @@
  * @updated 3.0.0 Hosted panel UI refresh with separated personalization steps.
  * @updated 3.0.0 Describe-step reference image attach control and credit tip tooltip.
  * @updated 3.0.0 Palette step defaults to AI-decided colors from the prompt (JS-rendered).
+ * @updated 3.0.1 Goal grid gains feedback, events, announcements, gamification, and quiz icon via HtmlBuilderUseCases.
  * @author Hossein <hossein@notifal.com>
  * @package Notifal\Modules\OnPageNotification\Presentation\Admin\Views\components
  */

@@ -505,21 +505,6 @@ class GenerationBridgeService
             $fields = GatewayErrorMapper::fieldsForCode($code);
         }
 
-        // Temporary diagnostics: confirm whether start failed after the HTTP round-trip.
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Temporary generation validation diagnostics.
-            error_log(
-                'Notifal AI generation gateway failure: ' . wp_json_encode(
-                    [
-                        'code'       => sanitize_key($code),
-                        'fields'     => $fields,
-                        'request_id' => $response->getRequestId(),
-                        'status'     => $response->getStatusCode(),
-                    ]
-                )
-            );
-        }
-
         // Compose structured error metadata for JavaScript.
         $error = [
             'code'               => sanitize_key($code),
@@ -578,7 +563,6 @@ class GenerationBridgeService
      * Build a standardized failure envelope.
      *
      * @since 3.0.0
-     * @updated 3.0.0 Log local validation failures for temporary diagnostics.
      * @param string $code Stable error code.
      * @param string $message Localized message.
      * @param string[] $fields Optional related intent field slugs.
@@ -586,20 +570,6 @@ class GenerationBridgeService
      */
     private function failure(string $code, string $message, array $fields = []): array
     {
-        // Temporary diagnostics: local failures never create a gateway generation row.
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- Temporary generation validation diagnostics.
-            error_log(
-                'Notifal AI generation local failure: ' . wp_json_encode(
-                    [
-                        'code'    => sanitize_key($code),
-                        'fields'  => array_map('sanitize_key', $fields),
-                        'message' => sanitize_text_field($message),
-                    ]
-                )
-            );
-        }
-
         // Compose the base error metadata for AJAX consumers.
         $error = [
             'code'               => sanitize_key($code),

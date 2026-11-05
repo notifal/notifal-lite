@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Notifal\n"
 "Report-Msgid-Bugs-To: https://notifal.com\n"
-"POT-Creation-Date: 2026-10-10 14:24+0000\n"
+"POT-Creation-Date: 2026-11-05 06:33+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -250,7 +250,11 @@ msgstr ""
 msgid "AI generation output is not ready yet. Please try again."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:455
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:314
+msgid "AI lead-capture forms stay after import"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:498
 msgid "AI prompts for HTML Builder and Generate with AI now ask for the notifal-countdown structure when a timer is needed. Select the timer in the builder to set minutes, seconds, and what happens when it ends (keep 00:00, hide the timer, or close the notification). Notifal runs the countdown when the notification is shown."
 msgstr ""
 
@@ -276,9 +280,9 @@ msgid "API key"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:142
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:829
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1049
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1130
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:908
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1128
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1209
 msgid "API request failed with status %d"
 msgstr ""
 
@@ -318,15 +322,15 @@ msgstr ""
 msgid "Action Button"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:357
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:400
 msgid "Action buttons expose Content settings for Notifal action types. Spacer height, countdown layout, and flex Items controls make layout tweaks faster without editing HTML by hand."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:356
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:399
 msgid "Action buttons, spacer, countdown, and flex layout"
 msgstr ""
 
-#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:160
+#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:167
 #: app/Modules/Forms/Presentation/Admin/Lists/SubmissionListView.php:695
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Analytics/dashboard.php:901
 #: app/Modules/Templates/Application/Services/HtmlBuilderWidgets.php:191
@@ -336,7 +340,7 @@ msgstr ""
 msgid "Actions"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:315
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:358
 msgid "Activate and Noti analyzes your site, shows industry-matched suggestion cards, connects your account, and builds notification drafts. Domain package preflight reuses cached analysis when available."
 msgstr ""
 
@@ -433,7 +437,7 @@ msgstr ""
 msgid "Add Notification Title"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:68
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:96
 msgid "Add WhatsApp chat, click-to-call, and live support widgets so visitors can reach you instantly."
 msgstr ""
 
@@ -449,8 +453,8 @@ msgstr ""
 msgid "Add a Notifal urgency countdown timer."
 msgstr ""
 
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:147
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:146
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:145
 msgid "Add a brand color"
 msgstr ""
 
@@ -509,7 +513,7 @@ msgstr ""
 msgid "Add at least one more field to use conditional visibility."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:149
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:150
 #: app/Modules/SetupWizard/Resources/Lang/js/setup-wizard.php:262
 msgid "Add color"
 msgstr ""
@@ -1116,6 +1120,7 @@ msgstr ""
 msgid "Announcement"
 msgstr ""
 
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:71
 #: app/Modules/Templates/Infrastructure/WordPress/Registration/TaxonomyRegistrar.php:85
 msgid "Announcements"
 msgstr ""
@@ -1173,10 +1178,6 @@ msgstr ""
 msgid "Approved"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:491
-msgid "Archive cards and the details popup show when your installed version is too old, with a link to update from Plugins, and import requests are blocked server-side when required."
-msgstr ""
-
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsAjaxController.php:433
 msgid "Archive view not found."
 msgstr ""
@@ -1227,8 +1228,12 @@ msgstr ""
 msgid "Around"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:50
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:60
 msgid "Ask a few preference questions, then recommend the best-fit product, also known as a product finder or guided selling quiz."
+msgstr ""
+
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:54
+msgid "Ask for ratings, NPS, reviews, or short survey answers so you can improve products and support with real visitor input."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/general-settings.php:105
@@ -1239,7 +1244,7 @@ msgstr ""
 msgid "Assigned CSS properties that are not listed above. Edit any value or clear a field to remove it."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:171
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:172
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:79
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:187
 msgid "Attach reference images"
@@ -1434,11 +1439,11 @@ msgstr ""
 msgid "Available tags"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:293
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:245
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:259
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:247
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:261
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:294
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:272
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:286
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:274
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:288
 #: app/Modules/SetupWizard/Resources/Lang/js/setup-wizard.php:162
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:88
 msgid "Back"
@@ -1507,7 +1512,7 @@ msgstr ""
 msgid "Background Size"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:350
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:393
 msgid "Background color now reads CSS shorthand and can replace gradients with a solid color. Typography works on text inside layout containers, and paragraphs with nested bold or merge-tag markup stay editable in Content."
 msgstr ""
 
@@ -1618,8 +1623,12 @@ msgstr ""
 msgid "Bookings & guest engagement"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:55
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:83
 msgid "Boost Engagement"
+msgstr ""
+
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:78
+msgid "Boost engagement with spin-to-win, scratch cards, challenges, and reward prompts that make taking action feel fun."
 msgstr ""
 
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:376
@@ -1733,7 +1742,7 @@ msgstr ""
 msgid "Build"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:61
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:89
 msgid "Build Trust and Social Proof"
 msgstr ""
 
@@ -1745,7 +1754,7 @@ msgstr ""
 msgid "Build lead capture forms, manage submissions, and connect email notifications."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:364
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:407
 msgid "Build multi-step lead forms in the HTML Builder with data attributes, captcha, honeypot, submissions inbox, CSV export, and webhook / Mailchimp integrations. Secrets stay in Settings and Form CPT meta, never in template HTML."
 msgstr ""
 
@@ -1951,7 +1960,7 @@ msgstr ""
 msgid "Capture more leads with a focused signup prompt on your most visited pages."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:44
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:48
 msgid "Capture qualified leads with targeted offers, demo requests, and high-intent signup prompts."
 msgstr ""
 
@@ -2024,7 +2033,7 @@ msgstr ""
 msgid "Cart total comparison"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:98
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:126
 msgid "Catch shoppers right before they leave checkout with a dedicated cart recovery notification."
 msgstr ""
 
@@ -2050,7 +2059,7 @@ msgstr ""
 msgid "Center"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:79
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:80
 msgid "Center Popup"
 msgstr ""
 
@@ -2206,7 +2215,7 @@ msgstr ""
 msgid "Choose the type of rule based on your target. Pages, Posts, and Products are convenience options that automatically switch to Post Type and configure the appropriate settings. Post Type allows you to select from all available post types. Pro features require Notifal Pro."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:329
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:372
 msgid "Choose to generate a new template or edit the current one. Edit mode shows a before/after preview so you can apply changes only when you are happy."
 msgstr ""
 
@@ -2282,10 +2291,6 @@ msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:418
 msgid "Clear session counters when the user logs out."
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:490
-msgid "Clearer update guidance when a template needs a newer Notifal"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/Edit/partials/timing-settings.php:237
@@ -2402,7 +2407,7 @@ msgstr ""
 #: app/Modules/Forms/Presentation/Admin/Lists/SubmissionListView.php:366
 #: app/Modules/Forms/Resources/Lang/js/admin.php:85
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:317
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:47
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:48
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-modal.php:67
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/notifications-list.php:103
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:14
@@ -2504,6 +2509,14 @@ msgstr ""
 msgid "Collapse field settings"
 msgstr ""
 
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:53
+msgid "Collect Feedback"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:329
+msgid "Collect Feedback, Events & Webinars, Announcements, and Gamification join the goal grids, and Product Recommendation Quiz now has a dedicated icon."
+msgstr ""
+
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:481
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/ActionButtonWidget.php:500
 #: app/Modules/Templates/Infrastructure/WordPress/Elementor/Widgets/CloseIconWidget.php:159
@@ -2562,7 +2575,7 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
-#: app/Infrastructure/WordPress/Hooks/ActionHooks.php:1160
+#: app/Infrastructure/WordPress/Hooks/ActionHooks.php:1169
 msgid "Comment Author Name"
 msgstr ""
 
@@ -2597,7 +2610,7 @@ msgstr ""
 msgid "Comment features available in Notifal Pro"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:67
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:95
 msgid "Communicate with Visitors"
 msgstr ""
 
@@ -2787,7 +2800,7 @@ msgstr ""
 msgid "Content"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:85
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:113
 msgid "Content Blocking"
 msgstr ""
 
@@ -2822,7 +2835,7 @@ msgid "Context-Aware Content Source"
 msgstr ""
 
 #: app/Modules/Ai/Resources/Lang/js/ai-connection.php:34
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:297
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:298
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:23
 #: app/Modules/OnPageNotification/Resources/Lang/js/frontend.php:32
 #: app/Modules/SetupWizard/Resources/Lang/js/setup-wizard.php:72
@@ -3013,7 +3026,7 @@ msgstr ""
 msgid "Could not install Notifal Pro automatically."
 msgstr ""
 
-#: app/Modules/SetupWizard/Application/Services/SetupWizardRecommendationService.php:63
+#: app/Modules/SetupWizard/Application/Services/SetupWizardRecommendationService.php:64
 #: app/Modules/SetupWizard/Presentation/Admin/Controllers/Ajax/SetupWizardAjaxController.php:516
 msgid "Could not load recommendations."
 msgstr ""
@@ -3338,7 +3351,7 @@ msgstr ""
 msgid "Custom color"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:142
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:143
 msgid "Custom colors"
 msgstr ""
 
@@ -3906,7 +3919,7 @@ msgstr ""
 msgid "Displays the last name of the user."
 msgstr ""
 
-#: app/Infrastructure/WordPress/Hooks/ActionHooks.php:1167
+#: app/Infrastructure/WordPress/Hooks/ActionHooks.php:1176
 msgid "Displays the name of the comment author."
 msgstr ""
 
@@ -4161,15 +4174,15 @@ msgstr ""
 msgid "Download and install manually"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1188
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1267
 msgid "Download failed with status %d"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1200
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1279
 msgid "Downloaded file is empty."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1231
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1310
 msgid "Downloaded file is not accessible."
 msgstr ""
 
@@ -4193,7 +4206,7 @@ msgstr ""
 msgid "Draft mode allows you to save without publishing the notification."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:217
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:218
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:107
 msgid "Draft notification created"
 msgstr ""
@@ -4210,7 +4223,7 @@ msgstr ""
 msgid "Drag HTML source panel"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:343
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:386
 msgid "Drag any Structure row to move or nest it. Insertion lines show before/after placement, and an Inside badge highlights when you are nesting into a container. Press Delete or Backspace to remove the selected element."
 msgstr ""
 
@@ -4380,7 +4393,7 @@ msgstr ""
 msgid "Edit profile"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:269
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:270
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:115
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:116
 msgid "Edit template with AI"
@@ -4483,9 +4496,9 @@ msgstr ""
 
 #: app/Domain/Tags/RegisterTags.php:1003
 #: app/Domain/Tags/RegisterTags.php:1025
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:435
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:477
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:314
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:450
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:492
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:329
 msgid "Email"
 msgstr ""
 
@@ -4511,7 +4524,7 @@ msgstr ""
 msgid "Emails"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:92
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:93
 msgid "Embedded inside page content with shortcode or auto placement"
 msgstr ""
 
@@ -4840,6 +4853,10 @@ msgstr ""
 msgid "Events"
 msgstr ""
 
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:65
+msgid "Events & Webinars"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/analytics.php:22
 msgid "Events processed: {count} events"
 msgstr ""
@@ -4898,7 +4915,7 @@ msgstr ""
 msgid "Explain when it shows, what you offer, and how it should look. Example structure: Show on [exit intent / after 30–60s idle / before leaving checkout]. Offer [free trial / discount code / helpful resource]. Include a strong headline, up to 3 short benefits, one primary CTA button, and a subtle dismiss link. Tone: [premium and calm / friendly / urgent but not spammy]. Replace every bracket with your real details."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:132
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:133
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-modal.php:36
 #: app/Modules/OnPageNotification/Presentation/Admin/Views/notifications-list.php:75
 msgid "Explore Pre-created Notifications"
@@ -4961,11 +4978,11 @@ msgstr ""
 msgid "Failed to create notification: %s"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:298
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:368
 msgid "Failed to create template post."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1211
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1290
 msgid "Failed to create temporary file."
 msgstr ""
 
@@ -4995,7 +5012,7 @@ msgstr ""
 msgid "Failed to duplicate post. Please try again."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:499
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:569
 msgid "Failed to encode Elementor data."
 msgstr ""
 
@@ -5033,8 +5050,8 @@ msgstr ""
 msgid "Failed to load notification requirements."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:483
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:69
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:478
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:70
 msgid "Failed to load notifications."
 msgstr ""
 
@@ -5062,19 +5079,19 @@ msgstr ""
 msgid "Failed to render archive."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:507
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:577
 msgid "Failed to save Elementor data."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:490
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:560
 msgid "Failed to save Elementor metadata: %s"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:588
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:658
 msgid "Failed to save HTML Builder content."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:560
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:630
 msgid "Failed to save block editor content."
 msgstr ""
 
@@ -5087,7 +5104,7 @@ msgstr ""
 msgid "Failed to save notification. Please try again."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:443
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:513
 msgid "Failed to save template content: %s"
 msgstr ""
 
@@ -5112,7 +5129,7 @@ msgstr ""
 msgid "Failed to update preferences."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1222
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1301
 msgid "Failed to write downloaded file."
 msgstr ""
 
@@ -5187,7 +5204,7 @@ msgstr ""
 msgid "Filtering templates..."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:145
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:146
 msgid "Filters"
 msgstr ""
 
@@ -5203,7 +5220,7 @@ msgstr ""
 msgid "Finance / Fintech"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:441
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:484
 msgid "Find text in the HTML Source modal with highlighted matches, automatic scroll to the first result, and previous/next arrows to move between matches when you need to tweak the markup."
 msgstr ""
 
@@ -5287,7 +5304,7 @@ msgstr ""
 msgid "Floating Bar Placement"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:83
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:84
 msgid "Floating Side"
 msgstr ""
 
@@ -5344,7 +5361,7 @@ msgstr ""
 msgid "Force refresh is not available."
 msgstr ""
 
-#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:158
+#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:165
 #: app/Modules/Forms/Infrastructure/WordPress/Registration/PostTypeRegistrar.php:39
 #: app/Modules/Forms/Presentation/Admin/Lists/SubmissionListView.php:204
 #: app/Modules/Forms/Presentation/Admin/Lists/SubmissionListView.php:485
@@ -5449,7 +5466,7 @@ msgstr ""
 msgid "Form title is required."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:507
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:522
 msgid "Form: %s"
 msgstr ""
 
@@ -5467,7 +5484,7 @@ msgstr ""
 msgid "Forms"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:371
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:414
 msgid "Forms rendered dynamically inside Notifal popups now receive WP Armour honeypot fields when WP Armour is installed and active, preventing valid submissions from being rejected as spam."
 msgstr ""
 
@@ -5562,6 +5579,7 @@ msgid "Full-width banner sliding from top. Great for site-wide announcements and
 msgstr ""
 
 #: app/Core/Modules/ModuleRegistry.php:40
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:77
 msgid "Gamification"
 msgstr ""
 
@@ -5569,7 +5587,7 @@ msgstr ""
 msgid "Gap"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:86
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:114
 msgid "Gate content with age verification or registration walls, fully customizable for your site rules."
 msgstr ""
 
@@ -5592,12 +5610,12 @@ msgstr ""
 msgid "General notification influence"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:107
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:108
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:20
 msgid "Generate Notification with Notifal AI"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:322
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:365
 msgid "Generate OnPage notifications and HTML Builder templates with Notifal AI. Connect your account with email verification, then create drafts from a guided wizard inside WordPress."
 msgstr ""
 
@@ -5717,8 +5735,8 @@ msgstr ""
 msgid "Get 20% off your next purchase"
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:452
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:315
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:467
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:330
 msgid "Get Early Access"
 msgstr ""
 
@@ -5908,15 +5926,15 @@ msgstr ""
 msgid "Greater than (>)"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:91
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:119
 msgid "Grow AOV (Average Order Value)"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:37
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:41
 msgid "Grow Email List"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:80
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:108
 msgid "Grow your YouTube and social following with on-page promotion that appears at the right moment."
 msgstr ""
 
@@ -5952,11 +5970,7 @@ msgstr ""
 msgid "HTML Builder Templates"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:483
-msgid "HTML Builder import for pre-created notifications"
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:426
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:469
 msgid "HTML Builder style attribute updates"
 msgstr ""
 
@@ -5964,11 +5978,11 @@ msgstr ""
 msgid "HTML Builder widget"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:335
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:378
 msgid "HTML Builder widgets"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:328
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:371
 msgid "HTML Builder: create or edit with AI"
 msgstr ""
 
@@ -6026,7 +6040,7 @@ msgid "Height"
 msgstr ""
 
 #: app/Modules/Ai/Resources/Lang/js/ai-connection.php:110
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:244
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:245
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:119
 msgid "Helpful"
 msgstr ""
@@ -6166,7 +6180,7 @@ msgstr ""
 msgid "Hide the timer"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:80
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:81
 msgid "High attention, middle of screen"
 msgstr ""
 
@@ -6207,7 +6221,7 @@ msgstr ""
 msgid "Hosted AI is temporarily unavailable. Please try again later."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:321
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:364
 msgid "Hosted Notifal AI generation"
 msgstr ""
 
@@ -6294,7 +6308,7 @@ msgstr ""
 msgid "How to get Google reCAPTCHA keys"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:236
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:237
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:118
 msgid "How was this AI result?"
 msgstr ""
@@ -6599,7 +6613,7 @@ msgstr ""
 msgid "Import Pre-Created Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:399
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:442
 msgid "Import Pre-Created now scrolls to the library even while templates are still loading, and builder import buttons in the details popup appear only after the template details are fully ready."
 msgstr ""
 
@@ -6622,7 +6636,7 @@ msgstr ""
 msgid "Import failed for file %d."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageImportService.php:116
+#: app/Modules/Ai/Application/Services/AiOnPageImportService.php:167
 #: app/Modules/Ai/Presentation/Admin/Controllers/Ajax/AiContentAjaxController.php:93
 #: app/Modules/OnPageNotification/Infrastructure/WordPress/Import/Importer.php:74
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:323
@@ -6664,7 +6678,7 @@ msgstr ""
 msgid "Imported Notification"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:269
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:339
 msgid "Imported Template"
 msgstr ""
 
@@ -6729,7 +6743,7 @@ msgstr ""
 msgid "Incorrect template change"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:31
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:35
 msgid "Increase Sales"
 msgstr ""
 
@@ -6766,7 +6780,7 @@ msgstr ""
 msgid "Inline"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:91
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:92
 #: app/Modules/OnPageNotification/Application/Services/Settings/AppearanceSettingsService.php:931
 msgid "Inline (in content)"
 msgstr ""
@@ -6835,16 +6849,16 @@ msgstr ""
 msgid "Internal notes"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:465
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:473
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:535
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:543
 msgid "Invalid Elementor content format."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:201
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:271
 msgid "Invalid Elementor template content. Content must be a valid JSON array."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:217
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:287
 msgid "Invalid HTML Builder template content. Content must be a non-empty HTML string."
 msgstr ""
 
@@ -6859,9 +6873,9 @@ msgid "Invalid JSON input."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:153
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:839
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1060
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1141
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:918
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1139
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1220
 msgid "Invalid JSON response from API"
 msgstr ""
 
@@ -6898,7 +6912,7 @@ msgstr ""
 msgid "Invalid cart comparison operator."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:209
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:279
 msgid "Invalid content format for block editor. Content must be a string or array."
 msgstr ""
 
@@ -6923,7 +6937,7 @@ msgstr ""
 msgid "Invalid deactivation feedback data: "
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1164
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1243
 msgid "Invalid download URL."
 msgstr ""
 
@@ -6948,7 +6962,7 @@ msgstr ""
 msgid "Invalid file format. Please upload a valid JSON or ZIP file."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1095
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1174
 msgid "Invalid file type."
 msgstr ""
 
@@ -7003,7 +7017,7 @@ msgid "Invalid notification ID"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:196
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:998
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1077
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsAjaxController.php:201
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsAjaxController.php:277
 #: app/Modules/OnPageNotification/Presentation/Admin/Controllers/Ajax/PreCreatedNotificationsImportController.php:140
@@ -7101,7 +7115,7 @@ msgstr ""
 msgid "Invalid template ID."
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:164
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:234
 msgid "Invalid template data structure. Missing required \"builder\" or \"content\" fields."
 msgstr ""
 
@@ -7315,7 +7329,7 @@ msgstr ""
 msgid "Lazy Load"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:43
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:47
 msgid "Lead Generation"
 msgstr ""
 
@@ -7323,7 +7337,7 @@ msgstr ""
 msgid "Lead capture"
 msgstr ""
 
-#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:162
+#: app/Modules/Forms/Application/Services/HtmlBuilder/FormsHtmlBuilderIntegration.php:169
 msgid "Lead form with Notifal fields, success actions, and brand styling."
 msgstr ""
 
@@ -7400,7 +7414,7 @@ msgstr ""
 msgid "License validation failed."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:92
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:120
 msgid "Lift average order value with free shipping progress bars, upsells, and cross-sell recommendations."
 msgstr ""
 
@@ -7436,7 +7450,7 @@ msgstr ""
 msgid "List"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:121
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:122
 msgid "List refreshes every hour"
 msgstr ""
 
@@ -7877,6 +7891,10 @@ msgstr ""
 msgid "Modified Date"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:328
+msgid "More AI use cases for OnPage and Setup Wizard"
+msgstr ""
+
 #: app/Modules/OnPageNotification/Resources/Lang/js/analytics.php:25
 msgid "More notifications loaded"
 msgstr ""
@@ -7957,7 +7975,7 @@ msgstr ""
 msgid "Must use HTTPS. Submissions are posted as JSON."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:471
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:486
 msgid "Name"
 msgstr ""
 
@@ -7978,7 +7996,7 @@ msgid "Need help?"
 msgstr ""
 
 #: app/Modules/Ai/Resources/Lang/js/ai-connection.php:111
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:251
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:252
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:120
 msgid "Needs improvement"
 msgstr ""
@@ -8086,8 +8104,8 @@ msgstr ""
 msgid "Newsletter invite"
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:114
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:532
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:122
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:547
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:319
 msgid "Newsletter signup"
 msgstr ""
@@ -8108,19 +8126,19 @@ msgstr ""
 msgid "Next step CTA"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:101
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:102
 msgid "Next update: %1$s hr %2$s min later"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:107
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:108
 msgid "Next update: %d hr later"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:113
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:114
 msgid "Next update: %d min later"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:118
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:119
 msgid "Next update: refreshing soon"
 msgstr ""
 
@@ -8301,7 +8319,7 @@ msgid "No notification draft was created this time."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:311
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:228
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:255
 msgid "No notifications found matching your criteria."
 msgstr ""
 
@@ -8402,8 +8420,8 @@ msgstr ""
 msgid "No templates found. Please create one first."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:206
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:279
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:207
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:280
 msgid "No update information available for this version."
 msgstr ""
 
@@ -8589,7 +8607,7 @@ msgstr ""
 msgid "Notifal Dynamic Date"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:363
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:406
 msgid "Notifal Forms"
 msgstr ""
 
@@ -8650,7 +8668,7 @@ msgstr ""
 msgid "Notifal Templates"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:454
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:497
 msgid "Notifal countdown timers"
 msgstr ""
 
@@ -8701,7 +8719,7 @@ msgstr ""
 msgid "Notification Action Button"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:249
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:276
 msgid "Notification Details"
 msgstr ""
 
@@ -8771,7 +8789,7 @@ msgstr ""
 msgid "Notification duplicated successfully."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:131
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:132
 msgid "Notification goal"
 msgstr ""
 
@@ -8975,6 +8993,10 @@ msgstr ""
 msgid "OnPage Notifications"
 msgstr ""
 
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:315
+msgid "OnPage and Setup Wizard AI imports now remap portable Form ids from the generation payload before save, so email signup fields remain visible in success preview and on the live draft."
+msgstr ""
+
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:70
 msgid "OnPage appearance hint (optional)"
 msgstr ""
@@ -9094,7 +9116,7 @@ msgstr ""
 msgid "Open full details for submission #%d"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:42
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:43
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:63
 msgid "Open fullscreen"
 msgstr ""
@@ -9103,7 +9125,7 @@ msgstr ""
 msgid "Open notification builder"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:262
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:263
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:113
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:114
 msgid "Open notification settings"
@@ -9593,6 +9615,10 @@ msgstr ""
 
 #: app/Modules/Forms/Resources/Lang/js/admin.php:27
 msgid "Placeholder"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:322
+msgid "Placeholder Form ids that do not exist locally are treated as unbound and reconnected, and duplicate template imports still recreate connected forms instead of keeping stale ids."
 msgstr ""
 
 #: app/Modules/Forms/Presentation/Admin/Views/Edit/partials/email-template-panel.php:201
@@ -10109,10 +10135,6 @@ msgstr ""
 msgid "Pre-created Notifications"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:484
-msgid "Pre-created notification import now supports HTML Builder templates, and the library checks each template minimum Notifal version before import."
-msgstr ""
-
 #: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:951
 #: app/Modules/OnPageNotification/Presentation/Frontend/Controllers/OnPageNotificationApiController.php:992
 msgid "Preferences updated successfully"
@@ -10138,7 +10160,7 @@ msgstr ""
 msgid "Preparing your draft for review…"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:97
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:125
 msgid "Prevent Cart Abandonment"
 msgstr ""
 
@@ -10354,7 +10376,7 @@ msgstr ""
 msgid "Product Publish Date"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:49
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:59
 msgid "Product Recommendation Quiz"
 msgstr ""
 
@@ -10407,12 +10429,16 @@ msgstr ""
 msgid "Profile saved on this site and on Notifal."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:79
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:107
 msgid "Promote Social Channels"
 msgstr ""
 
 #: app/Modules/SetupWizard/Application/Services/SetupWizardHeuristicAnalysisService.php:139
 msgid "Promote seasonal or limited stock offers without slowing down your storefront."
+msgstr ""
+
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:66
+msgid "Promote upcoming events, webinars, and workshops with registration prompts timed to keep seats filling."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:42
@@ -10483,7 +10509,7 @@ msgstr ""
 msgid "Quick question before we wrap up: how did guided setup feel?"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:200
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:201
 msgid "Quick tips & inspiration"
 msgstr ""
 
@@ -10518,11 +10544,11 @@ msgstr ""
 msgid "Read More"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:433
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:476
 msgid "Readable HTML Source modal"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:447
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:490
 msgid "Readable Properties HTML tab"
 msgstr ""
 
@@ -10578,11 +10604,11 @@ msgstr ""
 msgid "Recover abandoned carts with a gentle exit-intent reminder tied to items still waiting."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:32
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:36
 msgid "Recover lost sales with exit-intent coupons, flash discounts, and cross-sell offers powered by live WooCommerce cart data."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:73
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:101
 msgid "Recover or Retain Visitors"
 msgstr ""
 
@@ -10616,7 +10642,7 @@ msgstr ""
 msgid "Reference images"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:183
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:184
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:80
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:188
 msgid "Reference images use more credits, and usually match your UI more accurately."
@@ -10731,7 +10757,7 @@ msgstr ""
 msgid "Rendering template…"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:342
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:385
 msgid "Reorder Structure with drag and drop"
 msgstr ""
 
@@ -10835,7 +10861,7 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:230
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:257
 msgid "Reset Filters"
 msgstr ""
 
@@ -11015,6 +11041,10 @@ msgstr ""
 
 #: app/Modules/Ai/Application/Services/AiIndustryOptions.php:42
 msgid "SaaS / Software"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:321
+msgid "Safer Form reconnect for AI templates"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Resources/Lang/js/multi-filters.php:42
@@ -11276,7 +11306,7 @@ msgstr ""
 msgid "Search and select the products you want to target. Start typing to search."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:177
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:204
 msgid "Search by name, template code (e.g. 80 or 80,82), or category…"
 msgstr ""
 
@@ -11297,7 +11327,7 @@ msgstr ""
 msgid "Search forms..."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:440
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:483
 msgid "Search in HTML Source"
 msgstr ""
 
@@ -11309,7 +11339,7 @@ msgstr ""
 msgid "Search meta fields..."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:180
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:207
 msgid "Search notifications"
 msgstr ""
 
@@ -11567,7 +11597,7 @@ msgstr ""
 msgid "Select version"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:108
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:109
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:26
 msgid "Select your industry to personalize your AI experience"
 msgstr ""
@@ -11674,7 +11704,7 @@ msgstr ""
 msgid "Setup Wizard skipped."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:314
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:357
 msgid "Setup Wizard with Noti"
 msgstr ""
 
@@ -11712,6 +11742,10 @@ msgstr ""
 
 #: app/Modules/Templates/Resources/Lang/js/html-builder.php:154
 msgid "Share feedback"
+msgstr ""
+
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:72
+msgid "Share product launches, policy updates, shipping news, and important site messages without burying them in a blog post."
 msgstr ""
 
 #: app/Modules/SetupWizard/Application/Services/SetupWizardHeuristicAnalysisService.php:159
@@ -11759,7 +11793,7 @@ msgstr ""
 msgid "Show Less"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:222
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:249
 #: app/Modules/Templates/Resources/Lang/js/translations.php:33
 msgid "Show More"
 msgstr ""
@@ -11838,7 +11872,7 @@ msgstr ""
 msgid "Show properties panel"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:62
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:90
 msgid "Show real-time sales, Google and Trustpilot ratings, and testimonials that turn visitors into confident buyers."
 msgstr ""
 
@@ -12015,11 +12049,11 @@ msgstr ""
 msgid "Smart Targeting"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:349
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:392
 msgid "Smarter Style and Content editing"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:398
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:441
 msgid "Smoother pre-created notifications experience"
 msgstr ""
 
@@ -12051,8 +12085,8 @@ msgstr ""
 msgid "Something went wrong."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:313
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:334
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:328
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:349
 #: app/Modules/Ai/Domain/GatewayErrorMapper.php:46
 #: app/Modules/Ai/Resources/Lang/js/ai-connection.php:58
 #: app/Modules/Forms/Application/Services/FormPresentationSettings.php:33
@@ -12187,7 +12221,7 @@ msgstr ""
 msgid "Specific product in cart"
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:56
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:84
 msgid "Spotlight new posts, products, and reviews the moment they go live with timely on-page notifications."
 msgstr ""
 
@@ -12280,11 +12314,11 @@ msgstr ""
 msgid "Step %d"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:35
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:36
 msgid "Step 1 of 6"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:88
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:89
 msgid "Sticky header announcement"
 msgstr ""
 
@@ -12473,7 +12507,7 @@ msgstr ""
 msgid "Subscriber"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:84
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:85
 msgid "Subtle, stays in the corner"
 msgstr ""
 
@@ -12643,7 +12677,7 @@ msgstr ""
 msgid "Tell me what {domain} offers and who you serve so I can tailor sharper copy once."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:119
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:120
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:28
 msgid "Tell us about your business"
 msgstr ""
@@ -12700,7 +12734,7 @@ msgid "Template has no content."
 msgstr ""
 
 #: app/Modules/OnPageNotification/Infrastructure/WordPress/Import/Importer.php:185
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:146
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:144
 msgid "Template import failed: %s"
 msgstr ""
 
@@ -12839,9 +12873,9 @@ msgstr ""
 msgid "Thanks! We will be in touch."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:312
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:331
-#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:422
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:327
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:346
+#: app/Modules/Ai/Application/Services/AiOnPageFormAutoConnectService.php:437
 msgid "Thanks! You are on the list."
 msgstr ""
 
@@ -12874,7 +12908,7 @@ msgstr ""
 msgid "The AI service returned an unexpected response. Please try again."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:434
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:477
 msgid "The HTML Source popup now opens with indented HTML and formatted CSS in style tags, so you can read and edit the markup like in a code editor instead of one long minified line."
 msgstr ""
 
@@ -12882,7 +12916,7 @@ msgstr ""
 msgid "The PHP ZIP extension is not enabled on your server. This extension is required for importing and exporting pre-created notifications with bundled media files."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:448
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:491
 msgid "The Properties panel HTML tab now shows indented element markup and includes the same search with previous/next navigation, so editing a selected element is easier for non-technical users."
 msgstr ""
 
@@ -12898,7 +12932,7 @@ msgstr ""
 msgid "The default template for the selected format is loaded here. Edit it freely and use variables below."
 msgstr ""
 
-#: app/Modules/Ai/Application/Services/AiOnPageImportService.php:67
+#: app/Modules/Ai/Application/Services/AiOnPageImportService.php:71
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:132
 #: app/Modules/SetupWizard/Resources/Lang/js/setup-wizard.php:158
 msgid "The generated notification did not match the expected import format."
@@ -12913,7 +12947,7 @@ msgstr ""
 msgid "The kitchen blinked once. Same order, fresh attempt. I'm back on your {goal} popup for {domain}."
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:336
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:379
 msgid "The left panel now has Structure and Widgets tabs. Insert heading, paragraph, image, featured image, button, close button, list, countdown, divider, and spacer with one click or drag them onto the tree (before, inside, or after)."
 msgstr ""
 
@@ -13106,7 +13140,7 @@ msgstr ""
 msgid "This label is already added."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:88
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:89
 msgid "This list is cached for 1 hour. If you don't see a new template or can't import a template's file builder, try again later after the cache refreshes."
 msgstr ""
 
@@ -13303,8 +13337,8 @@ msgstr ""
 
 #: app/Modules/Ai/Domain/GatewayErrorMapper.php:134
 #: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:122
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:420
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1014
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:415
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:1093
 msgid "Too many requests. Please wait a moment and try again."
 msgstr ""
 
@@ -13325,7 +13359,7 @@ msgstr ""
 msgid "Top"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:87
+#: app/Modules/OnPageNotification/Application/Services/OnPageAiPromptConfig.php:88
 msgid "Top Banner"
 msgstr ""
 
@@ -13390,11 +13424,11 @@ msgstr ""
 msgid "Travel / Hospitality"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:154
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:155
 msgid "Trending"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:153
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:154
 msgid "Trending categories"
 msgstr ""
 
@@ -13451,7 +13485,7 @@ msgid "Trust-building & product offers"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:310
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:198
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:225
 msgid "Try Again"
 msgstr ""
 
@@ -13492,7 +13526,7 @@ msgstr ""
 msgid "Turn this on when you want visitors to complete the form across multiple steps."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:38
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:42
 msgid "Turn visitors into subscribers with newsletter popups, scroll-based forms, and exit-intent lead capture."
 msgstr ""
 
@@ -13547,7 +13581,7 @@ msgid "URL parameter [%1$s] %2$s [%3$s]"
 msgstr ""
 
 #: app/Modules/OnPageNotification/Presentation/Admin/Assets/ListAssets.php:309
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:192
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/precreated-notifications-archive.php:219
 msgid "Unable to Load Notifications"
 msgstr ""
 
@@ -13617,7 +13651,7 @@ msgstr ""
 msgid "Undo (Ctrl+Z)"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:725
+#: app/Modules/OnPageNotification/Application/Services/API/PreCreatedNotificationsApiService.php:757
 msgid "Unexpected parallel response for %s."
 msgstr ""
 
@@ -13697,11 +13731,11 @@ msgstr ""
 msgid "Unsubscribe"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:438
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:508
 msgid "Unsupported builder type: %s"
 msgstr ""
 
-#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:184
+#: app/Modules/Templates/Infrastructure/WordPress/Import/Importer.php:254
 msgid "Unsupported builder type: %s. Supported builders: %s"
 msgstr ""
 
@@ -14200,7 +14234,7 @@ msgstr ""
 msgid "Visual HTML template editor"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:370
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:413
 msgid "WP Armour compatibility for popup forms"
 msgstr ""
 
@@ -14211,7 +14245,7 @@ msgstr ""
 msgid "Wait! Don't deactivate Notifal. You have to activate both Notifal and Notifal Pro in order for the plugin to work."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:231
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:232
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:117
 msgid "Want to apply some changes on the template? Open the builder and talk with Noti, Notifal AI, to change anything you need!"
 msgstr ""
@@ -14413,29 +14447,29 @@ msgstr ""
 msgid "What's New %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:205
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:225
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:232
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:239
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:246
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:283
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:206
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:226
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:233
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:240
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:247
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:284
 msgid "What's New in %s"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:478
-msgid "What's New in 2.4.3"
-msgstr ""
-
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:421
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:464
 msgid "What's New in 2.4.4"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:393
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:436
 msgid "What's New in 2.4.5"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:309
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:352
 msgid "What's New in 3.0.0"
+msgstr ""
+
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:309
+msgid "What's New in 3.0.1"
 msgstr ""
 
 #: app/Infrastructure/WordPress/WhatsNewPopup/Infrastructure/WhatsNewController.php:119
@@ -14483,7 +14517,7 @@ msgstr ""
 msgid "When timer ends"
 msgstr ""
 
-#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:427
+#: app/Infrastructure/WordPress/WhatsNewPopup/Domain/WhatsNewPopup.php:470
 msgid "When you edit an element in the HTML tab and remove CSS from the style attribute, Update HTML now keeps that change. Styles from class or style-tag rules stay in the stylesheet instead of being copied back as inline styles."
 msgstr ""
 
@@ -14530,7 +14564,7 @@ msgstr ""
 msgid "Width, height, and border radius apply to the dynamic image injected at render time — not the placeholder wrapper."
 msgstr ""
 
-#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:74
+#: app/Modules/Templates/Application/Services/HtmlBuilderUseCases.php:102
 msgid "Win back idle visitors and abandoning carts with perfectly timed exit-intent and inactivity prompts."
 msgstr ""
 
@@ -14604,7 +14638,7 @@ msgstr ""
 msgid "Write in your own language. The more detail you share about the offer, audience, and message, the sharper and more useful your draft will be. English is not required."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:157
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:158
 msgid "Write your prompt"
 msgstr ""
 
@@ -14812,7 +14846,7 @@ msgstr ""
 msgid "You've generated %s in clicked revenue (%s in total influenced revenue)! Upgrade to Pro to see detailed analytics, CTR insights, conversion tracking, and optimization recommendations to boost your results even further."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:218
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:219
 #: app/Modules/OnPageNotification/Resources/Lang/js/ai-prompt.php:133
 msgid "Your AI notification was imported as a disabled draft. Review settings, then enable it when ready."
 msgstr ""
@@ -14873,7 +14907,7 @@ msgstr ""
 msgid "Your first notification is saved as a draft so you can review it safely."
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:114
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:115
 msgid "Your industry"
 msgstr ""
 
@@ -15036,7 +15070,7 @@ msgstr ""
 msgid "e.g. Branding, SEO, web design…"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:159
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:160
 #: app/Modules/SetupWizard/Resources/Lang/js/setup-wizard.php:206
 msgid "e.g. Create a sleek exit-intent popup offering a 15% discount for first-time buyers…"
 msgstr ""
@@ -15101,7 +15135,7 @@ msgstr ""
 msgid "e.g. Vegan cafe, pizza delivery…"
 msgstr ""
 
-#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:125
+#: app/Modules/OnPageNotification/Presentation/Admin/Views/components/onpage-ai-prompt-modal.php:126
 msgid "e.g. We provide sustainable packaging for e-commerce brands, focusing on biodegradable materials and custom branding…"
 msgstr ""
 

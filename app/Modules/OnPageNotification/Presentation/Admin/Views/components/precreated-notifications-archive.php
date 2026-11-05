@@ -18,6 +18,7 @@ if (!defined('ABSPATH')) {
  * Provides filtering and browsing capabilities for pre-created notification templates.
  *
  * @since 2.0.0
+ * @updated 3.0.1 Trending tags support all archive taxonomies from the marketplace menu.
  * @author Hossein <hossein@notifal.com>
  */
 
@@ -153,12 +154,38 @@ if ($cacheExpiresAt > 0) {
             <div class="notifal-precreated-archive-trending" role="navigation" aria-label="<?php esc_attr_e('Trending categories', 'notifal'); ?>">
                 <span class="notifal-precreated-archive-trending-label"><?php esc_html_e('Trending', 'notifal'); ?></span>
                 <div class="notifal-precreated-archive-trending-tags">
-                    <?php foreach ($trending as $item) :
-                        $is_active = !empty($currentFilters['use_case']) && in_array($item['use_case_slug'], (array) $currentFilters['use_case'], true);
+                    <?php
+                    // Map API taxonomy keys to parsed URL filter keys for active-state checks.
+                    $taxonomy_to_filter_key = [
+                        'use_cases'    => 'use_case',
+                        'events'       => 'event',
+                        'industries'   => 'industry',
+                        'layouts'      => 'layout',
+                        'used_plugins' => 'plugin',
+                    ];
+                    foreach ($trending as $item) :
+                        // Resolve taxonomy/slug with legacy use_case_slug fallback.
+                        $taxonomy = isset($item['taxonomy']) ? sanitize_key((string) $item['taxonomy']) : 'use_cases';
+                        $term_slug = '';
+                        if (!empty($item['slug'])) {
+                            $term_slug = sanitize_text_field((string) $item['slug']);
+                        } elseif (!empty($item['use_case_slug'])) {
+                            $term_slug = sanitize_text_field((string) $item['use_case_slug']);
+                            $taxonomy = 'use_cases';
+                        }
+                        if ($term_slug === '' || !isset($taxonomy_to_filter_key[$taxonomy])) {
+                            continue;
+                        }
+                        $filter_key = $taxonomy_to_filter_key[$taxonomy];
+                        $is_active = !empty($currentFilters[$filter_key]) && in_array($term_slug, (array) $currentFilters[$filter_key], true);
                         ?>
                         <button type="button"
                                 class="notifal-trending-tag<?php echo $is_active ? ' is-active' : ''; ?>"
-                                data-use-case="<?php echo esc_attr($item['use_case_slug']); ?>"
+                                data-taxonomy="<?php echo esc_attr($taxonomy); ?>"
+                                data-term-slug="<?php echo esc_attr($term_slug); ?>"
+                                <?php if ('use_cases' === $taxonomy) : ?>
+                                data-use-case="<?php echo esc_attr($term_slug); ?>"
+                                <?php endif; ?>
                                 aria-pressed="<?php echo $is_active ? 'true' : 'false'; ?>">
                             <?php echo esc_html($item['title']); ?>
                         </button>
