@@ -13,6 +13,7 @@ defined('ABSPATH') || exit;
  *
  * @since 3.0.0
  * @updated 3.0.0 Release the PHP session before outbound gateway HTTP so cancel is not blocked.
+ * @updated 3.0.3 Forward the HTML Builder script auto-apply opt-in on start.
  * @author Hossein <hossein@notifal.com>
  */
 class AiGenerationAjaxController
@@ -53,6 +54,7 @@ class AiGenerationAjaxController
      * Start one hosted generation job.
      *
      * @since 3.0.0
+     * @updated 3.0.3 Forward the HTML Builder script auto-apply opt-in.
      * @return void
      */
     public static function startGeneration(): void
@@ -90,8 +92,12 @@ class AiGenerationAjaxController
                 notifal_json_error(__('Missing generation retry key.', 'notifal'));
             }
 
+            // Read the HTML Builder opt-in for gateway-reviewed automatic script apply.
+            $scriptAutoApply = isset($_POST['script_auto_apply'])
+                && '1' === sanitize_key(wp_unslash($_POST['script_auto_apply']));
+
             // Delegate to the generation bridge service.
-            $result = self::generationService()->start($feature, $intent, $idempotencyKey);
+            $result = self::generationService()->start($feature, $intent, $idempotencyKey, $scriptAutoApply);
 
             // Return structured success or error payloads.
             self::respond($result);

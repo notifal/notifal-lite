@@ -1,5 +1,18 @@
 == Changelog ==
 
+3.0.3 [2026-11-16]
+Added: Noti now adds interactive scripts (gamification, pick-a-card, scratch reveal) to HTML Builder templates automatically once they pass automatic security checks, after you allow it once in the chat.
+Added: Each added script shows its status in the chat with View code, Remove script, Add it back, and a Stop adding scripts automatically option, and every change is a single undo step.
+Improved: Noti now checks that a generated template actually displays, and automatically fixes content that rendered with no size, such as game cards that were invisible, without slowing down the normal reply.
+Fixed: Copy code buttons now work in HTML Builder Preview mode and show Copied! like they do on the live site, so coupon buttons can be tested before publishing.
+Added: Preview mode has a Reset test button for templates with scripts. It clears the template's saved play limit and restarts the preview, so games can be tested again without waiting 24 hours.
+Improved: When Noti cannot make a script pass the security checks, the template design is still applied and the chat offers Try again instead of a dead end.
+Improved: Scripts you added yourself are never changed automatically, and accounts without the unfiltered HTML permission keep the existing no-script behavior.
+Fixed: HTML Builder canvas now shows Noti AI style edits immediately when the template contains action or close buttons, instead of only after save and refresh.
+
+3.0.2 [2026-11-09]
+Fixed: HTML Builder AI edits that ask to remove a form or convert the template into a promote / landing CTA no longer force Keep-form or include_form, so Noti can drop the form subtree instead of regenerating it.
+
 3.0.1 [2026-11-02]
 Fixed: AI OnPage and Setup Wizard imports now remap portable Form ids from the gateway forms bundle before save, so lead-capture email fields stay visible after import and in success preview.
 Fixed: Orphan positive data-form-id placeholders are treated as unbound when no local Form CPT exists, instead of being skipped and later stripped.

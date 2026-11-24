@@ -20,6 +20,7 @@ defined('ABSPATH') || exit;
  * @since 3.0.0
  * @updated 3.0.0 Pass related validation fields through gateway failures for wizard UX.
  * @updated 3.0.0 Expose code/message aliases on failed job status for Pass 2 recovery UX.
+ * @updated 3.0.3 Declare script_auto_apply for HTML Builder chat requests that opt in.
  * @author Hossein <hossein@notifal.com>
  */
 class GenerationBridgeService
@@ -88,12 +89,14 @@ class GenerationBridgeService
      * Start an asynchronous hosted generation job.
      *
      * @since 3.0.0
+     * @updated 3.0.3 Accept the HTML Builder script auto-apply opt-in.
      * @param string $feature Feature slug.
      * @param array<string, mixed> $intent Structured intent payload.
      * @param string $idempotencyKey Client retry key.
+     * @param bool $scriptAutoApply Whether the caller applies gateway-approved scripts automatically.
      * @return array<string, mixed> Normalized job state for polling UI.
      */
-    public function start(string $feature, array $intent, string $idempotencyKey): array
+    public function start(string $feature, array $intent, string $idempotencyKey, bool $scriptAutoApply = false): array
     {
         // Normalize legacy feature slugs before local validation.
         $feature = AiFeature::normalize($feature);
@@ -122,7 +125,7 @@ class GenerationBridgeService
         }
 
         // Build the shared generation body used by authenticated and public wizard routes.
-        $body = $this->buildGenerationBody($feature, $intent);
+        $body = $this->buildGenerationBody($feature, $intent, $scriptAutoApply);
 
         /**
          * Filter the hosted generation request body before it is sent to the gateway.
@@ -359,9 +362,11 @@ class GenerationBridgeService
      * Build client capability flags sent with every generation request.
      *
      * @since 3.0.0
+     * @updated 3.0.3 Add script_auto_apply when the request opted in and the user may keep scripts.
+     * @param bool $scriptAutoApply Whether the caller applies gateway-approved scripts automatically.
      * @return array<string, bool> Capability map.
      */
-    private function buildCapabilities(): array
+    private function buildCapabilities(bool $scriptAutoApply = false): array
     {
         // Compose baseline capability flags from the local installation.
         // Cast every flag to bool so JSON always emits true/false for known keys.
@@ -389,6 +394,8 @@ class GenerationBridgeService
             'pro_display_rules' => !empty($filtered['pro_display_rules']),
             'comment_tags'      => !empty($filtered['comment_tags']),
             'unfiltered_html'   => !empty($filtered['unfiltered_html']),
+            // Never derived from filters: the opt-in plus the real WordPress capability decide it.
+            'script_auto_apply' => $scriptAutoApply && current_user_can('unfiltered_html'),
         ];
     }
 
@@ -597,17 +604,23 @@ class GenerationBridgeService
      * Build the shared generation request body for gateway routes.
      *
      * @since 3.0.0
-     * @param string               $feature Feature slug.
-     * @param array<string, mixed> $intent  Normalized intent.
+     * @updated 3.0.3 Scope the script auto-apply opt-in to HTML Builder template jobs.
+     * @param string               $feature         Feature slug.
+     * @param array<string, mixed> $intent          Normalized intent.
+     * @param bool                 $scriptAutoApply Whether the caller applies gateway-approved scripts automatically.
      * @return array<string, mixed> Generation request body.
      */
-    private function buildGenerationBody(string $feature, array $intent): array
+    private function buildGenerationBody(string $feature, array $intent, bool $scriptAutoApply = false): array
     {
+        // Only HTML Builder template jobs can carry an auto-applied script.
+        $scriptAutoApply = $scriptAutoApply
+            && in_array($feature, [AiFeature::HTML_TEMPLATE, AiFeature::HTML_TEMPLATE_EDIT], true);
+
         // active_plugins is collected on this site so the hosted prompt can suggest real shortcodes.
         return [
             'feature'            => $feature,
             'intent'             => $intent,
-            'capabilities'       => $this->buildCapabilities(),
+            'capabilities'       => $this->buildCapabilities($scriptAutoApply),
             'active_plugins'     => $this->buildActivePlugins(),
             'prompt_version'     => Constants::PROMPT_VERSION,
             'schema_version'     => Constants::SCHEMA_VERSION,

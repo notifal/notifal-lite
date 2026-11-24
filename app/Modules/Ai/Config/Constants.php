@@ -9,6 +9,7 @@ defined('ABSPATH') || exit;
  *
  * @since 3.0.0
  * @updated 3.0.0 Bump PROMPT_VERSION to 1.9.6 for language + mood template font import guidance.
+ * @updated 3.0.3 Add the script auto-apply consent user meta key.
  * @author Hossein <hossein@notifal.com>
  */
 class Constants
@@ -64,6 +65,14 @@ class Constants
      * @var string
      */
     public const AJAX_NONCE_ACTION = 'notifal_ai_ajax_nonce';
+
+    /**
+     * User meta key storing the one-time consent to auto-apply approved Noti scripts.
+     *
+     * @since 3.0.3
+     * @var string
+     */
+    public const USER_META_SCRIPT_AUTO_APPLY = 'notifal_ai_script_auto_apply';
 
     /**
      * Default disclosure version mirrored from the gateway launch settings.
