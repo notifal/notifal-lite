@@ -3,7 +3,7 @@ Contributors: notifal,hosseinalehabib
 Tags: popup, popup builder, woocommerce, marketing, AI
 Requires at least: 6.0
 Tested up to: 7.1
-Stable tag: 3.0.1
+Stable tag: 3.0.3
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -15,6 +15,8 @@ AI CRO for WordPress. Noti analyzes your site, suggests industry-fit notificatio
 **<a href="https://notifal.com/documentation/?utm_source=WPD" target="_blank">Documentation</a> | <a href="https://notifal.com/pricing/?utm_source=WPD&utm_campaing=Notifal-Pricing" target="_blank">Notifal Pro</a> | <a href="https://notifal.com/templates?utm_source=WPD&utm_campaing=Notifal-Library" target="_blank">Templates Library</a> | <a href="https://notifal.com/community?utm_source=WPD&utm_campaing=Notifal-Community" target="_blank">Community</a>**
 
 ### Most Visitors Leave Without Buying. Notifal Is Built to Change That. ###
+
+[youtube https://youtu.be/bVtmS_LJMFU?si=ce8pnDFtCSkT8IxC]
 
 A regular popup plugin shows the same message to everyone. Notifal is different: it's a conversion rate optimization (CRO) engine that reads live data, your content, your visitors, and on eCommerce sites, your products, cart, and orders too, and turns it into real-time, persuasive messaging that actually moves people to act.
 
@@ -30,7 +32,7 @@ And here is what makes Notifal feel unfair compared to every other popup tool: *
 💬 Change anything by talking to Noti, rewrite, restyle, rebuild, without starting from scratch
 📝 Built-in Forms: a professional form builder inside notifications, with AI, inbox, emails, and popular integrations
 🎨 Design with the recommended Notifal HTML Builder (Noti + AI), or use Elementor / Block Editor
-⚡ Launch faster with 100+ ready-to-use templates, or skip them and generate with AI
+⚡ Launch faster with 1000+ ready-to-use templates, or skip them and generate with AI
 📊 Track performance with built-in advanced analytics
 🧠 Smart Targeting for context-aware dynamic content on every page [PRO]
 🔴 Live social proof powered by real site data, any post type, any custom field
@@ -95,21 +97,27 @@ Every scenario above runs through Notifal's own engine: dynamic tags, Smart Targ
 Noti gets you converting fast. When you want humans in the loop too, request a <a href="https://notifal.com/my-account/support" target="_blank">**Free Configuration**</a>. Our team reviews your site, sets up high-converting notifications, and watches Notifal analytics, impressions, click rate, close rate, conversion rate, to refine wording, timing, and placement over time. AI plus a real team. CRO as an ongoing process, not a one-time setup.
 
 ## One Plugin. Endless Possibilities. ##
-From growing your email list to preventing cart abandonment, from building social proof to boosting engagement, Notifal adapts to your goals. eCommerce, blog, SaaS, agency, or portfolio, there's a notification strategy waiting.
+From growing your email list to preventing cart abandonment, from gamification and bookings to events and announcements, Notifal adapts to your goals. eCommerce, blog, SaaS, agency, or portfolio, there's a notification strategy waiting.
 
 Here's what you can create with Notifal:
 
-* **📧 <a href="https://notifal.com/use-cases/grow-email-list/" target="_blank">Grow Email List</a>**: Newsletter signup, email discount, exit-intent / scroll capture, built-in Notifal Forms
-* **💰 <a href="https://notifal.com/use-cases/increase-sales/" target="_blank">Increase Sales</a>**: Discounted products, coupons, cross-sells, cart-based product notifications (WooCommerce)
-* **🧠 Product Recommendation Quiz**: Multi-step product finder / guided selling quiz that asks preference questions, then recommends the best-fit product
-* **⭐ <a href="https://notifal.com/use-cases/build-trust-and-social-proof/" target="_blank">Build Trust & Social Proof</a>**: Recent sales, Google / G2 / Trustpilot rating templates, testimonials
-* **🚀 <a href="https://notifal.com/use-cases/boost-engagement/" target="_blank">Boost Engagement</a>**: New post or product alerts, comment prompts, share and related-content exit offers
-* **🔄 <a href="https://notifal.com/use-cases/recover-or-retain-visitors/" target="_blank">Recover & Retain Visitors</a>**: Idle user popup, exit intent offers, cart exit popup
-* **🛒 <a href="https://notifal.com/use-cases/prevent-cart-abandonment/" target="_blank">Prevent Cart Abandonment</a>**: Cart exit recovery powered by live WooCommerce cart data
-* **📱 <a href="https://notifal.com/use-cases/promote-social-channels/" target="_blank">Promote Your Social Channels</a>**: YouTube, social follow buttons
-* **💬 <a href="https://notifal.com/use-cases/communicate-with-visitors/" target="_blank">Communicate with Visitors</a>**: WhatsApp, click to call, all-in-one chat widgets
-* **📈 <a href="https://notifal.com/use-cases/grow-aov/" target="_blank">Grow Average Order Value (AOV)</a>**: Free shipping progress, cart upsells via Cart Products
-* **🔒 <a href="https://notifal.com/use-cases/content-blocking/" target="_blank">Content Blocking & Access Control</a>**: Age verification, registration-required popups
+* **💰 <a href="https://notifal.com/use-cases/increase-sales/" target="_blank">Increase Sales</a>**: Exit-intent coupons, flash discounts, and cross-sell offers powered by live WooCommerce cart data
+* **📧 <a href="https://notifal.com/use-cases/grow-email-list/" target="_blank">Grow Email List</a>**: Newsletter popups, scroll-based forms, and exit-intent email capture
+* **⭐ <a href="https://notifal.com/use-cases/build-trust-and-social-proof/" target="_blank">Build Trust and Social Proof</a>**: Real-time sales, Google and Trustpilot ratings, and testimonials
+* **📈 <a href="https://notifal.com/use-cases/grow-aov/" target="_blank">Grow AOV</a>**: Free shipping progress bars and cart-aware cross-sell recommendations
+* **🛒 <a href="https://notifal.com/use-cases/prevent-cart-abandonment/" target="_blank">Prevent Cart Abandonment</a>**: A dedicated cart-exit popup before shoppers leave checkout
+* **🎲 <a href="https://notifal.com/use-cases/gamification/" target="_blank">Gamification</a>**: Spin-to-win, scratch cards, and playful reward popups
+* **🚀 <a href="https://notifal.com/use-cases/boost-engagement/" target="_blank">Boost Engagement</a>**: New posts, products, and reviews the moment they go live
+* **💬 <a href="https://notifal.com/use-cases/communicate-with-visitors/" target="_blank">Communicate with Visitors</a>**: WhatsApp chat, click-to-call, and live support widgets
+* **👥 <a href="https://notifal.com/use-cases/grow-user-base/" target="_blank">Grow User Base</a>**: Targeted registration popups that drive more account signups
+* **📅 <a href="https://notifal.com/use-cases/bookings-appointments/" target="_blank">Bookings & Appointments</a>**: Appointment popups, schedule CTAs, and timed reminders
+* **📱 <a href="https://notifal.com/use-cases/promote-social-channels/" target="_blank">Promote Social Channels</a>**: YouTube and social follow prompts visitors actually notice
+* **🧠 <a href="https://notifal.com/use-cases/product-recommendation-quiz/" target="_blank">Product Recommendation Quiz</a>**: Preference questions that recommend the best-fit product
+* **📣 <a href="https://notifal.com/use-cases/announcements/" target="_blank">Announcements</a>**: Site-wide news, launches, and updates with bars and timed popups
+* **🔒 <a href="https://notifal.com/use-cases/content-blocking/" target="_blank">Content Blocking</a>**: Age verification and registration walls, fully customizable
+* **📝 <a href="https://notifal.com/use-cases/collect-feedback/" target="_blank">Collect Feedback</a>**: Reviews, NPS scores, and visitor surveys in lightweight popups
+* **🎥 <a href="https://notifal.com/use-cases/events-webinars/" target="_blank">Events & Webinars</a>**: Registration popups that capture webinar and event signups
+* **🔄 <a href="https://notifal.com/use-cases/recover-or-retain-visitors/" target="_blank">Recover or Retain Visitors</a>**: Exit-intent and idle-trigger popups for idle visitors and abandoning carts
 
 Whatever your conversion goal, Notifal has a notification for it.
 
@@ -122,10 +130,10 @@ A popup isn't always the right tool. Notifal gives you five display types so the
 * **📰 Top Bar Banner**: Announcements, shipping thresholds, promotions.
 * **🔔 Toast Notification**: Brief "someone just bought this" style alerts.
 
-## 🔥 With +100 Ready-to-Use Templates, Launch in Minutes, Not Hours ##
-Prefer a starting point from the library? Choose from 100+ professionally designed notifications and go live in a few clicks. Prefer zero blank-canvas work? Let Notifal AI generate a draft that already matches your brand and industry.
+## 🔥 With +1000 Ready-to-Use Templates, Launch in Minutes, Not Hours ##
+Prefer a starting point from the library? Choose from 1000+ professionally designed notifications and go live in a few clicks. Prefer zero blank-canvas work? Let Notifal AI generate a draft that already matches your brand and industry.
 
-* **🎨 Templates for Every Need**: All major use cases, from email list growth to product recommendation quizzes and cart abandonment recovery.
+* **🎨 Templates for Every Need**: All major use cases, from email list growth and social proof to gamification, bookings, events, and cart abandonment recovery.
 * **🏢 Designed for Every Industry**: Online store, blog, SaaS, or local business.
 * **⚡ Ready in Clicks, Not Hours**: Pick, import, customize if you want. Or skip the library and talk to Noti.
 
@@ -444,6 +452,19 @@ Notifal is designed to work with any properly coded WordPress theme. Whether you
 27. a Newsletter Sign-up Form Pop-up that was created with Notifal and you can import it to your website from our library.
 
 == Changelog ==
+3.0.3 [2026-11-16]
+Added: Noti now adds interactive scripts (gamification, pick-a-card, scratch reveal) to HTML Builder templates automatically once they pass automatic security checks, after you allow it once in the chat.
+Added: Each added script shows its status in the chat with View code, Remove script, Add it back, and a Stop adding scripts automatically option, and every change is a single undo step.
+Improved: Noti now checks that a generated template actually displays, and automatically fixes content that rendered with no size, such as game cards that were invisible, without slowing down the normal reply.
+Fixed: Copy code buttons now work in HTML Builder Preview mode and show Copied! like they do on the live site, so coupon buttons can be tested before publishing.
+Added: Preview mode has a Reset test button for templates with scripts. It clears the template's saved play limit and restarts the preview, so games can be tested again without waiting 24 hours.
+Improved: When Noti cannot make a script pass the security checks, the template design is still applied and the chat offers Try again instead of a dead end.
+Improved: Scripts you added yourself are never changed automatically, and accounts without the unfiltered HTML permission keep the existing no-script behavior.
+Fixed: HTML Builder canvas now shows Noti AI style edits immediately when the template contains action or close buttons, instead of only after save and refresh.
+
+3.0.2 [2026-11-09]
+Fixed: HTML Builder AI edits that ask to remove a form or convert the template into a promote / landing CTA no longer force Keep-form or include_form, so Noti can drop the form subtree instead of regenerating it.
+
 3.0.1 [2026-11-02]
 Fixed: AI OnPage and Setup Wizard imports now remap portable Form ids from the gateway forms bundle before save, so lead-capture email fields stay visible after import and in success preview.
 Fixed: Orphan positive data-form-id placeholders are treated as unbound when no local Form CPT exists, instead of being skipped and later stripped.
@@ -473,17 +494,6 @@ Added: Hosted Notifal AI generation for OnPage notifications, HTML Builder templ
 Added: HTML Builder AI wizard to create a new template or edit the current one, including a before/after preview before applying edits.
 Improved: OnPage and HTML Builder AI modals use a guided step-by-step wizard powered by Notifal AI.
 Improved: Forms work smoothly with WP Armour when that plugin is installed and active.
-
-2.4.5 [2026-07-17]
-Improved: Pre-created notifications UX, Import Pre-Created scrolls to the library while it is still loading, and details popup builder import buttons appear only after template details finish loading.
-
-2.4.4 [2026-07-11]
-Fixed: HTML Builder HTML tab now keeps style attribute edits when you remove CSS properties and click Update HTML, without restoring stylesheet-matched rules as inline styles.
-Added: Content Source now shows an info note for cart tags explaining that cart tag limits are not available, matching the user tags behavior.
-Improved: HTML Source modal now opens with indented, readable HTML (including CSS in style tags) instead of a single minified line.
-Added: HTML Source modal search with highlighted matches, scroll-to-first result, and previous/next navigation.
-Improved: Properties panel HTML tab now opens with indented element markup and the same find-in-HTML search with previous/next navigation.
-Added: Notifal countdown placeholder (`notifal-countdown`) with AI prompt guidance, Content panel minutes/seconds and when-timer-ends settings in HTML Builder, and frontend timer runtime.
 
 [See changelog for all versions.](https://notifal.com/changelog/)
 

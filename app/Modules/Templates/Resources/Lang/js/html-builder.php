@@ -11,6 +11,7 @@ use Notifal\Modules\Ai\Config\AiCharacter;
  * @updated 3.0.0 HTML Builder chat image attach strings and form-aware chips.
  * @updated 3.0.0 Empty canvas can open Noti chat as an alternative to import.
  * @updated 3.0.0 Hidden-step canvas hint is an eye-slash hover tooltip.
+ * @updated 3.0.3 Script auto-apply consent, applied, removed, and retry strings.
  * @author Hossein <hossein@notifal.com>
  */
 return [
@@ -175,6 +176,36 @@ return [
         'ai_chat_script_copy'               => __('Copy script', 'notifal'),
         'ai_chat_script_copied'             => __('Copied!', 'notifal'),
         'ai_chat_script_withheld'           => __('The script did not pass the security check and was not delivered. Re-generate or ask Noti for a no-script version instead.', 'notifal'),
+
+        // Script auto-apply states (gateway-approved scripts, one-time consent).
+        'ai_chat_script_consent_label'       => __('Add interactive script?', 'notifal'),
+        'ai_chat_script_consent_intro'       => __('Noti wrote a small script for the interactive part of this template, and it passed Notifal\'s automatic security checks. Allow Noti to add approved scripts to your templates automatically? You are asked only once, and you can remove a script at any time.', 'notifal'),
+        'ai_chat_script_consent_allow'       => __('Allow and add', 'notifal'),
+        'ai_chat_script_consent_decline'     => __('Show code instead', 'notifal'),
+        'ai_chat_script_applied_label'       => __('Interactive script added', 'notifal'),
+        'ai_chat_script_applied_intro'       => __('The script passed Notifal\'s automatic security checks and was added to this template. Save the template to keep it. If anything on your site misbehaves, remove the script first.', 'notifal'),
+        'ai_chat_script_view_code'           => __('View code', 'notifal'),
+        'ai_chat_script_remove'              => __('Remove script', 'notifal'),
+        'ai_chat_script_stop_auto'           => __('Stop adding scripts automatically', 'notifal'),
+        'ai_chat_script_auto_stopped'        => __('Noti will ask before adding a script next time.', 'notifal'),
+        'ai_chat_script_removed_label'       => __('Script removed', 'notifal'),
+        'ai_chat_script_removed_intro'       => __('The interactive script was removed from this template. The design stays on the canvas.', 'notifal'),
+        'ai_chat_script_add_back'            => __('Add it back', 'notifal'),
+        'ai_chat_script_action_failed'       => __('This could not be completed. Please try again.', 'notifal'),
+        'ai_chat_script_reviewed_disclaimer' => __('This script passed Notifal\'s automatic security checks. If anything on your site misbehaves, remove the script first.', 'notifal'),
+        'ai_chat_script_existing_note'       => __('Your template already has a custom script, so Noti did not change it automatically. Review the code below and add it yourself if you want it.', 'notifal'),
+        'ai_chat_script_withheld_auto'       => __('Noti could not make the interactive script pass the security checks, so it was not added. The template design is on the canvas. Try again, or ask Noti for a version without a script.', 'notifal'),
+        'ai_chat_script_retry'               => __('Try again', 'notifal'),
+
+        // Preview test reset (templates with scripts, such as games with a play limit).
+        'preview_copied'                     => __('Copied!', 'notifal'),
+        'preview_reset_test'                 => __('Reset test', 'notifal'),
+        'preview_reset_test_done'            => __('Reset', 'notifal'),
+        'preview_reset_test_title'           => __('Clears this template\'s saved play limit and restarts the preview so you can test it again.', 'notifal'),
+
+        // Automatic layout repair (shown when part of a generated template rendered with no size).
+        'ai_chat_layout_polishing'           => __('Part of this template is not displaying correctly. Noti is fixing it now.', 'notifal'),
+        'ai_chat_layout_polish_failed'       => __('Part of this template may not display correctly. Ask Noti to fix it, or check the canvas.', 'notifal'),
 
         'ai_chat_chip_countdown' => __('Add a countdown above the action button', 'notifal'),
         'ai_chat_chip_form_modern' => __('Update the form UI to a cleaner, more modern look', 'notifal'),

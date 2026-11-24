@@ -15,6 +15,7 @@ defined('ABSPATH') || exit;
  * Builds browser-safe AI configuration localized into admin scripts.
  *
  * @since 3.0.0
+ * @updated 3.0.3 Expose script auto-apply consent state and its AJAX action.
  * @author Hossein <hossein@notifal.com>
  */
 class AiPublicConfigService
@@ -48,25 +49,37 @@ class AiPublicConfigService
     private LicenseConnectionProvisioner $licenseProvisioner;
 
     /**
+     * Script auto-apply consent dependency.
+     *
+     * @since 3.0.3
+     * @var ScriptAutoApplyConsentService
+     */
+    private ScriptAutoApplyConsentService $scriptConsent;
+
+    /**
      * Create the public config service.
      *
      * @since 3.0.0
+     * @updated 3.0.3 Inject the script auto-apply consent service.
      * @param AccountConnectionService $connectionService Connection service.
      * @param InstallationCredentialStore $credentialStore Credential store.
      * @param SiteProfileService $siteProfileService Site profile service.
      * @param LicenseConnectionProvisioner $licenseProvisioner License provisioner.
+     * @param ScriptAutoApplyConsentService $scriptConsent Script auto-apply consent service.
      */
     public function __construct(
         AccountConnectionService $connectionService,
         InstallationCredentialStore $credentialStore,
         SiteProfileService $siteProfileService,
-        LicenseConnectionProvisioner $licenseProvisioner
+        LicenseConnectionProvisioner $licenseProvisioner,
+        ScriptAutoApplyConsentService $scriptConsent
     ) {
         // Store dependencies used to compose public config.
         $this->connectionService = $connectionService;
         $this->credentialStore = $credentialStore;
         $this->siteProfileService = $siteProfileService;
         $this->licenseProvisioner = $licenseProvisioner;
+        $this->scriptConsent = $scriptConsent;
     }
 
     /**
@@ -109,6 +122,8 @@ class AiPublicConfigService
             'character'          => AiCharacter::getPublicMeta(),
             'prompt_version'     => Constants::PROMPT_VERSION,
             'schema_version'     => Constants::SCHEMA_VERSION,
+            // Per-user state for auto-applying gateway-approved template scripts.
+            'script_auto_apply'  => $this->scriptConsent->getPublicState(),
             'actions'            => [
                 'request_code'       => 'notifal_ai_request_code',
                 'verify_code'        => 'notifal_ai_verify_code',
@@ -124,6 +139,7 @@ class AiPublicConfigService
                 'generation_feedback'=> 'notifal_ai_generation_feedback',
                 'sanitize_html'      => 'notifal_ai_sanitize_html',
                 'import_onpage'      => 'notifal_ai_import_onpage',
+                'script_consent'     => 'notifal_ai_script_consent',
             ],
             'strings'            => $strings,
         ];

@@ -16,6 +16,7 @@ use Notifal\Modules\Ai\Application\Services\GeneratedContentSanitizer;
 use Notifal\Modules\Ai\Application\Services\GenerationBridgeService;
 use Notifal\Modules\Ai\Application\Services\InstallationCredentialStore;
 use Notifal\Modules\Ai\Application\Services\LicenseConnectionProvisioner;
+use Notifal\Modules\Ai\Application\Services\ScriptAutoApplyConsentService;
 use Notifal\Modules\Ai\Application\Services\SecureOptionStorage;
 use Notifal\Modules\Ai\Application\Services\SiteProfileService;
 use Notifal\Modules\Ai\Domain\SiteIdentityBuilder;
@@ -32,6 +33,7 @@ defined('ABSPATH') || exit;
  * Service provider for the shared hosted AI client infrastructure.
  *
  * @since 3.0.0
+ * @updated 3.0.3 Register ScriptAutoApplyConsentService.
  * @author Hossein <hossein@notifal.com>
  */
 class ServiceProvider extends AbstractServiceProvider
@@ -56,6 +58,7 @@ class ServiceProvider extends AbstractServiceProvider
         AiInviteGreeting::class,
         AiPublicConfigService::class,
         GeneratedContentSanitizer::class,
+        ScriptAutoApplyConsentService::class,
         AiOnPageFormAutoConnectService::class,
         AiOnPageImportService::class,
         AiAssetsRegistrar::class,

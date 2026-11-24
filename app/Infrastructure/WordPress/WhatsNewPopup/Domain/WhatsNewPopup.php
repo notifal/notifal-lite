@@ -8,6 +8,8 @@
  * @since 2.0.0
  * @updated 3.0.0 Keep latest What's New entries including Setup Wizard site readiness.
  * @updated 3.0.1 Add 3.0.1 What's New for form import remapping and expanded AI use cases.
+ * @updated 3.0.2 Add 3.0.2 What's New for HTML Builder AI form-removal edit fidelity.
+ * @updated 3.0.3 Add automatic Noti script apply and layout check to the 3.0.3 What's New entry.
  * @author Hossein <hossein@notifal.com>
  */
 
@@ -147,7 +149,7 @@ class WhatsNewPopup
      */
     public function getCurrentVersion(): string
     {
-        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '3.0.1';
+        return defined('NOTIFAL_VERSION') ? NOTIFAL_VERSION : '3.0.3';
     }
 
     /**
@@ -220,6 +222,20 @@ class WhatsNewPopup
     private function getAllVersionsConfig(): array
     {
         return [
+            '3.0.3' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '3.0.3'),
+                'content' => $this->getVersion303Content(),
+                'action_buttons' => [],
+            ],
+            '3.0.2' => [
+                'show_popup' => true,
+                'is_important' => false,
+                'title' => sprintf(__("What's New in %s", 'notifal'), '3.0.2'),
+                'content' => $this->getVersion302Content(),
+                'action_buttons' => [],
+            ],
             '3.0.1' => [
                 'show_popup' => true,
                 'is_important' => false,
@@ -232,20 +248,6 @@ class WhatsNewPopup
                 'is_important' => false,
                 'title' => sprintf(__("What's New in %s", 'notifal'), '3.0.0'),
                 'content' => $this->getVersion300Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.5' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.5'),
-                'content' => $this->getVersion245Content(),
-                'action_buttons' => [],
-            ],
-            '2.4.4' => [
-                'show_popup' => true,
-                'is_important' => false,
-                'title' => sprintf(__("What's New in %s", 'notifal'), '2.4.4'),
-                'content' => $this->getVersion244Content(),
                 'action_buttons' => [],
             ],
         ];
@@ -292,6 +294,83 @@ class WhatsNewPopup
             'title' => $config['title'],
             'content' => $config['content'],
         ];
+    }
+
+    /**
+     * Get content for version 3.0.3
+     *
+     * @return string HTML content for version 3.0.3
+     * @since 3.0.3
+     */
+    private function getVersion303Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 3.0.3", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🎮</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Noti adds interactive scripts for you', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When a template needs JavaScript, such as a pick-a-card game or a scratch reveal, Noti now adds the script to the template automatically after it passes automatic security checks. You confirm once in the chat, no copy and paste needed, and you can remove the script or turn this off at any time.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🧪</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Test interactive templates again and again', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Preview mode now has a Reset test button for templates with scripts, such as games with a daily play limit. One click clears the saved limit and restarts the preview. Copy code buttons now work in Preview too, just like on your live site.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">🔍</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('Noti double-checks what it builds', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('After Noti builds a template, the builder checks that everything actually displays. If a part rendered with no size, such as invisible game cards, Noti fixes it automatically, and your normal reply is not slowed down.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">⚡</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('HTML Builder shows Noti style edits instantly', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('Style changes applied by Noti, such as rounded corners on buttons or cards, now appear on the canvas right away instead of only after you save and refresh.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Get content for version 3.0.2
+     *
+     * @return string HTML content for version 3.0.2
+     * @since 3.0.2
+     */
+    private function getVersion302Content(): string
+    {
+        ob_start();
+        ?>
+        <div class="notifal-whatsnew-content">
+            <div class="notifal-whatsnew-section">
+                <h3><?php echo '✨ ' . esc_html(__("What's New in 3.0.2", 'notifal')); ?></h3>
+                <div class="notifal-whatsnew-features">
+                    <div class="notifal-feature-item">
+                        <span class="notifal-feature-icon">✏️</span>
+                        <div class="notifal-feature-content">
+                            <h4><?php esc_html_e('HTML Builder AI honors form-removal edits', 'notifal'); ?></h4>
+                            <p><?php esc_html_e('When you ask Noti to remove a form or turn the template into a promote / landing CTA, Noti now decides in any language whether the form should be dropped, so it is no longer regenerated against your request.', 'notifal'); ?></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+        return (string) ob_get_clean();
     }
 
     /**
